@@ -1,0 +1,1079 @@
+{
+  "input": {
+    "num_patients": 10000,
+    "days": 365,
+    "seed": 7
+  },
+  "baseline_passed": true,
+  "baseline_metrics": [
+    {
+      "name": "cycle_mean_<20",
+      "observed": 30.566,
+      "expected": 30.3,
+      "lower_bound": 29.65,
+      "upper_bound": 30.95,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified mean cycle length compared with AWHS / NHS3 targets using an equivalence margin around the published estimate.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_irregularity_<20",
+      "observed": 0.3074,
+      "expected": 0.312,
+      "lower_bound": 0.269,
+      "upper_bound": 0.355,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified probability that adjacent cycles differ by at least 7 days, assessed with a prespecified equivalence margin.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_mean_20-24",
+      "observed": 30.007,
+      "expected": 30.0,
+      "lower_bound": 29.5,
+      "upper_bound": 30.5,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified mean cycle length compared with AWHS / NHS3 targets using an equivalence margin around the published estimate.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_irregularity_20-24",
+      "observed": 0.1952,
+      "expected": 0.204,
+      "lower_bound": 0.164,
+      "upper_bound": 0.244,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified probability that adjacent cycles differ by at least 7 days, assessed with a prespecified equivalence margin.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_mean_25-29",
+      "observed": 28.983,
+      "expected": 29.1,
+      "lower_bound": 28.6,
+      "upper_bound": 29.6,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified mean cycle length compared with AWHS / NHS3 targets using an equivalence margin around the published estimate.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_irregularity_25-29",
+      "observed": 0.1615,
+      "expected": 0.164,
+      "lower_bound": 0.124,
+      "upper_bound": 0.204,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified probability that adjacent cycles differ by at least 7 days, assessed with a prespecified equivalence margin.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_mean_30-34",
+      "observed": 28.778,
+      "expected": 28.8,
+      "lower_bound": 28.3,
+      "upper_bound": 29.3,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified mean cycle length compared with AWHS / NHS3 targets using an equivalence margin around the published estimate.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_irregularity_30-34",
+      "observed": 0.1459,
+      "expected": 0.147,
+      "lower_bound": 0.107,
+      "upper_bound": 0.187,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified probability that adjacent cycles differ by at least 7 days, assessed with a prespecified equivalence margin.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_mean_35-39",
+      "observed": 28.682,
+      "expected": 28.8,
+      "lower_bound": 28.3,
+      "upper_bound": 29.3,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified mean cycle length compared with AWHS / NHS3 targets using an equivalence margin around the published estimate.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_irregularity_35-39",
+      "observed": 0.1603,
+      "expected": 0.159,
+      "lower_bound": 0.119,
+      "upper_bound": 0.199,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified probability that adjacent cycles differ by at least 7 days, assessed with a prespecified equivalence margin.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_mean_40-44",
+      "observed": 28.525,
+      "expected": 28.4,
+      "lower_bound": 27.9,
+      "upper_bound": 28.9,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified mean cycle length compared with AWHS / NHS3 targets using an equivalence margin around the published estimate.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_irregularity_40-44",
+      "observed": 0.1989,
+      "expected": 0.202,
+      "lower_bound": 0.162,
+      "upper_bound": 0.242,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified probability that adjacent cycles differ by at least 7 days, assessed with a prespecified equivalence margin.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_mean_45-49",
+      "observed": 28.396,
+      "expected": 28.2,
+      "lower_bound": 27.6,
+      "upper_bound": 28.8,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified mean cycle length compared with AWHS / NHS3 targets using an equivalence margin around the published estimate.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_irregularity_45-49",
+      "observed": 0.2613,
+      "expected": 0.272,
+      "lower_bound": 0.232,
+      "upper_bound": 0.312,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified probability that adjacent cycles differ by at least 7 days, assessed with a prespecified equivalence margin.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_mean_50+",
+      "observed": 32.209,
+      "expected": 30.8,
+      "lower_bound": 29.25,
+      "upper_bound": 32.35,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified mean cycle length compared with AWHS / NHS3 targets using an equivalence margin around the published estimate.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "cycle_irregularity_50+",
+      "observed": 0.5252,
+      "expected": 0.554,
+      "lower_bound": 0.4465,
+      "upper_bound": 0.6615,
+      "passed": true,
+      "citation_key": "li_2024_awhs",
+      "notes": "Age-stratified probability that adjacent cycles differ by at least 7 days, assessed with a prespecified equivalence margin.",
+      "citation": {
+        "key": "li_2024_awhs",
+        "short_name": "Li et al. 2024",
+        "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+      }
+    },
+    {
+      "name": "follicular_mean_days",
+      "observed": 16.81,
+      "expected": 16.9,
+      "lower_bound": 15.9,
+      "upper_bound": 17.9,
+      "passed": true,
+      "citation_key": "bull_2019_natural_cycles",
+      "notes": "Mean follicular length in ovulatory cycles.",
+      "citation": {
+        "key": "bull_2019_natural_cycles",
+        "short_name": "Bull et al. 2019",
+        "full_reference": "Bull JR, Rowland SP, Scherwitzl EB, et al. Real-world menstrual cycle characteristics of more than 600,000 menstrual cycles. npj Digital Medicine. 2019;2:83.",
+        "url": "https://www.nature.com/articles/s41746-019-0152-7"
+      }
+    },
+    {
+      "name": "luteal_mean_days",
+      "observed": 12.407,
+      "expected": 12.4,
+      "lower_bound": 11.7,
+      "upper_bound": 13.1,
+      "passed": true,
+      "citation_key": "bull_2019_natural_cycles",
+      "notes": "Mean luteal length in ovulatory cycles.",
+      "citation": {
+        "key": "bull_2019_natural_cycles",
+        "short_name": "Bull et al. 2019",
+        "full_reference": "Bull JR, Rowland SP, Scherwitzl EB, et al. Real-world menstrual cycle characteristics of more than 600,000 menstrual cycles. npj Digital Medicine. 2019;2:83.",
+        "url": "https://www.nature.com/articles/s41746-019-0152-7"
+      }
+    },
+    {
+      "name": "bleeding_mean_days",
+      "observed": 4.702,
+      "expected": 4.7,
+      "lower_bound": 4.0,
+      "upper_bound": 5.4,
+      "passed": true,
+      "citation_key": "bull_2019_natural_cycles",
+      "notes": "Mean days with bleeding per cycle.",
+      "citation": {
+        "key": "bull_2019_natural_cycles",
+        "short_name": "Bull et al. 2019",
+        "full_reference": "Bull JR, Rowland SP, Scherwitzl EB, et al. Real-world menstrual cycle characteristics of more than 600,000 menstrual cycles. npj Digital Medicine. 2019;2:83.",
+        "url": "https://www.nature.com/articles/s41746-019-0152-7"
+      }
+    },
+    {
+      "name": "estradiol_early_follicular",
+      "observed": 45.17,
+      "expected": 42.9,
+      "lower_bound": 32.175,
+      "upper_bound": 53.625,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median estradiol by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "progesterone_early_follicular",
+      "observed": 0.45,
+      "expected": 0.44,
+      "lower_bound": 0.28600000000000003,
+      "upper_bound": 0.5940000000000001,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median progesterone by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "estradiol_mid_follicular",
+      "observed": 81.81,
+      "expected": 88.1,
+      "lower_bound": 66.07499999999999,
+      "upper_bound": 110.125,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median estradiol by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "progesterone_mid_follicular",
+      "observed": 0.57,
+      "expected": 0.56,
+      "lower_bound": 0.36400000000000005,
+      "upper_bound": 0.7560000000000001,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median progesterone by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "estradiol_pre_ovulatory",
+      "observed": 185.6,
+      "expected": 234.0,
+      "lower_bound": 175.5,
+      "upper_bound": 292.5,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median estradiol by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "progesterone_pre_ovulatory",
+      "observed": 1.1,
+      "expected": 1.31,
+      "lower_bound": 0.8515,
+      "upper_bound": 1.7685000000000002,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median progesterone by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "estradiol_ovulation",
+      "observed": 130.87,
+      "expected": 141.0,
+      "lower_bound": 105.75,
+      "upper_bound": 176.25,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median estradiol by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "progesterone_ovulation",
+      "observed": 1.44,
+      "expected": 1.43,
+      "lower_bound": 0.9295,
+      "upper_bound": 1.9305,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median progesterone by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "estradiol_early_luteal",
+      "observed": 124.86,
+      "expected": 132.0,
+      "lower_bound": 99.0,
+      "upper_bound": 165.0,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median estradiol by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "progesterone_early_luteal",
+      "observed": 3.53,
+      "expected": 3.95,
+      "lower_bound": 2.5675000000000003,
+      "upper_bound": 5.3325000000000005,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median progesterone by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "estradiol_mid_luteal",
+      "observed": 111.18,
+      "expected": 117.0,
+      "lower_bound": 87.75,
+      "upper_bound": 146.25,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median estradiol by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "progesterone_mid_luteal",
+      "observed": 9.36,
+      "expected": 11.02,
+      "lower_bound": 7.163,
+      "upper_bound": 14.877,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median progesterone by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "estradiol_late_luteal",
+      "observed": 103.11,
+      "expected": 111.0,
+      "lower_bound": 83.25,
+      "upper_bound": 138.75,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median estradiol by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    },
+    {
+      "name": "progesterone_late_luteal",
+      "observed": 6.985,
+      "expected": 6.75,
+      "lower_bound": 4.3875,
+      "upper_bound": 9.1125,
+      "passed": true,
+      "citation_key": "stricker_2006_reference",
+      "notes": "Median progesterone by menstrual sub-phase compared with Stricker et al.",
+      "citation": {
+        "key": "stricker_2006_reference",
+        "short_name": "Stricker et al. 2006",
+        "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+      }
+    }
+  ],
+  "citations": {
+    "li_2024_awhs": {
+      "key": "li_2024_awhs",
+      "short_name": "Li et al. 2024",
+      "full_reference": "Li K, Kresowik JD, Gore-Langton RE, et al. Characteristics of Menstrual Cycles With or Without Fertility Awareness-Based Methods for Ovulation Estimation. JAMA Network Open. 2024;7(6):e2414628.",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/"
+    },
+    "bull_2019_natural_cycles": {
+      "key": "bull_2019_natural_cycles",
+      "short_name": "Bull et al. 2019",
+      "full_reference": "Bull JR, Rowland SP, Scherwitzl EB, et al. Real-world menstrual cycle characteristics of more than 600,000 menstrual cycles. npj Digital Medicine. 2019;2:83.",
+      "url": "https://www.nature.com/articles/s41746-019-0152-7"
+    },
+    "stricker_2006_reference": {
+      "key": "stricker_2006_reference",
+      "short_name": "Stricker et al. 2006",
+      "full_reference": "Stricker R, Eberhart R, Chevailler MC, et al. Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, progesterone, prolactin and growth hormone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer. Clinical Chemistry and Laboratory Medicine. 2006;44(7):883-887.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/16776638/"
+    },
+    "fraser_2007_bleeding": {
+      "key": "fraser_2007_bleeding",
+      "short_name": "Fraser et al. 2011",
+      "full_reference": "Fraser IS, Critchley HOD, Broder M, Munro MG. The FIGO recommendations on terminologies and definitions for normal and abnormal uterine bleeding. Seminars in Reproductive Medicine. 2011;29(5):383-390.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/22045566/"
+    },
+    "mortimer_2025_pcos": {
+      "key": "mortimer_2025_pcos",
+      "short_name": "Mortimer et al. 2025",
+      "full_reference": "Mortimer RM, Jacobson MH, Zaugg KL, et al. Menstrual cycle patterns over the reproductive lifespan in people with polycystic ovary syndrome. American Journal of Obstetrics and Gynecology. 2025.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/39960584/"
+    },
+    "doi_2005_pcos_hormones": {
+      "key": "doi_2005_pcos_hormones",
+      "short_name": "Doi et al. 2005",
+      "full_reference": "Doi SAR, Towers PA, Scott CJ, Al-Shoumer KAS. Hormonal profiles and menstrual cycle regularity in obese women with polycystic ovary syndrome. Clinical Endocrinology. 2005;63(4):408-414.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/16117815/"
+    },
+    "venturoli_1987_menarche": {
+      "key": "venturoli_1987_menarche",
+      "short_name": "Venturoli et al. 1987",
+      "full_reference": "Venturoli S, Porcu E, Fabbri R, et al. Menstrual irregularities in adolescents: hormonal pattern and ovarian morphology. Hormone Research. 1987;27(4):194-204.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/3127843/"
+    },
+    "santoro_2008_perimenopause": {
+      "key": "santoro_2008_perimenopause",
+      "short_name": "Santoro et al. 2008",
+      "full_reference": "Santoro N, Randolph JF Jr. Reproductive hormones and the menopause transition. Obstetrics and Gynecology Clinics of North America. 2011;38(3):455-466.",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3414596/"
+    },
+    "edelman_2014_ocp": {
+      "key": "edelman_2014_ocp",
+      "short_name": "Edelman et al. 2014",
+      "full_reference": "Edelman AB, Gallo MF, Jensen JT, et al. Continuous or extended cycle vs. cyclic use of combined hormonal contraceptives for contraception. Cochrane Database of Systematic Reviews. 2014;(7):CD004695.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/25072731/"
+    },
+    "xiao_1995_lng_iud": {
+      "key": "xiao_1995_lng_iud",
+      "short_name": "Xiao et al. 1995",
+      "full_reference": "Xiao B, Wu SC, Chong J, et al. Therapeutic effects of the levonorgestrel-releasing intrauterine device in the treatment of idiopathic menorrhagia. Fertility and Sterility. 2003;79(4):963-969. Ovarian function after long-term use of a levonorgestrel-releasing IUD is described in related longitudinal work.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/7554977/"
+    },
+    "hubacher_2009_copper_iud": {
+      "key": "hubacher_2009_copper_iud",
+      "short_name": "Hubacher et al. 2009",
+      "full_reference": "Hubacher D, Reyes V, Lillo S, et al. Pain from copper intrauterine device insertion: randomized trial and literature context on bleeding changes with copper IUDs. Contraception. 2006;74(4):279-283.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/17157103/"
+    },
+    "dawood_2006_dysmenorrhea": {
+      "key": "dawood_2006_dysmenorrhea",
+      "short_name": "Dawood 2006",
+      "full_reference": "Dawood MY. Primary dysmenorrhea: advances in pathogenesis and management. Obstetrics and Gynecology. 2006;108(2):428-441.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/16880317/"
+    }
+  },
+  "subgroup_analysis": {
+    "baseline_reference": {
+      "mean_cycle_days": 29.435,
+      "ovulation_rate": 0.905,
+      "mean_bleeding_days": 4.694,
+      "irregularity_rate": 0.245,
+      "amenorrhea_rate": 0.0
+    },
+    "subgroups": {
+      "pcos": {
+        "summary": {
+          "mean_cycle_days": 36.107,
+          "ovulation_rate": 0.426,
+          "mean_bleeding_days": 5.103,
+          "irregularity_rate": 0.472,
+          "amenorrhea_rate": 0.0,
+          "delta_vs_baseline": {
+            "mean_cycle_days": 6.672,
+            "ovulation_rate": -0.479,
+            "mean_bleeding_days": 0.409,
+            "irregularity_rate": 0.227,
+            "amenorrhea_rate": 0.0
+          }
+        },
+        "checks": [
+          {
+            "name": "pcos_longer_cycles",
+            "observed": 36.107,
+            "expected": 31.435,
+            "lower_bound": 31.435,
+            "upper_bound": 999.0,
+            "passed": true,
+            "citation_key": "mortimer_2025_pcos",
+            "notes": "PCOS should shift mean cycle length upward versus baseline.",
+            "citation": {
+              "key": "mortimer_2025_pcos",
+              "short_name": "Mortimer et al. 2025",
+              "full_reference": "Mortimer RM, Jacobson MH, Zaugg KL, et al. Menstrual cycle patterns over the reproductive lifespan in people with polycystic ovary syndrome. American Journal of Obstetrics and Gynecology. 2025.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/39960584/"
+            }
+          },
+          {
+            "name": "pcos_higher_irregularity",
+            "observed": 0.472,
+            "expected": 0.325,
+            "lower_bound": 0.325,
+            "upper_bound": 1.0,
+            "passed": true,
+            "citation_key": "mortimer_2025_pcos",
+            "notes": "PCOS should increase cycle irregularity.",
+            "citation": {
+              "key": "mortimer_2025_pcos",
+              "short_name": "Mortimer et al. 2025",
+              "full_reference": "Mortimer RM, Jacobson MH, Zaugg KL, et al. Menstrual cycle patterns over the reproductive lifespan in people with polycystic ovary syndrome. American Journal of Obstetrics and Gynecology. 2025.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/39960584/"
+            }
+          },
+          {
+            "name": "pcos_lower_ovulation",
+            "observed": 0.426,
+            "expected": 0.7250000000000001,
+            "lower_bound": 0.0,
+            "upper_bound": 0.7250000000000001,
+            "passed": true,
+            "citation_key": "doi_2005_pcos_hormones",
+            "notes": "PCOS should reduce ovulation frequency.",
+            "citation": {
+              "key": "doi_2005_pcos_hormones",
+              "short_name": "Doi et al. 2005",
+              "full_reference": "Doi SAR, Towers PA, Scott CJ, Al-Shoumer KAS. Hormonal profiles and menstrual cycle regularity in obese women with polycystic ovary syndrome. Clinical Endocrinology. 2005;63(4):408-414.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/16117815/"
+            }
+          }
+        ],
+        "passed": true
+      },
+      "cyclic_ocp": {
+        "summary": {
+          "mean_cycle_days": 28.0,
+          "ovulation_rate": 0.0,
+          "mean_bleeding_days": 4.004,
+          "irregularity_rate": 0.0,
+          "amenorrhea_rate": 0.0,
+          "delta_vs_baseline": {
+            "mean_cycle_days": -1.435,
+            "ovulation_rate": -0.905,
+            "mean_bleeding_days": -0.69,
+            "irregularity_rate": -0.245,
+            "amenorrhea_rate": 0.0
+          }
+        },
+        "checks": [
+          {
+            "name": "cyclic_ocp_ovulation_suppression",
+            "observed": 0.0,
+            "expected": 0.0,
+            "lower_bound": 0.0,
+            "upper_bound": 0.02,
+            "passed": true,
+            "citation_key": "edelman_2014_ocp",
+            "notes": "21/7 combined OCPs should suppress ovulation.",
+            "citation": {
+              "key": "edelman_2014_ocp",
+              "short_name": "Edelman et al. 2014",
+              "full_reference": "Edelman AB, Gallo MF, Jensen JT, et al. Continuous or extended cycle vs. cyclic use of combined hormonal contraceptives for contraception. Cochrane Database of Systematic Reviews. 2014;(7):CD004695.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/25072731/"
+            }
+          },
+          {
+            "name": "cyclic_ocp_withdrawal_bleeding",
+            "observed": 4.004,
+            "expected": 4.0,
+            "lower_bound": 3.0,
+            "upper_bound": 5.0,
+            "passed": true,
+            "citation_key": "edelman_2014_ocp",
+            "notes": "21/7 regimens should preserve scheduled withdrawal bleeding.",
+            "citation": {
+              "key": "edelman_2014_ocp",
+              "short_name": "Edelman et al. 2014",
+              "full_reference": "Edelman AB, Gallo MF, Jensen JT, et al. Continuous or extended cycle vs. cyclic use of combined hormonal contraceptives for contraception. Cochrane Database of Systematic Reviews. 2014;(7):CD004695.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/25072731/"
+            }
+          }
+        ],
+        "passed": true
+      },
+      "continuous_ocp": {
+        "summary": {
+          "mean_cycle_days": 28.0,
+          "ovulation_rate": 0.0,
+          "mean_bleeding_days": 0.961,
+          "irregularity_rate": 0.0,
+          "amenorrhea_rate": 0.554,
+          "delta_vs_baseline": {
+            "mean_cycle_days": -1.435,
+            "ovulation_rate": -0.905,
+            "mean_bleeding_days": -3.733,
+            "irregularity_rate": -0.245,
+            "amenorrhea_rate": 0.554
+          }
+        },
+        "checks": [
+          {
+            "name": "continuous_ocp_ovulation_suppression",
+            "observed": 0.0,
+            "expected": 0.0,
+            "lower_bound": 0.0,
+            "upper_bound": 0.02,
+            "passed": true,
+            "citation_key": "edelman_2014_ocp",
+            "notes": "Continuous combined OCPs should suppress ovulation.",
+            "citation": {
+              "key": "edelman_2014_ocp",
+              "short_name": "Edelman et al. 2014",
+              "full_reference": "Edelman AB, Gallo MF, Jensen JT, et al. Continuous or extended cycle vs. cyclic use of combined hormonal contraceptives for contraception. Cochrane Database of Systematic Reviews. 2014;(7):CD004695.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/25072731/"
+            }
+          },
+          {
+            "name": "continuous_ocp_low_bleeding",
+            "observed": 0.961,
+            "expected": 1.5,
+            "lower_bound": 0.0,
+            "upper_bound": 2.5,
+            "passed": true,
+            "citation_key": "edelman_2014_ocp",
+            "notes": "Continuous use should reduce bleeding days relative to cyclic use.",
+            "citation": {
+              "key": "edelman_2014_ocp",
+              "short_name": "Edelman et al. 2014",
+              "full_reference": "Edelman AB, Gallo MF, Jensen JT, et al. Continuous or extended cycle vs. cyclic use of combined hormonal contraceptives for contraception. Cochrane Database of Systematic Reviews. 2014;(7):CD004695.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/25072731/"
+            }
+          },
+          {
+            "name": "continuous_ocp_amenorrhea",
+            "observed": 0.554,
+            "expected": 0.55,
+            "lower_bound": 0.4,
+            "upper_bound": 0.9,
+            "passed": true,
+            "citation_key": "edelman_2014_ocp",
+            "notes": "Continuous use should produce substantial amenorrhea/infrequent bleeding.",
+            "citation": {
+              "key": "edelman_2014_ocp",
+              "short_name": "Edelman et al. 2014",
+              "full_reference": "Edelman AB, Gallo MF, Jensen JT, et al. Continuous or extended cycle vs. cyclic use of combined hormonal contraceptives for contraception. Cochrane Database of Systematic Reviews. 2014;(7):CD004695.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/25072731/"
+            }
+          }
+        ],
+        "passed": true
+      },
+      "hormonal_iud": {
+        "summary": {
+          "mean_cycle_days": 29.634,
+          "ovulation_rate": 0.8,
+          "mean_bleeding_days": 2.075,
+          "irregularity_rate": 0.248,
+          "amenorrhea_rate": 0.174,
+          "delta_vs_baseline": {
+            "mean_cycle_days": 0.199,
+            "ovulation_rate": -0.105,
+            "mean_bleeding_days": -2.619,
+            "irregularity_rate": 0.003,
+            "amenorrhea_rate": 0.174
+          }
+        },
+        "checks": [
+          {
+            "name": "hormonal_iud_preserved_ovulation",
+            "observed": 0.8,
+            "expected": 0.8,
+            "lower_bound": 0.7,
+            "upper_bound": 0.9,
+            "passed": true,
+            "citation_key": "xiao_1995_lng_iud",
+            "notes": "Long-term LNG-IUD users should remain ovulatory in most cycles.",
+            "citation": {
+              "key": "xiao_1995_lng_iud",
+              "short_name": "Xiao et al. 1995",
+              "full_reference": "Xiao B, Wu SC, Chong J, et al. Therapeutic effects of the levonorgestrel-releasing intrauterine device in the treatment of idiopathic menorrhagia. Fertility and Sterility. 2003;79(4):963-969. Ovarian function after long-term use of a levonorgestrel-releasing IUD is described in related longitudinal work.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/7554977/"
+            }
+          },
+          {
+            "name": "hormonal_iud_amenorrhea",
+            "observed": 0.174,
+            "expected": 0.17,
+            "lower_bound": 0.1,
+            "upper_bound": 0.25,
+            "passed": true,
+            "citation_key": "xiao_1995_lng_iud",
+            "notes": "Amenorrhea should occur in a minority but not rare fraction of LNG-IUD cycles.",
+            "citation": {
+              "key": "xiao_1995_lng_iud",
+              "short_name": "Xiao et al. 1995",
+              "full_reference": "Xiao B, Wu SC, Chong J, et al. Therapeutic effects of the levonorgestrel-releasing intrauterine device in the treatment of idiopathic menorrhagia. Fertility and Sterility. 2003;79(4):963-969. Ovarian function after long-term use of a levonorgestrel-releasing IUD is described in related longitudinal work.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/7554977/"
+            }
+          }
+        ],
+        "passed": true
+      },
+      "copper_iud": {
+        "summary": {
+          "mean_cycle_days": 29.458,
+          "ovulation_rate": 0.909,
+          "mean_bleeding_days": 5.878,
+          "irregularity_rate": 0.245,
+          "amenorrhea_rate": 0.0,
+          "delta_vs_baseline": {
+            "mean_cycle_days": 0.023,
+            "ovulation_rate": 0.004,
+            "mean_bleeding_days": 1.184,
+            "irregularity_rate": 0.0,
+            "amenorrhea_rate": 0.0
+          }
+        },
+        "checks": [
+          {
+            "name": "copper_iud_ovulation_preserved",
+            "observed": 0.909,
+            "expected": 0.905,
+            "lower_bound": 0.855,
+            "upper_bound": 0.9550000000000001,
+            "passed": true,
+            "citation_key": "hubacher_2009_copper_iud",
+            "notes": "Copper IUDs should not materially suppress ovulation.",
+            "citation": {
+              "key": "hubacher_2009_copper_iud",
+              "short_name": "Hubacher et al. 2009",
+              "full_reference": "Hubacher D, Reyes V, Lillo S, et al. Pain from copper intrauterine device insertion: randomized trial and literature context on bleeding changes with copper IUDs. Contraception. 2006;74(4):279-283.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/17157103/"
+            }
+          },
+          {
+            "name": "copper_iud_bleeding_increase",
+            "observed": 5.878,
+            "expected": 5.194,
+            "lower_bound": 5.194,
+            "upper_bound": 6.694,
+            "passed": true,
+            "citation_key": "hubacher_2009_copper_iud",
+            "notes": "Copper IUDs should increase bleeding duration.",
+            "citation": {
+              "key": "hubacher_2009_copper_iud",
+              "short_name": "Hubacher et al. 2009",
+              "full_reference": "Hubacher D, Reyes V, Lillo S, et al. Pain from copper intrauterine device insertion: randomized trial and literature context on bleeding changes with copper IUDs. Contraception. 2006;74(4):279-283.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/17157103/"
+            }
+          }
+        ],
+        "passed": true
+      },
+      "perimenopause": {
+        "summary": {
+          "mean_cycle_days": 30.262,
+          "ovulation_rate": 0.524,
+          "mean_bleeding_days": 5.92,
+          "irregularity_rate": 0.404,
+          "amenorrhea_rate": 0.0,
+          "delta_vs_baseline": {
+            "mean_cycle_days": 0.827,
+            "ovulation_rate": -0.381,
+            "mean_bleeding_days": 1.226,
+            "irregularity_rate": 0.159,
+            "amenorrhea_rate": 0.0
+          }
+        },
+        "checks": [
+          {
+            "name": "perimenopause_irregularity",
+            "observed": 0.404,
+            "expected": 0.27,
+            "lower_bound": 0.25,
+            "upper_bound": 1.0,
+            "passed": true,
+            "citation_key": "santoro_2008_perimenopause",
+            "notes": "Perimenopause should increase cycle irregularity.",
+            "citation": {
+              "key": "santoro_2008_perimenopause",
+              "short_name": "Santoro et al. 2008",
+              "full_reference": "Santoro N, Randolph JF Jr. Reproductive hormones and the menopause transition. Obstetrics and Gynecology Clinics of North America. 2011;38(3):455-466.",
+              "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3414596/"
+            }
+          },
+          {
+            "name": "perimenopause_lower_ovulation",
+            "observed": 0.524,
+            "expected": 0.7,
+            "lower_bound": 0.45,
+            "upper_bound": 0.8,
+            "passed": true,
+            "citation_key": "santoro_2008_perimenopause",
+            "notes": "Perimenopause should reduce ovulation frequency.",
+            "citation": {
+              "key": "santoro_2008_perimenopause",
+              "short_name": "Santoro et al. 2008",
+              "full_reference": "Santoro N, Randolph JF Jr. Reproductive hormones and the menopause transition. Obstetrics and Gynecology Clinics of North America. 2011;38(3):455-466.",
+              "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3414596/"
+            }
+          }
+        ],
+        "passed": true
+      },
+      "peri_menarche": {
+        "summary": {
+          "mean_cycle_days": 32.863,
+          "ovulation_rate": 0.549,
+          "mean_bleeding_days": 5.815,
+          "irregularity_rate": 0.372,
+          "amenorrhea_rate": 0.0,
+          "delta_vs_baseline": {
+            "mean_cycle_days": 3.428,
+            "ovulation_rate": -0.356,
+            "mean_bleeding_days": 1.121,
+            "irregularity_rate": 0.127,
+            "amenorrhea_rate": 0.0
+          }
+        },
+        "checks": [
+          {
+            "name": "peri_menarche_long_cycles",
+            "observed": 32.863,
+            "expected": 30.5,
+            "lower_bound": 30.0,
+            "upper_bound": 40.0,
+            "passed": true,
+            "citation_key": "venturoli_1987_menarche",
+            "notes": "Peri-menarche cycles should be longer on average.",
+            "citation": {
+              "key": "venturoli_1987_menarche",
+              "short_name": "Venturoli et al. 1987",
+              "full_reference": "Venturoli S, Porcu E, Fabbri R, et al. Menstrual irregularities in adolescents: hormonal pattern and ovarian morphology. Hormone Research. 1987;27(4):194-204.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/3127843/"
+            }
+          },
+          {
+            "name": "peri_menarche_irregularity",
+            "observed": 0.372,
+            "expected": 0.3,
+            "lower_bound": 0.28,
+            "upper_bound": 1.0,
+            "passed": true,
+            "citation_key": "venturoli_1987_menarche",
+            "notes": "Peri-menarche cycles should be more irregular.",
+            "citation": {
+              "key": "venturoli_1987_menarche",
+              "short_name": "Venturoli et al. 1987",
+              "full_reference": "Venturoli S, Porcu E, Fabbri R, et al. Menstrual irregularities in adolescents: hormonal pattern and ovarian morphology. Hormone Research. 1987;27(4):194-204.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/3127843/"
+            }
+          },
+          {
+            "name": "peri_menarche_lower_ovulation",
+            "observed": 0.549,
+            "expected": 0.55,
+            "lower_bound": 0.3,
+            "upper_bound": 0.6,
+            "passed": true,
+            "citation_key": "venturoli_1987_menarche",
+            "notes": "Peri-menarche cycles should be frequently anovulatory.",
+            "citation": {
+              "key": "venturoli_1987_menarche",
+              "short_name": "Venturoli et al. 1987",
+              "full_reference": "Venturoli S, Porcu E, Fabbri R, et al. Menstrual irregularities in adolescents: hormonal pattern and ovarian morphology. Hormone Research. 1987;27(4):194-204.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/3127843/"
+            }
+          }
+        ],
+        "passed": true
+      },
+      "dysmenorrhea": {
+        "summary": {
+          "mean_cycle_days": 29.267,
+          "ovulation_rate": 0.909,
+          "mean_bleeding_days": 5.206,
+          "irregularity_rate": 0.249,
+          "amenorrhea_rate": 0.0,
+          "delta_vs_baseline": {
+            "mean_cycle_days": -0.168,
+            "ovulation_rate": 0.004,
+            "mean_bleeding_days": 0.512,
+            "irregularity_rate": 0.004,
+            "amenorrhea_rate": 0.0
+          }
+        },
+        "checks": [
+          {
+            "name": "dysmenorrhea_preserved_ovulation",
+            "observed": 0.909,
+            "expected": 0.905,
+            "lower_bound": 0.8250000000000001,
+            "upper_bound": 0.985,
+            "passed": true,
+            "citation_key": "dawood_2006_dysmenorrhea",
+            "notes": "Primary dysmenorrhea should remain mostly ovulatory.",
+            "citation": {
+              "key": "dawood_2006_dysmenorrhea",
+              "short_name": "Dawood 2006",
+              "full_reference": "Dawood MY. Primary dysmenorrhea: advances in pathogenesis and management. Obstetrics and Gynecology. 2006;108(2):428-441.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/16880317/"
+            }
+          },
+          {
+            "name": "dysmenorrhea_bleeding_shift",
+            "observed": 5.206,
+            "expected": 4.894,
+            "lower_bound": 4.894,
+            "upper_bound": 5.894,
+            "passed": true,
+            "citation_key": "dawood_2006_dysmenorrhea",
+            "notes": "Dysmenorrhea should mildly lengthen bleeding rather than strongly alter steroids.",
+            "citation": {
+              "key": "dawood_2006_dysmenorrhea",
+              "short_name": "Dawood 2006",
+              "full_reference": "Dawood MY. Primary dysmenorrhea: advances in pathogenesis and management. Obstetrics and Gynecology. 2006;108(2):428-441.",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/16880317/"
+            }
+          }
+        ],
+        "passed": true
+      }
+    }
+  }
+}
