@@ -1,0 +1,243 @@
+{
+  "assumptions": [
+    "Definition D uses a participant-full-diary method-of-moments negative-binomial alpha recorded in d_alpha; Poisson robust fallback is recorded in d_reason when statsmodels NB fitting fails. Definition D_window_alpha re-estimates alpha from the analyzed window as a non-oracle sensitivity.",
+    "Healthy ovulatory cohort used hormone_cycler build_patient_profile/render_cycle with ovulation_probability set to 1.0 because simulate_diary does not expose a public force-ovulation knob.",
+    "Historical definitions H1-H4 are assumption-based operationalizations and are flagged in summary outputs.",
+    "Study-level Monte Carlo samples each selected participant from a deterministic pool of precomputed random valid 3-month windows to avoid retaining all daily diaries in memory.",
+    "The hormone simulator exposes medical-factor knobs but no natural prevalence sampler; population medical factors were sampled from config.yaml rates."
+  ],
+  "config": {
+    "analysis_modes": {
+      "coupled_full": {
+        "chunk_size": 500,
+        "cohort_sizes": {
+          "healthy_ovulatory": 50000,
+          "population": 50000
+        },
+        "diary_months": 36,
+        "n_jobs": -1,
+        "output_dir": "outputs_true_coupling",
+        "study_level_n_studies": 10000,
+        "true_coupling": {
+          "enabled": true,
+          "rate_ratio": 1.5,
+          "target_phase": "M"
+        }
+      },
+      "coupled_smoke": {
+        "chunk_size": 25,
+        "diary_months": 6,
+        "n_jobs": 1,
+        "n_total": 100,
+        "output_dir": "outputs_true_coupling_smoke",
+        "study_level_n_studies": 100,
+        "true_coupling": {
+          "enabled": true,
+          "rate_ratio": 1.5,
+          "target_phase": "M"
+        }
+      },
+      "full": {
+        "chunk_size": 500,
+        "cohort_sizes": {
+          "healthy_ovulatory": 50000,
+          "population": 50000
+        },
+        "diary_months": 36,
+        "n_jobs": -1,
+        "output_dir": "outputs",
+        "study_level_n_studies": 10000
+      },
+      "smoke": {
+        "chunk_size": 25,
+        "diary_months": 6,
+        "n_jobs": 1,
+        "n_total": 100,
+        "output_dir": "outputs_smoke",
+        "study_level_n_studies": 100
+      }
+    },
+    "audit_daily_fraction": 0.01,
+    "bootstrap": {
+      "n_replicates": 1000
+    },
+    "chunk_size": 250,
+    "circular_shift_target": "seizure",
+    "cohorts": {
+      "healthy_ovulatory": {
+        "age_range": [
+          18.0,
+          45.0
+        ],
+        "force_ovulatory_cycles": true
+      },
+      "population": {
+        "age_range": [
+          13.0,
+          54.9
+        ],
+        "force_ovulatory_cycles": false
+      }
+    },
+    "days_per_month": 30,
+    "default_seizure_frequency": null,
+    "definition_b": {
+      "min_cycle_window_cycles": 6,
+      "min_months": 4,
+      "min_seizure_days": 4
+    },
+    "historical": {
+      "h1_sensitivity_threshold": 0.667,
+      "h1_threshold": 0.5
+    },
+    "ilp_progesterone_threshold_ng_ml": 5.0,
+    "master_seed": 20260505,
+    "n_jobs": -1,
+    "output_dir": "outputs",
+    "phase_mode": "strict_herzog",
+    "population_factor_rates": {
+      "dysmenorrhea": 0.12,
+      "pcos": 0.1,
+      "peri_menarche_if_age_lt_20": 0.6,
+      "perimenopause_if_age_gte_45": 0.55
+    },
+    "progress": {
+      "enabled": true,
+      "print_every_chunks": 1,
+      "print_updates": true,
+      "write_json": true
+    },
+    "regression": {
+      "enabled": true,
+      "fallback_alpha": 1.0,
+      "window_alpha_sensitivity_windows": [
+        {
+          "window_type": "full"
+        }
+      ]
+    },
+    "reproducibility": {
+      "primary_min_complete_cycles": 6,
+      "sensitivity_min_complete_cycles": 12
+    },
+    "study_level": {
+      "benchmarks": [
+        0.391,
+        0.442
+      ],
+      "n_participants": 30,
+      "n_studies": 10000,
+      "window_months": 3,
+      "window_pool_per_participant": 5
+    },
+    "suppress_infradian_seizure_cycles": false,
+    "thresholds": {
+      "C1": 1.69,
+      "C2": 1.83,
+      "C3": 1.62
+    },
+    "true_coupling": {
+      "enabled": false,
+      "rate_ratio": 1.5,
+      "target_phase": "M"
+    },
+    "windows": {
+      "calendar_months": [
+        1,
+        3,
+        4,
+        6,
+        12
+      ],
+      "cycle_counts": [
+        3,
+        6,
+        12
+      ]
+    }
+  },
+  "created_unix_time": 1778164681.208302,
+  "files": [
+    {
+      "bytes": 15267,
+      "path": "outputs_smoke/audit_daily_sample.parquet",
+      "sha256": "837514dcdf3204af6b64b82decee844ef176e5fd8ed0c1f50502d582740d4b11"
+    },
+    {
+      "bytes": 17787,
+      "path": "outputs_smoke/fig1_false_positive_by_window.pdf",
+      "sha256": "73892844cb8d5cdd235b8c6cc80ef63dbb543725d84652d869eb1b51d6ed7a80"
+    },
+    {
+      "bytes": 98020,
+      "path": "outputs_smoke/fig1_false_positive_by_window.png",
+      "sha256": "565e9b893f40658eb57c0d48acf508c80a9b407fd05e1c90cc526a8ac66009a1"
+    },
+    {
+      "bytes": 17167,
+      "path": "outputs_smoke/fig2_study_prevalence_distribution_3month_n30.pdf",
+      "sha256": "aa318841bfe49291048926af58f2f326132e7aba09bfddbc3bed93fe57122ab3"
+    },
+    {
+      "bytes": 67659,
+      "path": "outputs_smoke/fig2_study_prevalence_distribution_3month_n30.png",
+      "sha256": "9cb023dc337afcd9c8f29dcce09636f1bee90d04b75e68dab94cc116481e7e04"
+    },
+    {
+      "bytes": 22728,
+      "path": "outputs_smoke/fig3_indeterminate_vs_fpr_frontier.pdf",
+      "sha256": "9c4536a2e9099b32bd97e3df9af8f51577d03480c6178818360190b1b5f2ee48"
+    },
+    {
+      "bytes": 128745,
+      "path": "outputs_smoke/fig3_indeterminate_vs_fpr_frontier.png",
+      "sha256": "2af0dea56203ebc266099bcbb803cfe13aceb86aa64295c7a9b0f501669413e9"
+    },
+    {
+      "bytes": 17237,
+      "path": "outputs_smoke/fig4_historical_vs_core_definitions.pdf",
+      "sha256": "5f90d0cbdbdb2f73d7a18a3059db9e08209d6953c541e9aef2ce074742c1172b"
+    },
+    {
+      "bytes": 67259,
+      "path": "outputs_smoke/fig4_historical_vs_core_definitions.png",
+      "sha256": "c88b49a755ed3e950841efa9928886cb927e1fb25d364ab5809dd155bc4f0775"
+    },
+    {
+      "bytes": 16199,
+      "path": "outputs_smoke/fig5_null_cycle_day_profile.pdf",
+      "sha256": "7998b940b41b436540171ab75a9e71c5050f95c99a18b62b60751ff1e45a913c"
+    },
+    {
+      "bytes": 133734,
+      "path": "outputs_smoke/fig5_null_cycle_day_profile.png",
+      "sha256": "177c6364ce297240996f83ced6523f0e0e9ceb91c00f909358824618d3e9c94b"
+    },
+    {
+      "bytes": 24939,
+      "path": "outputs_smoke/participant_summary.parquet",
+      "sha256": "c60722c25f7f7a3da1a531cdd1119584204609f1a93fd7844abb894dc4d16411"
+    },
+    {
+      "bytes": 373,
+      "path": "outputs_smoke/progress.json",
+      "sha256": "2bd8014f3ef864b4d88d09f010609df5c38af86193116b879ff8d7fcdc076d3d"
+    },
+    {
+      "bytes": 15844,
+      "path": "outputs_smoke/study_level_3month_n30.parquet",
+      "sha256": "3e209da7be721e638d2717e219a3296d9076f2d7204478ad3db9107ff1dd7b0d"
+    },
+    {
+      "bytes": 525362,
+      "path": "outputs_smoke/summary_tables.csv",
+      "sha256": "818abf7b164d868906577073a0996cfb10b7d5183ad3d790cd3afb9787f1c080"
+    },
+    {
+      "bytes": 109230,
+      "path": "outputs_smoke/window_results.parquet",
+      "sha256": "1853fed3450b168358ea43618cc6ab9e00e5d16d78beaf5accfe6c9548356fd2"
+    }
+  ],
+  "output_dir": "outputs_smoke"
+}

@@ -1,5 +1,65 @@
 # catamenial-epilepsy-sim
 
+## Paper 1 null CE analysis
+
+This repository now includes a reproducible Paper 1 analysis package for the null-simulation study of apparent catamenial epilepsy (CE) false positives. The analysis combines independent seizure diaries from CHOCOLATES with independent menstrual/hormone diaries from `hormone_cycler`, applies a random circular alignment shift, labels Herzog phases, and evaluates exact, windowed, reproducibility, regression, and assumption-based historical CE definitions.
+
+Paper 1 scope only:
+
+- no wavelets
+- no HMMs
+- no true seizure-hormone coupling simulations
+
+Install the analysis dependencies:
+
+```bash
+python3.11 -m pip install -e .
+```
+
+Run the focused tests:
+
+```bash
+python3.11 -m pytest tests/test_phase_labeling.py tests/test_exact_herzog2004.py tests/test_windowed_rules.py tests/test_edge_cases.py
+```
+
+Run the end-to-end smoke test (`N=100`, six-month diaries):
+
+```bash
+python3.11 run_paper1_null_ce.py --config config.yaml --smoke-test
+```
+
+Run the full prespecified analysis (`N=100,000`, 36-month diaries):
+
+```bash
+python3.11 run_paper1_null_ce.py --config config.yaml --full
+```
+
+While a run is active, progress and ETA are printed after each participant chunk and also written to `outputs/progress.json`. From another terminal, check the latest ETA with:
+
+```bash
+python3.11 scripts/check_paper1_progress.py --progress outputs/progress.json
+```
+
+Primary outputs are written to `outputs/`:
+
+- `participant_summary.parquet`
+- `window_results.parquet`
+- `study_level_3month_n30.parquet`
+- `summary_tables.csv`
+- `fig1_false_positive_by_window.png`
+- `fig2_study_prevalence_distribution_3month_n30.png`
+- `fig3_indeterminate_vs_fpr_frontier.png`
+- `fig4_historical_vs_core_definitions.png`
+- `fig5_null_cycle_day_profile.png`
+- `audit_daily_sample.parquet`
+- `manifest.json`
+
+The full daily table is processed participant-by-participant and is not retained. Daily audit rows are saved only for the configured 1% participant sample.
+
+Implementation assumptions recorded in `outputs/manifest.json` include simulator API substitutions that are not directly exposed as public knobs. In particular, the healthy cohort is forced ovulatory through `hormone_cycler`'s profile/render helpers, and population medical-factor prevalence is sampled from `config.yaml` because the simulator exposes condition modifiers but not a public natural-prevalence sampler. Exact Herzog 2004 labels are emitted only for sampled 3-complete-cycle windows; strict and modified short-cycle sensitivity outputs are separated by the `phase_mode` column.
+
+## Hormone-cycle simulator
+
 `hormone_cycler` is a pure-Python simulator for menstrual-cycle diaries. Given a patient age, diary length, and medical modifiers, it generates daily values for:
 
 - estradiol (`estradiol_pg_ml`)

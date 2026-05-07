@@ -7,7 +7,16 @@ name = "hormone_cycler"
 version = "0.1.0"
 description = "Data-calibrated menstrual cycle simulator with validation and SVG visualization."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy",
+  "pandas",
+  "scipy",
+  "statsmodels",
+  "pyarrow",
+  "matplotlib",
+  "joblib",
+]
 license = { text = "MIT" }
 authors = [
   { name = "OpenAI Codex" }

@@ -1,0 +1,146 @@
+"""Within-participant negative-binomial regression classifier."""
+
+from __future__ import annotations
+
+import math
+from typing import Any
+
+import numpy as np
+import pandas as pd
+from scipy.stats import norm
+
+from paper1_null_ce.core.classifiers_windowed import DEFAULT_THRESHOLDS, passes_definition_b_threshold
+
+
+def holm_adjust_two(p_m: float, p_o: float) -> tuple[float, float]:
+    pvals = np.array([p_m, p_o], dtype=float)
+    order = np.argsort(pvals)
+    adjusted = np.empty_like(pvals)
+    running = 0.0
+    m = len(pvals)
+    for rank, idx in enumerate(order):
+        value = min(1.0, (m - rank) * pvals[idx])
+        running = max(running, value)
+        adjusted[idx] = running
+    return float(adjusted[0]), float(adjusted[1])
+
+
+def participant_alpha_from_full_diary(daily: pd.DataFrame, fallback: float = 1.0) -> float:
+    """Estimate a stable NB alpha from full-diary mean/variance for one participant."""
+
+    y = daily["seizure_count"].to_numpy(dtype=float)
+    mean = float(y.mean())
+    var = float(y.var(ddof=1)) if len(y) > 1 else 0.0
+    if mean <= 0 or var <= mean:
+        return fallback
+    return max(1e-6, min(50.0, (var - mean) / (mean * mean)))
+
+
+def classify_regression_nb(
+    window_df: pd.DataFrame,
+    cohort: str,
+    window_type: str,
+    window_value: Any,
+    days_per_month: float,
+    alpha: float = 1.0,
+    thresholds: dict[str, float] | None = None,
+    min_months: float = 4.0,
+    min_cycle_window_cycles: int = 6,
+    min_seizure_days: int = 4,
+) -> dict[str, Any]:
+    """Definition D: one-sided NB tests for menstrual and ovulatory enrichment."""
+
+    thresholds = thresholds or DEFAULT_THRESHOLDS
+    ok, reason = passes_definition_b_threshold(
+        window_df,
+        window_type,
+        window_value,
+        days_per_month,
+        min_months=min_months,
+        min_cycle_window_cycles=min_cycle_window_cycles,
+        min_seizure_days=min_seizure_days,
+    )
+    if not ok:
+        return _empty(reason)
+    data = window_df[window_df["phase"].isin(["M", "O", "F", "L"])].copy()
+    if data.empty or data["seizure_count"].sum() <= 0:
+        return _empty("no_labeled_seizure_data")
+    if not (data["phase"].eq("M").any() and data["phase"].eq("O").any()):
+        return _empty("missing_m_or_o_phase")
+
+    data["phase_M"] = data["phase"].eq("M").astype(float)
+    data["phase_O"] = data["phase"].eq("O").astype(float)
+    x = pd.DataFrame({"const": 1.0, "phase_M": data["phase_M"], "phase_O": data["phase_O"]}, index=data.index)
+    if _complete_cycle_count(data) >= 4:
+        dummies = pd.get_dummies(data["cycle_id"].astype(str), prefix="cycle", drop_first=True, dtype=float)
+        x = pd.concat([x, dummies], axis=1)
+    y = data["seizure_count"].astype(float)
+    fallback = False
+    try:
+        import statsmodels.api as sm
+
+        model = sm.GLM(y, x, family=sm.families.NegativeBinomial(alpha=alpha))
+        fit = model.fit(maxiter=100, disp=0)
+    except Exception:
+        try:
+            import statsmodels.api as sm
+
+            model = sm.GLM(y, x, family=sm.families.Poisson())
+            fit = model.fit(maxiter=100, disp=0, cov_type="HC0")
+            fallback = True
+        except Exception as exc:
+            return _empty(f"regression_failed:{type(exc).__name__}")
+
+    if "phase_M" not in fit.params or "phase_O" not in fit.params:
+        return _empty("phase_coefficients_not_estimated")
+    beta_m = float(fit.params["phase_M"])
+    beta_o = float(fit.params["phase_O"])
+    se_m = float(fit.bse["phase_M"])
+    se_o = float(fit.bse["phase_O"])
+    p_m = 1.0 - norm.cdf(beta_m / se_m) if se_m > 0 else (0.0 if beta_m > 0 else 1.0)
+    p_o = 1.0 - norm.cdf(beta_o / se_o) if se_o > 0 else (0.0 if beta_o > 0 else 1.0)
+    p_adj_m, p_adj_o = holm_adjust_two(p_m, p_o)
+    rr_m = math.exp(beta_m)
+    rr_o = math.exp(beta_o)
+    c1 = bool(rr_m >= thresholds["C1"] and p_adj_m < 0.05)
+    c2 = bool(rr_o >= thresholds["C2"] and p_adj_o < 0.05)
+    return {
+        "label_D_any": bool(c1 or c2),
+        "label_D_C1": c1,
+        "label_D_C2": c2,
+        "label_D_C3": None,
+        "d_reason": "poisson_robust_fallback" if fallback else None,
+        "d_beta_M": beta_m,
+        "d_beta_O": beta_o,
+        "d_rr_M": rr_m,
+        "d_rr_O": rr_o,
+        "d_p_adj_M": p_adj_m,
+        "d_p_adj_O": p_adj_o,
+        "d_alpha": alpha,
+    }
+
+
+def _complete_cycle_count(data: pd.DataFrame) -> int:
+    count = 0
+    for _, g in data.groupby("cycle_id", sort=False):
+        length = int(g["cycle_length"].iloc[0])
+        if len(g) == length and int(g["cycle_day"].min()) == 1 and int(g["cycle_day"].max()) == length:
+            count += 1
+    return count
+
+
+def _empty(reason: str) -> dict[str, Any]:
+    return {
+        "label_D_any": None,
+        "label_D_C1": None,
+        "label_D_C2": None,
+        "label_D_C3": None,
+        "d_reason": reason,
+        "d_beta_M": np.nan,
+        "d_beta_O": np.nan,
+        "d_rr_M": np.nan,
+        "d_rr_O": np.nan,
+        "d_p_adj_M": np.nan,
+        "d_p_adj_O": np.nan,
+        "d_alpha": np.nan,
+    }
