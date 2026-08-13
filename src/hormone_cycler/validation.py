@@ -39,6 +39,9 @@ from .hormone_constants import (
     HORMONAL_IUD_VALIDATION_EXPECTED_OVULATION_RATE,
     HORMONAL_IUD_VALIDATION_OVULATION_BOUNDS,
     IRREGULARITY_THRESHOLD_DAYS,
+    MENOPAUSE_TRANSITION_LONG_CYCLE_ANOVULATORY_TARGET,
+    MENOPAUSE_TRANSITION_LONG_CYCLE_THRESHOLD_DAYS,
+    MENOPAUSE_TRANSITION_ORDINARY_CYCLE_ANOVULATORY_TARGET,
     PCOS_VALIDATION_MIN_CYCLE_DELTA_DAYS,
     PCOS_VALIDATION_MIN_IRREGULARITY_DELTA,
     PCOS_VALIDATION_MIN_OVULATION_DELTA,
@@ -51,6 +54,8 @@ from .hormone_constants import (
     PERIMENOPAUSE_VALIDATION_EXPECTED_IRREGULARITY,
     PERIMENOPAUSE_VALIDATION_EXPECTED_OVULATION_RATE,
     PERIMENOPAUSE_VALIDATION_MIN_IRREGULARITY,
+    PERIMENOPAUSE_LONG_CYCLE_ANOVULATORY_BOUNDS,
+    PERIMENOPAUSE_LONG_VS_ORDINARY_ANOVULATION_DELTA_BOUNDS,
     PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS,
     SUBGROUP_BASELINE_REFERENCE_PATIENTS,
     SUBGROUP_REFERENCE_PATIENTS,
@@ -59,9 +64,12 @@ from .hormone_constants import (
     VALIDATION_CYCLE_TAIL_MARGIN_50_PLUS,
     VALIDATION_CYCLES_PER_PARTICIPANT,
     VALIDATION_EARLY_FOLLICULAR_FRACTION,
+    VALIDATION_ESTRADIOL_PEAK_OFFSET_BOUNDS,
+    VALIDATION_ESTRADIOL_PEAK_OFFSET_SD_BOUNDS,
     VALIDATION_ESTRADIOL_PEAK_WIDTH_DAYS_BOUNDS,
     VALIDATION_ESTRADIOL_PEAK_WIDTH_FRACTION,
     VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_BOUNDS,
+    VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_SD_BOUNDS,
     VALIDATION_IRREGULARITY_MARGIN,
     VALIDATION_MID_FOLLICULAR_FRACTION,
     VALIDATION_MID_LUTEAL_END_FRACTION,
@@ -72,14 +80,19 @@ from .hormone_constants import (
     VALIDATION_MIN_MID_LUTEAL_START_DAYS,
     VALIDATION_MIN_MID_LUTEAL_END_DAYS,
     VALIDATION_MIN_PROGESTERONE_BOUND,
+    VALIDATION_LUTEAL_LENGTH_P4_PEAK_CORRELATION_ABS_MAX,
+    VALIDATION_PROGESTERONE_PENULTIMATE_DROP_MAX_NG_ML,
     VALIDATION_PROGESTERONE_PEAK_OFFSET_BOUNDS,
+    VALIDATION_PROGESTERONE_PEAK_OFFSET_SD_BOUNDS,
     VALIDATION_PROGESTERONE_PLATEAU_DAYS_BOUNDS,
     VALIDATION_PROGESTERONE_PLATEAU_FRACTION,
     VALIDATION_PROGESTERONE_RISE_OFFSET_BOUNDS,
-    VALIDATION_PROGESTERONE_TERMINAL_TO_PEAK_MAX,
+    VALIDATION_PROGESTERONE_TERMINAL_TO_PEAK_BOUNDS,
     VALIDATION_PROGESTERONE_WITHDRAWAL_MIN_DAYS,
     VALIDATION_CROSS_CYCLE_PROGESTERONE_JUMP_MAX_NG_ML,
     VALIDATION_EARLY_LUTEAL_FRACTION,
+    VALIDATION_STRICKER_FOLLICULAR_E2_AREA_RATIO_BOUNDS,
+    VALIDATION_STRICKER_MAPPED_E2_COVERAGE_MIN,
     VALIDATION_WITHIN_PERSON_SD_MARGIN_50_PLUS_DAYS,
     VALIDATION_WITHIN_PERSON_SD_MARGIN_DAYS,
 )
@@ -89,9 +102,16 @@ from .literature import (
     BULL_PHASE_TARGETS,
     CITATIONS,
     CUNNINGHAM_AGE_TARGETS,
+    STRICKER_DAILY_SERUM_REFERENCE,
     age_band_for,
 )
-from .model import DIARY_START_RANDOM
+from .model import (
+    DIARY_START_RANDOM,
+    LONG_ESTRADIOL_DELAYED_EMERGENCE,
+    _luteal_reference_day,
+    ovulatory_hormone_points,
+    shape_preserving_curve,
+)
 from .population import simulate_population
 from .types import MedicalFactors
 
@@ -100,6 +120,8 @@ from .types import MedicalFactors
 # Puerto Rico). Restricting the baseline calibration to adults prevents the source study's
 # "under 20" stratum from being represented by 13--17-year-old synthetic participants.
 BASELINE_VALIDATION_AGE_RANGE = (18.0, 55.0)
+SIMULATOR_VERSION = "0.4.0"
+VALIDATION_SCHEMA_VERSION = 14
 
 
 @dataclass
@@ -148,6 +170,24 @@ def sample_sd(values: Sequence[float]) -> float:
         return float("nan")
     center = mean(values)
     return math.sqrt(sum((value - center) ** 2 for value in values) / (len(values) - 1))
+
+
+def pearson_correlation(left: Sequence[float], right: Sequence[float]) -> float:
+    """Return Pearson's correlation or NaN when the paired values have no variation."""
+
+    if len(left) != len(right) or len(left) < 2:
+        return float("nan")
+    left_center = mean(left)
+    right_center = mean(right)
+    left_ss = sum((value - left_center) ** 2 for value in left)
+    right_ss = sum((value - right_center) ** 2 for value in right)
+    if left_ss <= 0.0 or right_ss <= 0.0:
+        return float("nan")
+    covariance = sum(
+        (left_value - left_center) * (right_value - right_center)
+        for left_value, right_value in zip(left, right)
+    )
+    return covariance / math.sqrt(left_ss * right_ss)
 
 
 def proportion(values: Iterable[bool]) -> float:
@@ -449,7 +489,92 @@ def _overall_cycle_metrics(cycles: Sequence[Dict[str, object]]) -> List[Validati
     ]
 
 
-def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[ValidationMetric]:
+def _stricker_construction_metrics() -> List[ValidationMetric]:
+    """Verify complete ordinary-cycle mapping of the source daily E2 series.
+
+    These are construction-fidelity checks, not independent validation: the same Stricker values
+    define the median envelope. They exist to prevent a future implementation or plotting filter
+    from silently omitting the early/mid-follicular observations again.
+    """
+
+    cycle_length = 29
+    follicular_length = 15
+    lh_peak_day = float(follicular_length) - 0.75
+    estradiol_points, _ = ovulatory_hormone_points(
+        cycle_length,
+        follicular_length,
+        cycle_length - follicular_length,
+        1.0,
+        1.0,
+        LONG_ESTRADIOL_DELAYED_EMERGENCE,
+    )
+    estradiol_curve = shape_preserving_curve(estradiol_points)
+    mapped = [
+        (
+            reference,
+            _luteal_reference_day(
+                lh_peak_day,
+                float(reference.lh_offset_days),
+                cycle_length,
+            ),
+        )
+        for reference in STRICKER_DAILY_SERUM_REFERENCE
+    ]
+    mapped = [
+        (reference, day)
+        for reference, day in mapped
+        if 1.0 < day <= float(cycle_length)
+    ]
+    point_days = [float(day) for day, _ in estradiol_points]
+    covered = sum(
+        any(abs(point_day - day) <= 1e-9 for point_day in point_days)
+        for _, day in mapped
+    )
+    coverage = covered / len(mapped)
+
+    follicular = [
+        (reference, day)
+        for reference, day in mapped
+        if -13 <= reference.lh_offset_days <= -2
+    ]
+    simulated_area = sum(estradiol_curve(day) for _, day in follicular)
+    source_area = sum(reference.estradiol_pg_ml for reference, _ in follicular)
+    area_ratio = simulated_area / source_area
+    lower, upper = VALIDATION_STRICKER_FOLLICULAR_E2_AREA_RATIO_BOUNDS
+    return [
+        ValidationMetric(
+            name="estradiol_stricker_mapped_reference_coverage",
+            observed=round(coverage, 4),
+            expected=1.0,
+            lower_bound=VALIDATION_STRICKER_MAPPED_E2_COVERAGE_MIN,
+            upper_bound=1.0,
+            passed=coverage >= VALIDATION_STRICKER_MAPPED_E2_COVERAGE_MIN,
+            citation_key="stricker_2006_reference",
+            notes=(
+                "Direct construction check: fraction of all in-cycle Stricker E2 medians "
+                "represented as control points in the canonical 29-day envelope."
+            ),
+        ),
+        ValidationMetric(
+            name="estradiol_stricker_follicular_area_ratio",
+            observed=round(area_ratio, 4),
+            expected=1.0,
+            lower_bound=lower,
+            upper_bound=upper,
+            passed=lower <= area_ratio <= upper,
+            citation_key="stricker_2006_reference",
+            notes=(
+                "Direct construction check: simulated/source summed E2 at mapped LH-13 through "
+                "LH-2 observations; prevents an early or inflated follicular ramp."
+            ),
+        ),
+    ]
+
+
+def _hormone_metrics(
+    sample_diaries: Sequence[Dict[str, object]],
+    diagnostics: Optional[Dict[str, object]] = None,
+) -> List[ValidationMetric]:
     """Compare subphase amplitudes and daily morphology in retained healthy diaries.
 
     Stricker daily medians supply the model envelope. Anckaert et al.'s larger, separate cohort
@@ -463,12 +588,15 @@ def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[Valida
         for target in ANCKAERT_HORMONE_SUBPHASE_TARGETS
     }
     estradiol_peak_widths: List[float] = []
+    estradiol_peak_offsets: List[float] = []
     estradiol_secondary_peak_ratios: List[float] = []
     progesterone_plateau_days: List[float] = []
     progesterone_peak_offsets: List[float] = []
+    progesterone_peak_luteal_lengths: List[float] = []
     progesterone_rise_offsets: List[float] = []
     progesterone_withdrawal_days: List[float] = []
     progesterone_terminal_ratios: List[float] = []
+    progesterone_penultimate_drops: List[float] = []
     cross_cycle_progesterone_jumps: List[float] = []
 
     for diary_payload in sample_diaries:
@@ -504,6 +632,8 @@ def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[Valida
                 if int(row["cycle_day"]) <= ovulation_day
             ]
             follicular_peak = max(follicular_e2)
+            follicular_peak_day = follicular_e2.index(follicular_peak) + 1
+            estradiol_peak_offsets.append(float(follicular_peak_day - ovulation_day))
             estradiol_peak_widths.append(
                 float(
                     sum(
@@ -526,6 +656,7 @@ def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[Valida
             progesterone_peak = max(progesterone_values)
             progesterone_peak_day = progesterone_values.index(progesterone_peak) + 1
             progesterone_peak_offsets.append(float(progesterone_peak_day - ovulation_day))
+            progesterone_peak_luteal_lengths.append(float(cycle["luteal_length"]))
             progesterone_plateau_days.append(
                 float(
                     sum(
@@ -550,6 +681,10 @@ def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[Valida
                 if progesterone_peak > 0.0
                 else float("nan")
             )
+            if len(progesterone_values) >= 2:
+                progesterone_penultimate_drops.append(
+                    abs(progesterone_values[-1] - progesterone_values[-2])
+                )
             withdrawal_transitions = 0
             for earlier, later in zip(
                 reversed(progesterone_values[:-1]),
@@ -574,7 +709,7 @@ def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[Valida
                 )
             )
 
-    metrics: List[ValidationMetric] = []
+    metrics: List[ValidationMetric] = _stricker_construction_metrics()
     for target in ANCKAERT_HORMONE_SUBPHASE_TARGETS:
         estradiol_obs = median(phase_values[target.name]["estradiol"])
         progesterone_obs = median(phase_values[target.name]["progesterone"])
@@ -637,6 +772,46 @@ def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[Valida
             notes="Median number of follicular days at or above 80% of the cycle-specific estradiol maximum; investigator-selected kinetic smoke-check bound.",
         )
     )
+    estradiol_peak_offset = median(estradiol_peak_offsets)
+    metrics.append(
+        ValidationMetric(
+            name="estradiol_peak_offset_from_ovulation_days",
+            observed=round(estradiol_peak_offset, 3),
+            expected=-2.0,
+            lower_bound=VALIDATION_ESTRADIOL_PEAK_OFFSET_BOUNDS[0],
+            upper_bound=VALIDATION_ESTRADIOL_PEAK_OFFSET_BOUNDS[1],
+            passed=(
+                VALIDATION_ESTRADIOL_PEAK_OFFSET_BOUNDS[0]
+                <= estradiol_peak_offset
+                <= VALIDATION_ESTRADIOL_PEAK_OFFSET_BOUNDS[1]
+            ),
+            citation_key="roos_2015_true_ovulation",
+            notes=(
+                "Median E2-peak day relative to ultrasound-aligned ovulation context; Roos "
+                "supports a preovulatory rise with heterogeneous signal timing."
+            ),
+        )
+    )
+    estradiol_peak_offset_sd = sample_sd(estradiol_peak_offsets)
+    metrics.append(
+        ValidationMetric(
+            name="estradiol_peak_offset_sd_days",
+            observed=round(estradiol_peak_offset_sd, 3),
+            expected=1.0,
+            lower_bound=VALIDATION_ESTRADIOL_PEAK_OFFSET_SD_BOUNDS[0],
+            upper_bound=VALIDATION_ESTRADIOL_PEAK_OFFSET_SD_BOUNDS[1],
+            passed=(
+                VALIDATION_ESTRADIOL_PEAK_OFFSET_SD_BOUNDS[0]
+                <= estradiol_peak_offset_sd
+                <= VALIDATION_ESTRADIOL_PEAK_OFFSET_SD_BOUNDS[1]
+            ),
+            citation_key="roos_2015_true_ovulation",
+            notes=(
+                "Cycle-level SD of E2-peak timing. Roos establishes interindividual signal "
+                "heterogeneity; the numerical floor is an investigator-set anti-template guard."
+            ),
+        )
+    )
     secondary_peak_ratio = median(estradiol_secondary_peak_ratios)
     metrics.append(
         ValidationMetric(
@@ -652,6 +827,26 @@ def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[Valida
             ),
             citation_key="stricker_2006_reference",
             notes="Median ratio of luteal E2 maximum to the follicular maximum; checks the daily-series secondary luteal rise.",
+        )
+    )
+    secondary_peak_ratio_sd = sample_sd(estradiol_secondary_peak_ratios)
+    metrics.append(
+        ValidationMetric(
+            name="estradiol_luteal_secondary_peak_ratio_sd",
+            observed=round(secondary_peak_ratio_sd, 4),
+            expected=0.08,
+            lower_bound=VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_SD_BOUNDS[0],
+            upper_bound=VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_SD_BOUNDS[1],
+            passed=(
+                VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_SD_BOUNDS[0]
+                <= secondary_peak_ratio_sd
+                <= VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_SD_BOUNDS[1]
+            ),
+            citation_key="roos_2015_true_ovulation",
+            notes=(
+                "Cycle-level SD of the luteal/follicular E2 peak ratio; numerical bounds are "
+                "investigator-set guards against cloned or pathologically unstable morphology."
+            ),
         )
     )
     plateau_days = median(progesterone_plateau_days)
@@ -688,6 +883,49 @@ def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[Valida
             notes="Median day of maximum P4 relative to the simulator ovulation event after explicit LH-to-ovulation alignment.",
         )
     )
+    progesterone_peak_offset_sd = sample_sd(progesterone_peak_offsets)
+    metrics.append(
+        ValidationMetric(
+            name="progesterone_peak_offset_sd_days",
+            observed=round(progesterone_peak_offset_sd, 3),
+            expected=1.0,
+            lower_bound=VALIDATION_PROGESTERONE_PEAK_OFFSET_SD_BOUNDS[0],
+            upper_bound=VALIDATION_PROGESTERONE_PEAK_OFFSET_SD_BOUNDS[1],
+            passed=(
+                VALIDATION_PROGESTERONE_PEAK_OFFSET_SD_BOUNDS[0]
+                <= progesterone_peak_offset_sd
+                <= VALIDATION_PROGESTERONE_PEAK_OFFSET_SD_BOUNDS[1]
+            ),
+            citation_key="roos_2015_true_ovulation",
+            notes=(
+                "Cycle-level SD of P4-peak timing; Roos supports heterogeneous postovulatory "
+                "signals and the numerical floor is an investigator-set anti-template guard."
+            ),
+        )
+    )
+    luteal_peak_correlation = pearson_correlation(
+        progesterone_peak_luteal_lengths,
+        progesterone_peak_offsets,
+    )
+    metrics.append(
+        ValidationMetric(
+            name="progesterone_luteal_length_peak_offset_correlation",
+            observed=round(luteal_peak_correlation, 4),
+            expected=0.0,
+            lower_bound=-VALIDATION_LUTEAL_LENGTH_P4_PEAK_CORRELATION_ABS_MAX,
+            upper_bound=VALIDATION_LUTEAL_LENGTH_P4_PEAK_CORRELATION_ABS_MAX,
+            passed=(
+                math.isfinite(luteal_peak_correlation)
+                and abs(luteal_peak_correlation)
+                <= VALIDATION_LUTEAL_LENGTH_P4_PEAK_CORRELATION_ABS_MAX
+            ),
+            citation_key="roos_2015_true_ovulation",
+            notes=(
+                "Correlation between realized luteal length and P4-peak offset; the ceiling is "
+                "an investigator-set guard against uniformly time-warping the entire luteal curve."
+            ),
+        )
+    )
     rise_offset = median(progesterone_rise_offsets)
     metrics.append(
         ValidationMetric(
@@ -721,16 +959,36 @@ def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[Valida
     terminal_ratio = median(
         [value for value in progesterone_terminal_ratios if math.isfinite(value)]
     )
+    terminal_lower, terminal_upper = VALIDATION_PROGESTERONE_TERMINAL_TO_PEAK_BOUNDS
     metrics.append(
         ValidationMetric(
             name="progesterone_terminal_to_peak_ratio",
             observed=round(terminal_ratio, 4),
-            expected=0.04,
-            lower_bound=0.0,
-            upper_bound=VALIDATION_PROGESTERONE_TERMINAL_TO_PEAK_MAX,
-            passed=terminal_ratio <= VALIDATION_PROGESTERONE_TERMINAL_TO_PEAK_MAX,
+            expected=0.10,
+            lower_bound=terminal_lower,
+            upper_bound=terminal_upper,
+            passed=terminal_lower <= terminal_ratio <= terminal_upper,
             citation_key="stricker_2006_reference",
-            notes="Median final-cycle progesterone divided by the cycle maximum; verifies withdrawal before bleeding rather than a vertical reset at bleeding onset.",
+            notes=(
+                "Median final-cycle P4 divided by the cycle maximum; the two-sided bound retains "
+                "the published LH+14 tail while requiring substantial premenstrual withdrawal."
+            ),
+        )
+    )
+    penultimate_drop = median(progesterone_penultimate_drops)
+    metrics.append(
+        ValidationMetric(
+            name="progesterone_penultimate_to_terminal_drop_ng_ml",
+            observed=round(penultimate_drop, 4),
+            expected=0.4,
+            lower_bound=0.0,
+            upper_bound=VALIDATION_PROGESTERONE_PENULTIMATE_DROP_MAX_NG_ML,
+            passed=penultimate_drop <= VALIDATION_PROGESTERONE_PENULTIMATE_DROP_MAX_NG_ML,
+            citation_key="stricker_2006_reference",
+            notes=(
+                "Median absolute final within-cycle P4 drop; added because a boundary-only check "
+                "can miss a reset that was shifted to the preceding day."
+            ),
         )
     )
     cross_cycle_jump = median(cross_cycle_progesterone_jumps)
@@ -749,6 +1007,24 @@ def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[Valida
             notes="Median absolute progesterone difference between one complete cycle's final day and the next complete cycle's first day.",
         )
     )
+    if diagnostics is not None:
+        diagnostics.update(
+            {
+                "scope": (
+                    f"Complete ovulatory cycles in the {len(sample_diaries)} age-balanced "
+                    "retained baseline diaries; "
+                    "values support distribution and dependence QA, not population estimates."
+                ),
+                "n_complete_ovulatory_cycles": len(estradiol_peak_offsets),
+                "estradiol_peak_offsets_days": estradiol_peak_offsets,
+                "progesterone_peak_offsets_days": progesterone_peak_offsets,
+                "luteal_lengths_days": progesterone_peak_luteal_lengths,
+                "estradiol_secondary_peak_ratios": estradiol_secondary_peak_ratios,
+                "progesterone_terminal_to_peak_ratios": progesterone_terminal_ratios,
+                "progesterone_penultimate_drops_ng_ml": progesterone_penultimate_drops,
+                "progesterone_cross_cycle_jumps_ng_ml": cross_cycle_progesterone_jumps,
+            }
+        )
     return metrics
 
 
@@ -758,6 +1034,39 @@ def _summarize_subgroup(population: Dict[str, object], baseline: Optional[Dict[s
     cycles = population["cycles"]
     cycle_lengths = [int(cycle["cycle_length"]) for cycle in cycles]
     ovulation_rate = proportion(bool(cycle["ovulatory"]) for cycle in cycles)
+    long_cycles = [
+        cycle
+        for cycle in cycles
+        if int(cycle["cycle_length"])
+        >= MENOPAUSE_TRANSITION_LONG_CYCLE_THRESHOLD_DAYS
+    ]
+    long_cycle_anovulatory_rate = proportion(
+        not bool(cycle["ovulatory"])
+        for cycle in long_cycles
+    )
+    ordinary_cycles = [
+        cycle
+        for cycle in cycles
+        if 21 <= int(cycle["cycle_length"]) < MENOPAUSE_TRANSITION_LONG_CYCLE_THRESHOLD_DAYS
+    ]
+    ordinary_cycle_anovulatory_rate = proportion(
+        not bool(cycle["ovulatory"])
+        for cycle in ordinary_cycles
+    )
+    long_vs_ordinary_delta = (
+        long_cycle_anovulatory_rate - ordinary_cycle_anovulatory_rate
+    )
+    if (
+        0.0 < long_cycle_anovulatory_rate < 1.0
+        and 0.0 < ordinary_cycle_anovulatory_rate < 1.0
+    ):
+        long_vs_ordinary_odds_ratio = (
+            long_cycle_anovulatory_rate / (1.0 - long_cycle_anovulatory_rate)
+        ) / (
+            ordinary_cycle_anovulatory_rate / (1.0 - ordinary_cycle_anovulatory_rate)
+        )
+    else:
+        long_vs_ordinary_odds_ratio = float("nan")
     bleeding_days = mean([float(cycle["bleeding_days"]) for cycle in cycles])
     irregularity_by_patient: Dict[str, List[int]] = {}
     for cycle in cycles:
@@ -774,12 +1083,31 @@ def _summarize_subgroup(population: Dict[str, object], baseline: Optional[Dict[s
         "mean_bleeding_days": round(bleeding_days, 3),
         "irregularity_rate": round(irregularity, 3),
         "amenorrhea_rate": round(amenorrhea, 3),
+        "long_cycle_count": len(long_cycles),
+        "long_cycle_anovulatory_rate": round(long_cycle_anovulatory_rate, 3),
+        "ordinary_cycle_count": len(ordinary_cycles),
+        "ordinary_cycle_anovulatory_rate": round(ordinary_cycle_anovulatory_rate, 3),
+        "long_vs_ordinary_anovulation_delta": round(long_vs_ordinary_delta, 3),
+        "long_vs_ordinary_anovulation_odds_ratio": round(
+            long_vs_ordinary_odds_ratio,
+            3,
+        ),
     }
     if baseline:
+        comparable_delta_keys = {
+            "mean_cycle_days",
+            "ovulation_rate",
+            "mean_bleeding_days",
+            "irregularity_rate",
+            "amenorrhea_rate",
+            "long_cycle_anovulatory_rate",
+            "ordinary_cycle_anovulatory_rate",
+            "long_vs_ordinary_anovulation_delta",
+        }
         summary["delta_vs_baseline"] = {
             key: round(summary[key] - baseline[key], 3)
             for key in baseline
-            if key in summary
+            if key in comparable_delta_keys and key in summary
         }
     return summary
 
@@ -899,6 +1227,39 @@ def _subgroup_analysis(seed: int, days: int, start_mode: str) -> Dict[str, objec
                 [
                     ValidationMetric("perimenopause_irregularity", summary["irregularity_rate"], PERIMENOPAUSE_VALIDATION_EXPECTED_IRREGULARITY, PERIMENOPAUSE_VALIDATION_MIN_IRREGULARITY, 1.00, summary["irregularity_rate"] >= PERIMENOPAUSE_VALIDATION_MIN_IRREGULARITY, "santoro_2011_perimenopause", "Direction-only check: perimenopause should increase cycle irregularity."),
                     ValidationMetric("perimenopause_lower_ovulation", summary["ovulation_rate"], PERIMENOPAUSE_VALIDATION_EXPECTED_OVULATION_RATE, PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[0], PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[1], PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[0] <= summary["ovulation_rate"] <= PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[1], "santoro_2011_perimenopause", "Direction/range check: perimenopause should reduce ovulation frequency."),
+                    ValidationMetric(
+                        "perimenopause_long_cycle_anovulatory_rate",
+                        summary["long_cycle_anovulatory_rate"],
+                        MENOPAUSE_TRANSITION_LONG_CYCLE_ANOVULATORY_TARGET,
+                        PERIMENOPAUSE_LONG_CYCLE_ANOVULATORY_BOUNDS[0],
+                        PERIMENOPAUSE_LONG_CYCLE_ANOVULATORY_BOUNDS[1],
+                        PERIMENOPAUSE_LONG_CYCLE_ANOVULATORY_BOUNDS[0]
+                        <= summary["long_cycle_anovulatory_rate"]
+                        <= PERIMENOPAUSE_LONG_CYCLE_ANOVULATORY_BOUNDS[1],
+                        "van_voorhis_2008_perimenopause",
+                        "Direct published-context check: Van Voorhis reported 64.7% anovulation among intervals of at least 36 days; the broad interval allows cohort and simulator differences.",
+                    ),
+                    ValidationMetric(
+                        "perimenopause_long_vs_ordinary_anovulation_delta",
+                        summary["long_vs_ordinary_anovulation_delta"],
+                        (
+                            MENOPAUSE_TRANSITION_LONG_CYCLE_ANOVULATORY_TARGET
+                            - MENOPAUSE_TRANSITION_ORDINARY_CYCLE_ANOVULATORY_TARGET
+                        ),
+                        PERIMENOPAUSE_LONG_VS_ORDINARY_ANOVULATION_DELTA_BOUNDS[0],
+                        PERIMENOPAUSE_LONG_VS_ORDINARY_ANOVULATION_DELTA_BOUNDS[1],
+                        (
+                            PERIMENOPAUSE_LONG_VS_ORDINARY_ANOVULATION_DELTA_BOUNDS[0]
+                            <= summary["long_vs_ordinary_anovulation_delta"]
+                            <= PERIMENOPAUSE_LONG_VS_ORDINARY_ANOVULATION_DELTA_BOUNDS[1]
+                        ),
+                        "van_voorhis_2008_perimenopause",
+                        (
+                            "Direction/range check: Van Voorhis reported 64.7% anovulation in "
+                            ">=36-day versus 8.1% in 21-35-day intervals. The exact contrast is "
+                            "context, not a fitted target, because stage mixtures differ."
+                        ),
+                    ),
                 ]
             )
         elif name == "peri_menarche":
@@ -957,15 +1318,19 @@ def run_population_validation(
         medical_factors=MedicalFactors(),
         balanced_age_bands=True,
         include_diaries=True,
-        capture_limit=16,
+        # Distributional morphology checks need substantially more than the legacy
+        # two diaries per age band.  Twenty per band remains a tiny retained subset
+        # of the 10,000-person cohort while stabilizing SD and correlation guards.
+        capture_limit=160,
         start_mode=start_mode,
         age_range=BASELINE_VALIDATION_AGE_RANGE,
     )
     cycles = population["cycles"]
+    waveform_diagnostics: Dict[str, object] = {}
     calibration_metrics = (
         _age_band_metrics(cycles)
         + _overall_cycle_metrics(cycles)
-        + _hormone_metrics(population["sample_diaries"])
+        + _hormone_metrics(population["sample_diaries"], waveform_diagnostics)
     )
     waveform_metrics = [
         metric
@@ -983,6 +1348,8 @@ def run_population_validation(
         label = age_band_for(float(diary["profile"]["age_years"])).label
         hormone_sample_age_bands[label] = hormone_sample_age_bands.get(label, 0) + 1
     report: Dict[str, object] = {
+        "simulator_version": SIMULATOR_VERSION,
+        "validation_schema_version": VALIDATION_SCHEMA_VERSION,
         "input": {
             "num_patients": num_patients,
             "days": days,
@@ -990,11 +1357,61 @@ def run_population_validation(
             "diary_start_mode": start_mode,
             "age_range": list(BASELINE_VALIDATION_AGE_RANGE),
         },
-        "evaluation_scope": "AWHS/Bull target reproduction plus held-out Flo cycle checks; daily Stricker waveform calibration is evaluated against independent Anckaert serum subphases and explicit daily morphology guards.",
+        "evaluation_scope": (
+            "AWHS/Bull target reproduction plus held-out Flo cycle checks; complete Stricker "
+            "mapping is audited as construction fidelity, Anckaert provides independent serum "
+            "subphase checks, Roos motivates timing-heterogeneity guards, and Van Voorhis "
+            "constrains long-cycle/anovulation dependence in perimenopause."
+        ),
+        "additional_validation_requirements": [
+            {
+                "requirement": "Complete in-cycle Stricker E2 mapping and follicular-area fidelity",
+                "evidence_role": "direct construction-fidelity check",
+                "reason": (
+                    "Stricker reports daily LH-aligned medians; the prior filter omitted the "
+                    "early/mid-follicular observations and concealed an early, inflated ramp."
+                ),
+                "citation_key": "stricker_2006_reference",
+            },
+            {
+                "requirement": "Nonzero E2/P4 peak-timing and relative-shape dispersion",
+                "evidence_role": "literature-informed investigator-set plausibility guard",
+                "reason": (
+                    "Roos observed heterogeneous serum hormone signal characteristics relative "
+                    "to ultrasound-confirmed ovulation; exact simulator SD bounds are not direct "
+                    "published estimates."
+                ),
+                "citation_key": "roos_2015_true_ovulation",
+            },
+            {
+                "requirement": "Two-sided terminal P4 ratio and final within-cycle drop check",
+                "evidence_role": "direct source-shape and boundary-integrity check",
+                "reason": (
+                    "The Stricker LH+14 median remains above the early-follicular baseline; "
+                    "checking only the cross-cycle jump can miss a reset shifted one day earlier."
+                ),
+                "citation_key": "stricker_2006_reference",
+            },
+            {
+                "requirement": "Perimenopausal long intervals enriched for anovulation",
+                "evidence_role": (
+                    "published conditional-rate context plus investigator-bounded directional "
+                    "joint-dependence check"
+                ),
+                "reason": (
+                    "Van Voorhis reported 64.7% anovulation among intervals of at least 36 days "
+                    "versus 8.1% among 21-35-day intervals; both the long-cycle posterior and a "
+                    "positive long-versus-ordinary contrast are shown. O'Connor confirms that "
+                    "long ovulatory cycles remain possible minorities."
+                ),
+                "citation_key": "van_voorhis_2008_perimenopause",
+            },
+        ],
         "hormone_smoke_sample": {
             "n_diaries": len(population["sample_diaries"]),
             "age_band_counts": hormone_sample_age_bands,
         },
+        "waveform_diagnostics": waveform_diagnostics,
         "baseline_passed": baseline_passed,
         "calibration_passed": calibration_passed,
         "waveform_validation_passed": waveform_validation_passed,
@@ -1010,6 +1427,15 @@ def run_population_validation(
             days=days,
             start_mode=start_mode,
         )
+        subgroup_validation_passed = all(
+            payload["passed"]
+            for payload in report["subgroup_analysis"]["subgroups"].values()
+        )
+        report["subgroup_validation_passed"] = subgroup_validation_passed
+        report["all_validation_passed"] = baseline_passed and subgroup_validation_passed
+    else:
+        report["subgroup_validation_passed"] = None
+        report["all_validation_passed"] = baseline_passed
     return report
 
 

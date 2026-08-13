@@ -12,8 +12,11 @@ sys.path.insert(0, str(ROOT / "src"))
 from hormone_cycler.model import (
     LONG_ESTRADIOL_DELAYED_EMERGENCE,
     LONG_ESTRADIOL_FAILED_WAVE,
+    _luteal_reference_day,
     bounded_shifted_lognormal,
     build_patient_profile,
+    conditional_long_episode_probability,
+    cycle_waveform_variation,
     domain_separated_rng,
     long_follicular_estradiol_variant,
     ovulatory_hormone_points,
@@ -22,6 +25,10 @@ from hormone_cycler.model import (
     shape_preserving_curve,
     simulate_diary,
 )
+from hormone_cycler.hormone_constants import (
+    MENOPAUSE_TRANSITION_LONG_CYCLE_ANOVULATORY_TARGET,
+)
+from hormone_cycler.literature import STRICKER_DAILY_SERUM_REFERENCE
 from hormone_cycler.visualization import render_svg
 from hormone_cycler.types import MedicalFactors
 
@@ -60,6 +67,74 @@ class SimulatorTest(unittest.TestCase):
                 progesterone,
             )
         self.assertEqual(full_rng.random(), compact_rng.random())
+
+    def test_long_episode_coupling_preserves_marginal_probability(self) -> None:
+        """Long-cycle enrichment for anovulation must not refit the marginal age-50+ tail."""
+
+        profile = build_patient_profile(age_years=52, seed=7, patient_id="long-coupling")
+        probability = profile.ovulation_probability
+        ovulatory = conditional_long_episode_probability(profile, True)
+        anovulatory = conditional_long_episode_probability(profile, False)
+        marginal = probability * ovulatory + (1.0 - probability) * anovulatory
+        posterior_anovulatory = (1.0 - probability) * anovulatory / marginal
+        self.assertAlmostEqual(marginal, 0.1090, places=10)
+        self.assertAlmostEqual(
+            posterior_anovulatory,
+            MENOPAUSE_TRANSITION_LONG_CYCLE_ANOVULATORY_TARGET,
+            places=10,
+        )
+        self.assertGreater(anovulatory, ovulatory)
+
+    def test_waveform_variation_is_reproducible_and_has_cycle_support(self) -> None:
+        """Waveform heterogeneity should be deterministic and vary without consuming cycle RNG."""
+
+        profile = build_patient_profile(age_years=31, seed=17, patient_id="waveform-variation")
+        first = cycle_waveform_variation(profile, 1)
+        self.assertEqual(first, cycle_waveform_variation(profile, 1))
+        variants = {cycle_waveform_variation(profile, index) for index in range(1, 25)}
+        self.assertGreater(len(variants), 8)
+
+    def test_complete_stricker_estradiol_series_constructs_ordinary_cycle(self) -> None:
+        """Every in-cycle daily E2 median must be represented, including follicular LH-13..-2."""
+
+        estradiol_points, progesterone_points = ovulatory_hormone_points(
+            cycle_length=29,
+            follicular_length=15,
+            luteal_length=14,
+            estradiol_scale=1.0,
+            progesterone_scale=1.0,
+        )
+        e2_curve = shape_preserving_curve(estradiol_points)
+        p4_curve = shape_preserving_curve(progesterone_points)
+        lh_peak_day = 15.0 - 0.75
+        for reference in STRICKER_DAILY_SERUM_REFERENCE:
+            mapped_day = _luteal_reference_day(
+                lh_peak_day,
+                float(reference.lh_offset_days),
+                29,
+            )
+            if 1.0 < mapped_day <= 29.0:
+                self.assertAlmostEqual(
+                    e2_curve(mapped_day),
+                    reference.estradiol_pg_ml,
+                    places=7,
+                )
+                self.assertAlmostEqual(
+                    p4_curve(mapped_day),
+                    reference.progesterone_ng_ml,
+                    places=7,
+                )
+
+    def test_terminal_progesterone_retains_published_lh_plus_14_tail(self) -> None:
+        """The final day should retain Stricker LH+14 rather than reset to follicular baseline."""
+
+        _, progesterone_points = ovulatory_hormone_points(29, 15, 14, 1.0, 1.0)
+        curve = shape_preserving_curve(progesterone_points)
+        self.assertAlmostEqual(
+            curve(29.0),
+            STRICKER_DAILY_SERUM_REFERENCE[-1].progesterone_ng_ml,
+            places=7,
+        )
 
     def test_waveform_update_preserves_fixed_seed_upstream_cycle_structure(self) -> None:
         """Waveform-only changes must not alter the protected cycle/event calibration."""

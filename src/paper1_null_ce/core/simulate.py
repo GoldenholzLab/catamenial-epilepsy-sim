@@ -238,6 +238,11 @@ def run_pipeline(config: dict[str, Any], mode: str = "smoke") -> dict[str, Any]:
 
     runtime = elapsed_seconds(started)
     progress.finish(runtime_seconds=runtime, output_files=[str(path) for path in paths])
+    # ``finish`` updates progress.json one final time. Rewrite the manifest afterward so its
+    # recorded progress checksum describes the completed run rather than the preceding
+    # ``manifest`` stage. The first write above ensures a manifest still exists if finalization
+    # itself is interrupted.
+    write_manifest(output_dir, config, sorted(assumptions))
     headline = headline_rates(summary)
     return {
         "runtime_seconds": runtime,

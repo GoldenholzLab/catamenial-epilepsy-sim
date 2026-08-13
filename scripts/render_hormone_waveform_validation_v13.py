@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the v0.3.0 waveform-construction and long-cycle visual check."""
+"""Render the v0.4.0 waveform-construction and long-cycle visual check."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import argparse
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from hormone_cycler.literature import STRICKER_DAILY_SERUM_REFERENCE
 from hormone_cycler.model import (
@@ -25,7 +26,7 @@ GREEN = "#27855B"
 GRAY = "#5F6368"
 
 
-def _ordinary_curves() -> tuple[list[int], list[float], list[float], float]:
+def _ordinary_curves() -> tuple[np.ndarray, list[float], list[float], float]:
     cycle_length = 29
     follicular_length = 15
     luteal_length = cycle_length - follicular_length
@@ -39,7 +40,7 @@ def _ordinary_curves() -> tuple[list[int], list[float], list[float], float]:
     )
     e2_curve = shape_preserving_curve(e2_points)
     p4_curve = shape_preserving_curve(p4_points)
-    days = list(range(1, cycle_length + 1))
+    days = np.linspace(1.0, float(cycle_length), 561)
     return (
         days,
         [e2_curve(float(day)) for day in days],
@@ -56,14 +57,12 @@ def _mapped_reference(
     lh_peak_day = float(follicular_length) - 0.75
     mapped: list[tuple[float, float]] = []
     for reference in STRICKER_DAILY_SERUM_REFERENCE:
-        if hormone == "estradiol" and reference.lh_offset_days < -1:
-            continue
         day = _luteal_reference_day(
             lh_peak_day,
             reference.lh_offset_days,
             cycle_length,
         )
-        if 1.0 < day < float(cycle_length):
+        if 1.0 < day <= float(cycle_length):
             value = (
                 reference.estradiol_pg_ml
                 if hormone == "estradiol"
@@ -103,7 +102,7 @@ def render(output_png: Path, output_svg: Path) -> None:
 
     fig, axes = plt.subplots(1, 3, figsize=(15.8, 5.2))
 
-    axes[0].plot(days, e2, color=E2_COLOR, linewidth=2.4, label="v0.3.0 envelope")
+    axes[0].plot(days, e2, color=E2_COLOR, linewidth=2.4, label="v0.4.0 envelope")
     axes[0].scatter(
         e2_x,
         e2_y,
@@ -112,7 +111,7 @@ def render(output_png: Path, output_svg: Path) -> None:
         linewidth=0.6,
         s=38,
         zorder=3,
-        label="Mapped Stricker daily medians",
+        label=f"All {len(e2_x)} in-cycle Stricker medians",
     )
     axes[0].axvline(ovulation_day, color=GREEN, linestyle="--", linewidth=1.2)
     axes[0].set_title("A. Ordinary-cycle estradiol")
@@ -120,7 +119,7 @@ def render(output_png: Path, output_svg: Path) -> None:
     axes[0].set_xlabel("Cycle day")
     axes[0].legend(frameon=False, fontsize=8.5, loc="upper right")
 
-    axes[1].plot(days, p4, color=P4_COLOR, linewidth=2.4, label="v0.3.0 envelope")
+    axes[1].plot(days, p4, color=P4_COLOR, linewidth=2.4, label="v0.4.0 envelope")
     axes[1].scatter(
         p4_x,
         p4_y,
@@ -129,7 +128,7 @@ def render(output_png: Path, output_svg: Path) -> None:
         linewidth=0.6,
         s=38,
         zorder=3,
-        label="Mapped Stricker daily medians",
+        label=f"All {len(p4_x)} in-cycle Stricker medians",
     )
     axes[1].axvline(ovulation_day, color=GREEN, linestyle="--", linewidth=1.2)
     axes[1].set_title("B. Broad luteal progesterone summit")
@@ -154,10 +153,11 @@ def render(output_png: Path, output_svg: Path) -> None:
     # Draw the ordinary terminal follicular segment last. It is intentionally
     # similar to the terminal segments of the long-cycle branches; keeping the
     # dotted comparator on top makes that shared, non-stretched geometry visible.
-    ordinary_relative = [day - int(ovulation_day) for day in range(1, int(ovulation_day) + 1)]
+    ordinary_relative = [day - ovulation_day for day in days if day <= ovulation_day]
+    ordinary_e2 = [value for day, value in zip(days, e2) if day <= ovulation_day]
     axes[2].plot(
         ordinary_relative,
-        e2[: int(ovulation_day)],
+        ordinary_e2,
         color=GRAY,
         linewidth=2.0,
         linestyle=":",
@@ -165,7 +165,7 @@ def render(output_png: Path, output_svg: Path) -> None:
         label="29-day ordinary cycle",
     )
     axes[2].axvline(0, color=GREEN, linestyle="--", linewidth=1.2)
-    axes[2].set_title("C. Long-follicular E2 is not stretched")
+    axes[2].set_title("C. Qualitative long-follicular E2 branches")
     axes[2].set_ylabel("Estradiol (pg/mL)")
     axes[2].set_xlabel("Days relative to ovulation")
     handles, labels = axes[2].get_legend_handles_labels()
@@ -182,12 +182,24 @@ def render(output_png: Path, output_svg: Path) -> None:
         axis.spines["top"].set_visible(False)
         axis.spines["right"].set_visible(False)
     fig.suptitle(
-        "HORMONE-CYCLE v0.3.0 waveform construction and visual validation",
+        "HORMONE-CYCLE v0.4.0 waveform construction and visual validation",
         fontsize=16,
         fontweight="bold",
         y=1.02,
     )
-    fig.tight_layout()
+    fig.text(
+        0.5,
+        0.005,
+        (
+            "Panels A-B are construction-fidelity overlays, not independent validation. "
+            "Panel C is qualitative: Harlow supports the pattern classes, not their simulated "
+            "serum amplitudes or mixture weights."
+        ),
+        ha="center",
+        fontsize=8.8,
+        color=GRAY,
+    )
+    fig.tight_layout(rect=(0, 0.035, 1, 1))
     fig.savefig(output_png, dpi=240, bbox_inches="tight", facecolor="white")
     fig.savefig(output_svg, bbox_inches="tight", facecolor="white")
     plt.close(fig)
@@ -198,12 +210,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-png",
         type=Path,
-        default=ROOT / "examples" / "reports" / "hormone_waveform_validation_v13.png",
+        default=ROOT / "examples" / "reports" / "hormone_waveform_validation_v14.png",
     )
     parser.add_argument(
         "--output-svg",
         type=Path,
-        default=ROOT / "examples" / "reports" / "hormone_waveform_validation_v13.svg",
+        default=ROOT / "examples" / "reports" / "hormone_waveform_validation_v14.svg",
     )
     return parser.parse_args()
 

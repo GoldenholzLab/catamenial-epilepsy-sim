@@ -177,7 +177,25 @@ CITATIONS: Dict[str, Citation] = {
         url="https://pubmed.ncbi.nlm.nih.gov/16776638/",
         pmid="16776638",
         doi="10.1515/CCLM.2006.160",
-        evidence_role="Daily hormone-shape calibration and face-validity target",
+        evidence_role="Daily hormone-shape construction source and construction-fidelity target",
+    ),
+    "roos_2015_true_ovulation": Citation(
+        key="roos_2015_true_ovulation",
+        short_name="Roos et al. 2015",
+        title=(
+            "Monitoring the menstrual cycle: Comparison of urinary and serum reproductive "
+            "hormones referenced to true ovulation"
+        ),
+        full_reference=(
+            "Roos J, Johnson S, Weddell S, et al. Monitoring the menstrual cycle: "
+            "Comparison of urinary and serum reproductive hormones referenced to true "
+            "ovulation. European Journal of Contraception & Reproductive Health Care. "
+            "2015;20(6):438-450. doi:10.3109/13625187.2015.1048331."
+        ),
+        url="https://pubmed.ncbi.nlm.nih.gov/26018113/",
+        pmid="26018113",
+        doi="10.3109/13625187.2015.1048331",
+        evidence_role="Ultrasound-aligned waveform timing and heterogeneity context",
     ),
     "harlow_2000_long_follicular": Citation(
         key="harlow_2000_long_follicular",
@@ -207,6 +225,55 @@ CITATIONS: Dict[str, Citation] = {
         pmid="22837188",
         doi="10.1210/jc.2012-1350",
         evidence_role="Independent long-cycle hormone-timing context",
+    ),
+    "van_voorhis_2008_perimenopause": Citation(
+        key="van_voorhis_2008_perimenopause",
+        short_name="Van Voorhis et al. 2008",
+        title=(
+            "The relationship of bleeding patterns to daily reproductive hormones in women "
+            "approaching menopause"
+        ),
+        full_reference=(
+            "Van Voorhis BJ, Santoro N, Harlow S, Crawford SL, Randolph J. The relationship "
+            "of bleeding patterns to daily reproductive hormones in women approaching "
+            "menopause. Obstetrics & Gynecology. 2008;112(1):101-108. "
+            "doi:10.1097/AOG.0b013e31817d452b."
+        ),
+        url="https://pubmed.ncbi.nlm.nih.gov/18591314/",
+        pmid="18591314",
+        doi="10.1097/AOG.0b013e31817d452b",
+        evidence_role="Menopause-transition long-cycle/anovulation joint-dependence target",
+    ),
+    "oconnor_2009_perimenopause": Citation(
+        key="oconnor_2009_perimenopause",
+        short_name="O'Connor et al. 2009",
+        title="Progesterone and ovulation across stages of the transition to menopause",
+        full_reference=(
+            "O'Connor KA, Ferrell R, Brindle E, et al. Progesterone and ovulation across "
+            "stages of the transition to menopause. Menopause. 2009;16(6):1178-1187. "
+            "doi:10.1097/gme.0b013e3181aa192d."
+        ),
+        url="https://pubmed.ncbi.nlm.nih.gov/19568209/",
+        pmid="19568209",
+        doi="10.1097/gme.0b013e3181aa192d",
+        evidence_role="Long ovulatory-cycle and reproductive-stage interpretation context",
+    ),
+    "filicori_1984_progesterone_pulsatility": Citation(
+        key="filicori_1984_progesterone_pulsatility",
+        short_name="Filicori et al. 1984",
+        title=(
+            "Neuroendocrine regulation of the corpus luteum in the human. Evidence for "
+            "pulsatile progesterone secretion"
+        ),
+        full_reference=(
+            "Filicori M, Butler JP, Crowley WF Jr. Neuroendocrine regulation of the corpus "
+            "luteum in the human. Evidence for pulsatile progesterone secretion. Journal of "
+            "Clinical Investigation. 1984;73(6):1638-1647. doi:10.1172/JCI111370."
+        ),
+        url="https://pubmed.ncbi.nlm.nih.gov/6427277/",
+        pmid="6427277",
+        doi="10.1172/JCI111370",
+        evidence_role="Intraday serum-progesterone pulsatility limitation context",
     ),
     "anckaert_2021_hormones": Citation(
         key="anckaert_2021_hormones",

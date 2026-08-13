@@ -79,16 +79,16 @@ The repo also includes:
 
 The model is hierarchical rather than a hand-drawn waveform:
 
-1. Age-specific cycle means, within-person SDs, participant-level irregularity, and short/long-cycle tails come from the Apple Women's Health Study analysis in [Li et al. 2023](https://pubmed.ncbi.nlm.nih.gov/37248288/). Version 0.3.0 retains the v0.2.0 participant-level mean absolute adjacent-cycle difference of at least seven days, consistent with the article's methods definition of adjacent-cycle differences.
+1. Age-specific cycle means, within-person SDs, participant-level irregularity, and short/long-cycle tails come from the Apple Women's Health Study analysis in [Li et al. 2023](https://pubmed.ncbi.nlm.nih.gov/37248288/). Version 0.4.0 retains the participant-level mean absolute adjacent-cycle difference of at least seven days, consistent with the article's methods definition of adjacent-cycle differences.
 2. Follicular and luteal phase timing targets come from the 600,000-cycle Natural Cycles analysis in [Bull et al. 2019](https://pubmed.ncbi.nlm.nih.gov/31482137/).
-3. Ovulatory estradiol and progesterone curves use the complete daily LH-aligned serum medians reported in [Stricker et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16776638/). The simulator places ovulation 0.75 day after the LH peak, preserves one-day spacing through the peak, scales only the post-LH interval to the realized cycle end, and uses shape-preserving PCHIP interpolation plus endpoint-bridged serial noise. This yields a postovulatory progesterone rise, a broad midluteal summit, a secondary luteal estradiol elevation, and premenstrual withdrawal without a cycle-boundary jump.
+3. Ordinary ovulatory estradiol and progesterone curves map every in-cycle daily LH-aligned serum median reported in [Stricker et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16776638/). The simulator places ovulation 0.75 day after the LH peak, preserves one-day spacing through LH+7, scales only the late-luteal tail to the realized cycle end, and uses shape-preserving PCHIP interpolation plus endpoint-bridged serial noise. Modest deterministic cycle-level timing and shape variation prevents exact template repetition while preserving the published ordering and scale. [Roos et al. 2015](https://pubmed.ncbi.nlm.nih.gov/26018113/) provides ultrasound-aligned context for timing heterogeneity.
 4. Bleeding-duration targets use the Natural Cycles analysis and normal uterine-bleeding terminology/range context from [Fraser et al. 2011](https://pubmed.ncbi.nlm.nih.gov/22065325/).
 5. Long follicular phases keep a terminal 14-day estradiol-maturation interval rather than stretching an ordinary curve. [Harlow et al. 2000](https://pubmed.ncbi.nlm.nih.gov/10611180/) informs delayed-emergence and failed-wave geometry, while [Mumford et al. 2012](https://pubmed.ncbi.nlm.nih.gov/22837188/) supplies independent timing context. The implemented 25% failed-wave mixture and amplitude remain investigator-selected heterogeneity settings, not published prevalence estimates.
 6. Twelve-month participant means and personal SDs from [Cunningham et al. 2024](https://pubmed.ncbi.nlm.nih.gov/38702411/) are held out from fitting and used as an external cycle cross-check. Assay-specific subphase values from [Anckaert et al. 2021](https://pubmed.ncbi.nlm.nih.gov/33869706/) are held out from waveform construction and used as an independent aggregate hormone amplitude/order cross-check.
 7. Clinical-factor modifiers are constrained by peer-reviewed subgroup literature:
    - PCOS: [Mortimer et al. 2026](https://pubmed.ncbi.nlm.nih.gov/41297783/), [Doi et al. 2005](https://pubmed.ncbi.nlm.nih.gov/15932911/), and [Jarrett et al. 2020](https://pubmed.ncbi.nlm.nih.gov/32785651/)
    - Peri-menarche: [WHO Task Force 1986](https://pubmed.ncbi.nlm.nih.gov/3721946/), [Venturoli et al. 1986](https://pubmed.ncbi.nlm.nih.gov/3491030/), with [Zhang et al. 2008](https://pubmed.ncbi.nlm.nih.gov/18252789/) retained as a counterpoint
-   - Perimenopause: [Santoro and Randolph 2011](https://pubmed.ncbi.nlm.nih.gov/21961713/)
+   - Perimenopause: [Santoro and Randolph 2011](https://pubmed.ncbi.nlm.nih.gov/21961713/); [Van Voorhis et al. 2008](https://pubmed.ncbi.nlm.nih.gov/18591314/) constrains enrichment of anovulation among intervals of at least 36 days, while [O'Connor et al. 2009](https://pubmed.ncbi.nlm.nih.gov/19568209/) supports retaining long ovulatory intervals as a minority
    - Combined oral contraceptives: [Edelman et al. 2014](https://pubmed.ncbi.nlm.nih.gov/25072731/)
    - Levonorgestrel IUD: [Xiao et al. 1995](https://pubmed.ncbi.nlm.nih.gov/7554977/)
    - Copper IUD / non-hormonal IUD effects: [Faundes et al. 1980](https://pubmed.ncbi.nlm.nih.gov/7439408/) and [Malmqvist et al. 1974](https://pubmed.ncbi.nlm.nih.gov/4448089/)
@@ -150,7 +150,7 @@ Run the literature validation suite:
 python3 hormone_cycler validate \
   --patients 10000 \
   --days 365 \
-  --json-output examples/reports/healthy_cycle_validation_v13.json
+  --json-output examples/reports/healthy_cycle_validation_v14.json
 ```
 
 Run the deterministic low/high variability surrogate audit without changing source files:
@@ -168,12 +168,12 @@ Verify every simulator citation title, PMID, DOI, URL, and evidence role against
 
 ```bash
 PYTHONPATH=src python3 scripts/audit_hormone_citations.py \
-  --output examples/reports/hormone_citation_audit_v13.json
+  --output examples/reports/hormone_citation_audit_v14.json
 ```
 
 The executed [recalibration plan](docs/healthy_cycle_recalibration_plan_v12.md) and
-[critical validation report](docs/healthy_cycle_validation_v12.md) document the source separation,
-acceptance gate, results, and remaining limitations.
+[v0.4.0 critical validation report](docs/healthy_cycle_validation_v14.md) document the source
+separation, acceptance gates, results, and remaining limitations.
 
 Open the validation notebook:
 
@@ -196,14 +196,20 @@ matching AWHS adult eligibility) with literature targets:
 - held-out 12-month mean cycle length and mean personal SD by age (Cunningham et al. 2024)
 - independently measured sub-phase estradiol and progesterone medians
 - preovulatory estradiol peak width
+- complete mapped Stricker E2 coverage and LH−13…−2 follicular-area fidelity
+- cycle-level E2 and P4 peak-timing dispersion
 - luteal estradiol secondary-peak ratio
+- cycle-level luteal-E2 relative-shape dispersion
 - progesterone plateau width and peak offset from ovulation
+- luteal-length/P4-peak dependence (anti-time-warp guard)
 - progesterone rise-to-5-ng/mL offset from ovulation
 - consecutive premenstrual progesterone withdrawal
-- terminal-to-peak progesterone ratio
+- two-sided terminal-to-peak progesterone ratio and final within-cycle drop
 - progesterone continuity across cycle boundaries
+- anovulatory fraction among ≥36-day intervals and enrichment versus 21–35-day intervals in the
+  explicit perimenopause scenario
 
-The 16 full diaries retained for hormone checks are balanced across the eight age bands (two per band). Hormone plotting uses separate estradiol (pg/mL) and progesterone (ng/mL) panels, because those concentrations do not share a commensurate physical scale. The complete Stricker series constructs the daily envelope; eight morphology checks guard its shape. The Anckaert comparison is held out from waveform construction, and the Cunningham comparison is held out from cycle calibration. Both are independent at the aggregate-source level rather than participant-level clinical validation.
+The 160 full diaries retained for hormone checks are balanced across the eight age bands (20 per band). Hormone plotting uses separate estradiol (pg/mL) and progesterone (ng/mL) panels because those concentrations do not share a commensurate physical scale. Stricker checks are explicitly labeled construction fidelity; the Roos-informed numerical dispersion limits are investigator-set anti-template guards. The Anckaert comparison is held out from waveform construction, and the Cunningham comparison is held out from cycle calibration. These are aggregate-source checks rather than participant-level clinical validation.
 
 Age-stratified cycle metrics use equivalence windows centered on the published target estimates rather than requiring the simulator to fall inside the source-study confidence interval exactly. That choice is deliberate: the source cohorts are extremely large, so their confidence intervals are much narrower than a reasonable calibration tolerance for a simulator built from summary statistics rather than raw participant-level data.
 

@@ -1,6 +1,6 @@
 {
   "master_seed": 20260505,
-  "output_dir": "outputs/random_start_full_v13_waveform_recalibration",
+  "output_dir": "outputs/random_start_full_v14_waveform_recalibration",
   "days_per_month": 30,
   "n_jobs": -1,
   "chunk_size": 250,
@@ -40,7 +40,7 @@
       "n_jobs": 1,
       "chunk_size": 25,
       "study_level_n_studies": 100,
-      "output_dir": "outputs_random_start_smoke_v13_waveform_recalibration"
+      "output_dir": "outputs_random_start_smoke_v14_waveform_recalibration"
     },
     "full": {
       "cohort_sizes": {
@@ -48,10 +48,10 @@
         "population": 50000
       },
       "diary_months": 36,
-      "n_jobs": 3,
-      "chunk_size": 5000,
+      "n_jobs": 16,
+      "chunk_size": 2500,
       "study_level_n_studies": 10000,
-      "output_dir": "outputs/random_start_full_v13_waveform_recalibration"
+      "output_dir": "outputs/random_start_full_v14_waveform_recalibration"
     },
     "coupled_smoke": {
       "n_total": 100,

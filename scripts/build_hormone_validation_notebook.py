@@ -26,6 +26,16 @@ def build_notebook() -> object:
             """
             # `hormone_cycler` healthy-cycle calibration and validation
 
+            ## tl;dr
+
+            The deterministic 10,000-person v0.4.0 run must pass the fitted cycle calibration,
+            held-out cycle and hormone comparisons, all waveform guards, and all modifier stress
+            tests. The key new checks target the previously hidden follicular-E2 mismatch,
+            over-repeated waveform timing, an artificial terminal-P4 reset, and missing dependence
+            between long menopause-transition intervals and anovulation.
+
+            ## Context & methods
+
             This notebook distinguishes two kinds of evidence:
 
             1. **Calibration-target reproduction:** simulated age-band means, within-person SDs,
@@ -33,22 +43,22 @@ def build_notebook() -> object:
                compared with Li et al. (AWHS) and Bull et al.
             2. **Held-out external cross-check:** 12-month participant summaries are compared with
                Cunningham et al.'s independent global Flo cohort, which was not used for fitting.
-            3. **Waveform validation:** Stricker et al.'s complete daily LH-aligned serum medians
-               determine the luteal envelope. Anckaert et al.'s separate 85-woman serum cohort is
-               an independent subphase amplitude/order check. Daily morphology checks require a
-               broad postovulatory progesterone summit, correctly ordered rise/peak/withdrawal,
-               a secondary luteal estradiol rise, and continuity across cycle boundaries.
+            3. **Waveform validation:** all in-cycle Stricker et al. daily LH-aligned serum medians
+               determine the ordinary-cycle envelope. Anckaert et al.'s separate 85-woman serum
+               cohort is an independent subphase amplitude/order check. Roos et al. motivates
+               explicit anti-template timing-dispersion and dependence guards.
             4. **Long-follicular estradiol stress test:** Harlow et al.'s observed delayed-dominant-
                emergence and failed-dominant-wave geometries are shown without stretching one
                ordinary E2 curve across all extra follicular days. Mumford et al. provides an
                independent timing context: long-cycle E2 peaks were about three days later, not
                proportionally stretched over the entire long cycle.
 
-            The central waveform correction in v0.3.0 replaces sparse subphase control points
-            with the complete daily Stricker serum series, aligns that series to the simulator's
-            ovulation event, and adds independently checked morphology criteria. Long follicular
-            phases now preserve a terminal 14-day maturation interval and use delayed-emergence or
-            failed-wave E2 geometry rather than stretching an ordinary-cycle template.
+            Version 0.4.0 adds the previously omitted early/mid-follicular Stricker E2 observations,
+            retains the published LH+14 P4 tail at the cycle endpoint, stops uniformly time-warping
+            the entire luteal waveform, and adds modest deterministic cycle-level timing/shape
+            heterogeneity. In the explicit menopause-transition scenario, long intervals are also
+            enriched for anovulation using the joint proportion reported by Van Voorhis et al.;
+            O'Connor et al. supports retaining a minority of long ovulatory cycles.
 
             The central cycle-variability correction introduced in v0.2.0 was estimand alignment:
             AWHS classified a participant
@@ -76,22 +86,25 @@ def build_notebook() -> object:
 
             import matplotlib.pyplot as plt
             import pandas as pd
-            from IPython.display import display
+            from IPython.display import Markdown, display
 
             from hormone_cycler.literature import CITATIONS
             from hormone_cycler.model import simulate_diary
             from hormone_cycler.validation import run_population_validation
             from render_healthy_cycle_examples_v12 import render as render_examples
+            from render_hormone_nuanced_validation_v14 import render as render_nuanced_figure
             from render_hormone_waveform_validation_v13 import render as render_waveform_figure
             from render_hormone_validation_figure_v12 import render as render_validation_figure
 
-            REPORT_PATH = ROOT / "examples" / "reports" / "healthy_cycle_validation_v13.json"
-            KINETICS_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_kinetics_validation_v13.png"
-            VALIDATION_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_cycle_validation_v13.png"
-            EXAMPLE_PNG_PATH = ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v13.png"
-            EXAMPLE_SVG_PATH = ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v13.svg"
-            WAVEFORM_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_waveform_validation_v13.png"
-            WAVEFORM_SVG_PATH = ROOT / "examples" / "reports" / "hormone_waveform_validation_v13.svg"
+            REPORT_PATH = ROOT / "examples" / "reports" / "healthy_cycle_validation_v14.json"
+            KINETICS_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_kinetics_validation_v14.png"
+            VALIDATION_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_cycle_validation_v14.png"
+            EXAMPLE_PNG_PATH = ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v14.png"
+            EXAMPLE_SVG_PATH = ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v14.svg"
+            WAVEFORM_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_waveform_validation_v14.png"
+            WAVEFORM_SVG_PATH = ROOT / "examples" / "reports" / "hormone_waveform_validation_v14.svg"
+            NUANCED_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_nuanced_validation_v14.png"
+            NUANCED_SVG_PATH = ROOT / "examples" / "reports" / "hormone_nuanced_validation_v14.svg"
             REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
             """
         ),
@@ -101,8 +114,9 @@ def build_notebook() -> object:
 
             All runs use the same deterministic base seed but generate distinct patient seeds.
             The baseline cohorts are ages 18–54.9, matching AWHS adult eligibility. The retained
-            16-diary hormone sample is balanced across the eight age bands (two per band) so the
-            kinetic checks are not restricted to participants younger than 20 years.
+            160-diary hormone sample is balanced across the eight age bands (20 per band). This
+            stabilizes cycle-level timing-SD and dependence checks while retaining only a small
+            subset of full daily payloads.
             """
         ),
         _code(
@@ -186,8 +200,10 @@ def build_notebook() -> object:
             The amplitude rows compare simulated subphases with Anckaert et al., which was not used
             to build the waveform. Broad windows are intentional because the cohorts and assays
             differ. The daily rows then test the specific morphology that motivated this update:
-            P4 plateau width, rise and peak timing, withdrawal, the luteal E2 rebound, and boundary
-            continuity. This separates external amplitude evidence from internal shape checks.
+            P4 plateau width, rise and peak timing, withdrawal, the luteal E2 rebound, boundary
+            continuity, nonzero cycle-level dispersion, and absence of deterministic luteal-length
+            time warping. This separates external amplitude evidence from construction and
+            guardrail checks.
             """
         ),
         _code(
@@ -205,6 +221,21 @@ def build_notebook() -> object:
                 ]
             )
             assert hormone_metrics["passed"].all()
+            """
+        ),
+        _markdown(
+            """
+            ### Why the additional v0.4.0 requirements were added
+
+            These requirements are recorded with an evidence role so direct construction checks,
+            external cohort targets, and investigator-set plausibility guards cannot be mistaken
+            for one another. The exact numerical anti-template bounds are software guardrails;
+            their cited studies establish the biological phenomenon, not those exact cutoffs.
+            """
+        ),
+        _code(
+            """
+            display(pd.DataFrame(full_report["additional_validation_requirements"]))
             """
         ),
         _markdown(
@@ -257,7 +288,8 @@ def build_notebook() -> object:
                     {"check": "Progesterone peak offset from ovulation", "observed": p4_peak_day - complete_cycle.ovulation_day, "criterion": "3-9 days"},
                     {"check": "Progesterone 5 ng/mL rise offset", "observed": p4_rise_day - complete_cycle.ovulation_day, "criterion": "1-4 days"},
                     {"check": "Consecutive progesterone-decline transitions before bleeding", "observed": withdrawal_transitions, "criterion": ">=3"},
-                    {"check": "Final-cycle progesterone / cycle maximum", "observed": p4[-1] / max(p4), "criterion": "<=0.20"},
+                    {"check": "Final-cycle progesterone / cycle maximum", "observed": p4[-1] / max(p4), "criterion": "0.05-0.18"},
+                    {"check": "Final within-cycle P4 drop (ng/mL)", "observed": abs(p4[-1] - p4[-2]), "criterion": "<=1.0"},
                     {"check": "Progesterone jump across cycle boundary (ng/mL)", "observed": abs(next_rows[0].progesterone_ng_ml - p4[-1]), "criterion": "<=1.0"},
                     {"check": "Realized luteal length (days)", "observed": complete_cycle.luteal_length, "criterion": "9-17"},
                 ]
@@ -328,17 +360,43 @@ def build_notebook() -> object:
                         "ovulation_rate": payload["summary"]["ovulation_rate"],
                         "mean_bleeding_days": payload["summary"]["mean_bleeding_days"],
                         "amenorrhea_rate": payload["summary"]["amenorrhea_rate"],
+                        "long_cycle_anovulatory_rate": payload["summary"]["long_cycle_anovulatory_rate"],
                     }
                 )
             display(pd.DataFrame(subgroup_rows))
+            assert full_report["subgroup_validation_passed"]
 
             REPORT_PATH.write_text(json.dumps(full_report, indent=2), encoding="utf-8")
             render_validation_figure(full_report, VALIDATION_FIGURE_PATH)
             render_examples(EXAMPLE_PNG_PATH, EXAMPLE_SVG_PATH)
+            render_nuanced_figure(full_report, NUANCED_FIGURE_PATH, NUANCED_SVG_PATH)
             print(f"Wrote {REPORT_PATH}")
             print(f"Wrote {KINETICS_FIGURE_PATH}")
             print(f"Wrote {VALIDATION_FIGURE_PATH}")
             print(f"Wrote {EXAMPLE_PNG_PATH}")
+            print(f"Wrote {NUANCED_FIGURE_PATH}")
+            """
+        ),
+        _code(
+            """
+            perimenopause_summary = full_report["subgroup_analysis"]["subgroups"]["perimenopause"]["summary"]
+            waveform_cycles = full_report["waveform_diagnostics"]["n_complete_ovulatory_cycles"]
+            takeaway_text = (
+                "## Takeaways\\n\\n"
+                f"* **{sum(metric['passed'] for metric in full_report['baseline_metrics'])}/"
+                f"{len(full_report['baseline_metrics'])} baseline checks passed**, including all "
+                "held-out Cunningham and Anckaert comparisons.\\n"
+                f"* Waveform distribution guards used **{waveform_cycles:,} complete ovulatory "
+                "cycles** from 160 age-balanced retained diaries.\\n"
+                f"* In explicit perimenopause, **{perimenopause_summary['long_cycle_anovulatory_rate']:.1%}** "
+                f"of {perimenopause_summary['long_cycle_count']:,} intervals ≥36 days were anovulatory "
+                "(published context 64.7%), but ordinary-cycle anovulation was "
+                f"**{perimenopause_summary['ordinary_cycle_anovulatory_rate']:.1%}** versus the "
+                "published 8.1%; the joint association is only directionally calibrated.\\n"
+                "* These results support biologically plausible **latent daily envelopes**, not literal "
+                "individual serum time series or participant-level clinical validation."
+            )
+            display(Markdown(takeaway_text))
             """
         ),
         _markdown(
@@ -348,7 +406,9 @@ def build_notebook() -> object:
             The machine-readable report contains full references and PubMed/source URLs for every
             target family, plus exact PMIDs, DOIs, and evidence roles. Stricker et al. supplies the
             daily waveform source; Anckaert et al. is the independent serum-subphase comparison;
-            Harlow and Mumford constrain long-cycle morphology and timing. Threshold-based daily
+            Harlow and Mumford constrain long-cycle morphology and timing; Van Voorhis and O'Connor
+            constrain the dependence between long intervals and anovulation during the menopause
+            transition. Threshold-based daily
             morphology criteria remain declared software validation guards rather than independent
             prevalence estimates. Modifier scenarios are age-matched direction/range software
             stress tests; their exact numerical margins are regression guards, not estimates copied

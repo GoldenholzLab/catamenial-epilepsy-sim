@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the v13 healthy-cycle calibration and external-validation figure."""
+"""Render the v14 healthy-cycle calibration and external-validation figure."""
 
 from __future__ import annotations
 
@@ -92,8 +92,8 @@ def render(validation: dict, output: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--validation", type=Path, default=ROOT / "examples" / "reports" / "healthy_cycle_validation_v13.json")
-    parser.add_argument("--output", type=Path, default=ROOT / "examples" / "reports" / "hormone_cycle_validation_v13.png")
+    parser.add_argument("--validation", type=Path, default=ROOT / "examples" / "reports" / "healthy_cycle_validation_v14.json")
+    parser.add_argument("--output", type=Path, default=ROOT / "examples" / "reports" / "hormone_cycle_validation_v14.png")
     args = parser.parse_args()
     render(json.loads(args.validation.read_text(encoding="utf-8")), args.output)
     print(args.output.resolve())

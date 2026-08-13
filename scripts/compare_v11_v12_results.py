@@ -228,17 +228,17 @@ def cohort_comparison(old: list[dict[str, Any]], new: list[dict[str, Any]]) -> l
     return result
 
 
-def markdown_report(report: dict[str, Any]) -> str:
+def markdown_report(report: dict[str, Any], old_label: str, new_label: str) -> str:
     """Render the comparison as a concise, reviewable Markdown handoff."""
 
     lines = [
-        "# Paper-result change audit: HORMONE-CYCLE v0.2.0 to v0.3.0",
+        f"# Paper-result change audit: HORMONE-CYCLE {old_label} to {new_label}",
         "",
-        "This report compares the definitive cycle-calibrated full run with the waveform-recalibrated full run. Deltas are v0.3.0 minus v0.2.0.",
+        f"This report compares the two specified full-study runs. Deltas are {new_label} minus {old_label}.",
         "",
         "## Headline endpoints",
         "",
-        "| Cohort | Window | Definition | v0.2.0 rate | v0.3.0 rate | Change (percentage points) |",
+        f"| Cohort | Window | Definition | {old_label} rate | {new_label} rate | Change (percentage points) |",
         "|---|---|---|---:|---:|---:|",
     ]
     for row in report["headline_endpoints"]:
@@ -261,11 +261,11 @@ def markdown_report(report: dict[str, Any]) -> str:
             "",
             "## Complete summary-table alignment",
             "",
-            f"- v0.2.0 rows: {report['all_summary_rows']['old_rows']:,}",
-            f"- v0.3.0 rows: {report['all_summary_rows']['new_rows']:,}",
+            f"- {old_label} rows: {report['all_summary_rows']['old_rows']:,}",
+            f"- {new_label} rows: {report['all_summary_rows']['new_rows']:,}",
             f"- Aligned rows: {report['all_summary_rows']['aligned_rows']:,}",
-            f"- v0.2.0-only rows: {report['all_summary_rows']['old_only_rows']:,}",
-            f"- v0.3.0-only rows: {report['all_summary_rows']['new_only_rows']:,}",
+            f"- {old_label}-only rows: {report['all_summary_rows']['old_only_rows']:,}",
+            f"- {new_label}-only rows: {report['all_summary_rows']['new_only_rows']:,}",
             "",
             "The JSON companion contains cohort-level changes and maximum/mean absolute movement for every aligned numeric summary column.",
             "",
@@ -296,6 +296,8 @@ def main() -> int:
         type=Path,
         default=Path("docs/paper_results_change_v12_to_v13.md"),
     )
+    parser.add_argument("--old-label", default="v0.2.0")
+    parser.add_argument("--new-label", default="v0.3.0")
     args = parser.parse_args()
 
     old_summary = pd.read_csv(args.old / "summary_tables.csv")
@@ -303,6 +305,8 @@ def main() -> int:
     old_cohorts = cohort_summary(args.old)
     new_cohorts = cohort_summary(args.new)
     report = {
+        "old_label": args.old_label,
+        "new_label": args.new_label,
         "old_output_directory": str(args.old),
         "new_output_directory": str(args.new),
         "cohort_summaries": cohort_comparison(old_cohorts, new_cohorts),
@@ -312,7 +316,10 @@ def main() -> int:
     args.json_output.parent.mkdir(parents=True, exist_ok=True)
     args.markdown_output.parent.mkdir(parents=True, exist_ok=True)
     args.json_output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    args.markdown_output.write_text(markdown_report(report), encoding="utf-8")
+    args.markdown_output.write_text(
+        markdown_report(report, args.old_label, args.new_label),
+        encoding="utf-8",
+    )
     print(args.json_output.resolve())
     print(args.markdown_output.resolve())
     return 0

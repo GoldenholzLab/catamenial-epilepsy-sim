@@ -402,7 +402,7 @@ def cohort_definition_markdown() -> str:
 def hormone_validation_markdown(repo: Path) -> str:
     """Summarize the versioned hormone gate that authorized this paper rerun."""
 
-    report_path = repo / "examples" / "reports" / "healthy_cycle_validation_v13.json"
+    report_path = repo / "examples" / "reports" / "healthy_cycle_validation_v14.json"
     if not report_path.exists():
         return "## HORMONE-CYCLE validation provenance\n\nThe versioned validation report was not found."
     report = json.loads(report_path.read_text(encoding="utf-8"))
@@ -413,22 +413,22 @@ def hormone_validation_markdown(repo: Path) -> str:
     ages = report.get("input", {}).get("age_range", [None, None])
     age_text = f"{ages[0]:g}–{ages[1] - 0.1:g}" if all(value is not None for value in ages) else "not recorded"
     return (
-        "## HORMONE-CYCLE v0.3.0 validation provenance\n\n"
+        "## HORMONE-CYCLE v0.4.0 validation provenance\n\n"
         f"The primary paper rerun was authorized only after the versioned 10,000-participant "
         f"adult validation cohort (ages {age_text}) passed **{sum(bool(m['passed']) for m in calibration)}/{len(calibration)}** "
         f"calibration/waveform checks and **{sum(bool(m['passed']) for m in external)}/{len(external)}** held-out "
         f"Cunningham/Flo checks; **{subgroup_passed}/{len(subgroup_payloads)}** secondary age-matched modifier software stress tests also passed. "
-        "The v0.3.0 waveform gate uses the complete daily Stricker serum envelope, an independent "
-        "Anckaert subphase amplitude/order check, and prespecified P4 plateau, rise, peak, withdrawal, "
-        "luteal-E2 rebound, and cycle-boundary checks. Long follicular phases preserve terminal "
+        "The v0.4.0 waveform gate maps every in-cycle Stricker serum observation, uses an independent "
+        "Anckaert subphase amplitude/order check, and adds Roos-informed timing-dispersion, terminal-P4, "
+        "anti-time-warp, and cycle-boundary guards. Long follicular phases preserve terminal "
         "maturation rather than stretching an ordinary curve. The pass is qualified rather than clinical: "
-        "the waveform represents a daily population-median envelope, not within-day pulsatility or "
+        "the waveform represents a latent daily envelope, not within-day pulsatility or "
         "participant-level clinical validation. Cycle-summary agreement is strongest at ages 18–45, and the retained "
         "post-50 discrepancy reflects differing variability estimates in AWHS and Flo. Modifier margins are "
         "investigator-selected regression guards rather than externally estimated clinical thresholds. The machine-readable "
         "report, citation audit, and executable validation notebook are "
-        "`examples/reports/healthy_cycle_validation_v13.json`, "
-        "`examples/reports/hormone_citation_audit_v13.json`, and `show_validation.ipynb`."
+        "`examples/reports/healthy_cycle_validation_v14.json`, "
+        "`examples/reports/hormone_citation_audit_v14.json`, and `show_validation.ipynb`."
     )
 
 

@@ -1,0 +1,119 @@
+{
+  "simulator_version": "0.4.0",
+  "selection_role": "illustrative, not validation observations",
+  "selection_is_executable": true,
+  "display_cycles": 7,
+  "cases": [
+    {
+      "key": "age31_low",
+      "title": "A. Age 31, selected low-variability ovulatory profile",
+      "criterion": "first seven cycles all ovulatory; fitted low-variability component; length range <=4 days; mean absolute adjacent difference <=2 days; all seven fit inside the 360-day render horizon",
+      "search_order": "ascending integer seeds 0..5000; first match retained",
+      "selected_seed": 5,
+      "patient_id": "display-age31_low-seed-5",
+      "age_years": 31.0,
+      "stage": "reproductive",
+      "medical_factors": {
+        "pcos": false,
+        "oral_contraceptive_mode": null,
+        "hormonal_iud": false,
+        "copper_iud": false,
+        "perimenopause": false,
+        "peri_menarche": false,
+        "dysmenorrhea": false
+      },
+      "cycle_lengths": [
+        29,
+        30,
+        27,
+        27,
+        27,
+        29,
+        28
+      ],
+      "ovulatory": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "key": "age31_high",
+      "title": "B. Age 31, selected high-variability ovulatory profile",
+      "criterion": "first seven cycles all ovulatory; fitted high-variability component; length range >=8 days; mean absolute adjacent difference >=4 days; all seven fit inside the 360-day render horizon",
+      "search_order": "ascending integer seeds 0..5000; first match retained",
+      "selected_seed": 3,
+      "patient_id": "display-age31_high-seed-3",
+      "age_years": 31.0,
+      "stage": "reproductive",
+      "medical_factors": {
+        "pcos": false,
+        "oral_contraceptive_mode": null,
+        "hormonal_iud": false,
+        "copper_iud": false,
+        "perimenopause": false,
+        "peri_menarche": false,
+        "dysmenorrhea": false
+      },
+      "cycle_lengths": [
+        26,
+        26,
+        29,
+        25,
+        25,
+        43,
+        31
+      ],
+      "ovulatory": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "key": "age52_perimenopause",
+      "title": "C. Age 52 with explicit perimenopause modifier, selected mixed profile",
+      "criterion": "first seven cycles 21-60 days; at least one long (>=36-day) anovulatory cycle, one long ovulatory cycle, two ordinary-length ovulatory cycles, and all seven fit inside the 360-day render horizon",
+      "search_order": "ascending integer seeds 0..5000; first match retained",
+      "selected_seed": 39,
+      "patient_id": "display-age52_perimenopause-seed-39",
+      "age_years": 52.0,
+      "stage": "perimenopause",
+      "medical_factors": {
+        "pcos": false,
+        "oral_contraceptive_mode": null,
+        "hormonal_iud": false,
+        "copper_iud": false,
+        "perimenopause": true,
+        "peri_menarche": false,
+        "dysmenorrhea": false
+      },
+      "cycle_lengths": [
+        25,
+        32,
+        52,
+        33,
+        57,
+        27,
+        26
+      ],
+      "ovulatory": [
+        true,
+        false,
+        true,
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  ]
+}

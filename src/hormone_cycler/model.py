@@ -58,7 +58,9 @@ from .hormone_constants import (
     COPPER_IUD_BLEED_MEAN_DELTA_DAYS,
     COPPER_IUD_BLEED_SIGMA_DELTA_DAYS,
     CYCLE_ESTRADIOL_SCALE_CV,
+    CYCLE_LUTEAL_ESTRADIOL_SHAPE_CV,
     CYCLE_LENGTH_LOGNORMAL_SHIFT_DAYS,
+    CYCLE_PROGESTERONE_PLATEAU_SHAPE_CV,
     CYCLE_PROGESTERONE_SCALE_CV,
     CYCLIC_OCP_BLEED_MEAN_DAYS,
     CYCLIC_OCP_BLEED_RANGE,
@@ -88,11 +90,13 @@ from .hormone_constants import (
     LH_PEAK_TO_OVULATION_DAYS,
     LONG_FOLLICULAR_FAILED_WAVE_SHARE,
     LONG_FOLLICULAR_PHASE_MIN_DAYS,
+    LUTEAL_REFERENCE_FIXED_THROUGH_OFFSET_DAYS,
     MAX_BLEEDING_DAYS,
     MAX_CYCLE_LENGTH_DAYS,
     MAX_LUTEAL_LENGTH_DAYS,
     MID_LUTEAL_FRACTION,
     MID_LUTEAL_MIN_OFFSET_DAYS,
+    MENOPAUSE_TRANSITION_LONG_CYCLE_ANOVULATORY_TARGET,
     MIN_CYCLE_LENGTH_DAYS,
     MIN_ESTRADIOL_PG_ML,
     MIN_FOLLICULAR_LENGTH_DAYS,
@@ -136,6 +140,8 @@ from .hormone_constants import (
     PROGESTERONE_NOISE_SCALE_MULTIPLIER,
     SERUM_REPORTING_DECIMALS,
     TERMINAL_FOLLICULAR_MATURATION_DAYS,
+    WAVEFORM_TIMING_SHIFT_VALUES_DAYS,
+    WAVEFORM_TIMING_SHIFT_WEIGHTS,
 )
 from .literature import BULL_PHASE_TARGETS, HORMONE_ANCHORS, STRICKER_DAILY_SERUM_REFERENCE
 from .literature import age_band_for
@@ -692,6 +698,47 @@ def build_patient_profile(
     )
 
 
+def conditional_long_episode_probability(
+    profile: PatientProfile,
+    ovulatory: bool,
+) -> float:
+    """Return a long-episode probability conditional on ovulatory status.
+
+    The age-50+ long-episode process was fitted to marginal cycle-length outcomes. Van Voorhis
+    et al. 2008 additionally showed that long menopause-transition intervals are strongly enriched
+    for anovulation. Bayes' rule allocates the fitted marginal long-episode probability between
+    ovulatory and anovulatory cycles to reproduce that joint dependence without changing the
+    marginal episode probability when cycles follow the profile's ovulation probability.
+
+    A forced-ovulatory analysis appropriately receives the lower ovulatory conditional rate;
+    preserving the original marginal rate would be impossible after conditioning away the more
+    common anovulatory long-cycle stratum.
+    """
+
+    marginal = age_band_for(profile.age_years).long_cycle_episode_probability
+    if marginal <= 0.0:
+        return 0.0
+    ovulation_probability = clamp(profile.ovulation_probability, 0.0, 1.0)
+    if ovulatory:
+        if ovulation_probability <= 0.0:
+            return 0.0
+        probability = (
+            marginal
+            * (1.0 - MENOPAUSE_TRANSITION_LONG_CYCLE_ANOVULATORY_TARGET)
+            / ovulation_probability
+        )
+    else:
+        anovulation_probability = 1.0 - ovulation_probability
+        if anovulation_probability <= 0.0:
+            return 0.0
+        probability = (
+            marginal
+            * MENOPAUSE_TRANSITION_LONG_CYCLE_ANOVULATORY_TARGET
+            / anovulation_probability
+        )
+    return clamp(probability, 0.0, 1.0)
+
+
 def sample_cycle_length(profile: PatientProfile, rng: random.Random, ovulatory: bool) -> int:
     """Sample the total length of one cycle for a patient.
 
@@ -728,7 +775,7 @@ def sample_cycle_length(profile: PatientProfile, rng: random.Random, ovulatory: 
     age_target = age_band_for(profile.age_years)
     if (
         age_target.long_cycle_episode_probability > 0.0
-        and rng.random() < age_target.long_cycle_episode_probability
+        and rng.random() < conditional_long_episode_probability(profile, ovulatory)
     ):
         sampled_length += age_target.long_cycle_episode_extension_days
     cycle_length = int(round(clamp(sampled_length, MIN_CYCLE_LENGTH_DAYS, MAX_CYCLE_LENGTH_DAYS)))
@@ -913,23 +960,101 @@ def long_follicular_estradiol_variant(
     return LONG_ESTRADIOL_DELAYED_EMERGENCE
 
 
+def cycle_waveform_variation(
+    profile: PatientProfile,
+    cycle_index: int,
+) -> Tuple[float, float, float, float]:
+    """Return independent, reproducible timing and relative-shape modifiers for one cycle.
+
+    Roos et al. 2015 documented heterogeneous serum estrogen and progesterone signals relative to
+    ultrasound-confirmed ovulation. These modifiers add modest cycle-level heterogeneity around
+    the Stricker median envelope. A local hash-seeded stream is intentionally separate from the
+    production cycle RNG, so waveform variation cannot change cycle timing, bleeding, ovulation,
+    or any later random draw used by the paper simulation.
+    """
+
+    material = (
+        f"hormone-cycler|waveform-variation|{profile.patient_id}|{cycle_index}|"
+        f"{profile.age_years:.12g}|{profile.personal_cycle_mean_days:.12g}|"
+        f"{profile.personal_cycle_sigma_days:.12g}|{profile.estradiol_scale:.12g}|"
+        f"{profile.progesterone_scale:.12g}"
+    ).encode("utf-8")
+    local_seed = int.from_bytes(hashlib.sha256(material).digest()[:8], "big")
+    local_rng = random.Random(local_seed)
+    estradiol_timing_shift = float(
+        local_rng.choices(
+            WAVEFORM_TIMING_SHIFT_VALUES_DAYS,
+            weights=WAVEFORM_TIMING_SHIFT_WEIGHTS,
+            k=1,
+        )[0]
+    )
+    progesterone_timing_shift = float(
+        local_rng.choices(
+            WAVEFORM_TIMING_SHIFT_VALUES_DAYS,
+            weights=WAVEFORM_TIMING_SHIFT_WEIGHTS,
+            k=1,
+        )[0]
+    )
+    luteal_estradiol_shape_scale = sample_unit_lognormal(
+        local_rng,
+        CYCLE_LUTEAL_ESTRADIOL_SHAPE_CV,
+    )
+    progesterone_plateau_shape_scale = sample_unit_lognormal(
+        local_rng,
+        CYCLE_PROGESTERONE_PLATEAU_SHAPE_CV,
+    )
+    return (
+        estradiol_timing_shift,
+        progesterone_timing_shift,
+        luteal_estradiol_shape_scale,
+        progesterone_plateau_shape_scale,
+    )
+
+
 def _luteal_reference_day(
     lh_peak_day: float,
-    lh_offset_days: int,
+    lh_offset_days: float,
     cycle_length: int,
 ) -> float:
     """Map a Stricker LH-relative day into the realized luteal interval.
 
-    Negative offsets retain their observed daily spacing. Positive offsets are scaled so the
-    published +14-day tail reaches the final simulated day, allowing luteal-length variability to
-    alter the envelope duration without moving the rise to before ovulation or creating a reset at
-    the next menses.
+    Negative offsets and the positive offsets through the published +7-day midluteal maximum
+    retain their observed daily spacing. Only the declining +7-to-+14 tail is scaled so the final
+    published observation reaches the simulated cycle endpoint. This preserves rise/peak timing
+    while allowing luteal-length variability to act mainly through the withdrawal interval.
     """
 
     if lh_offset_days <= 0:
         return lh_peak_day + lh_offset_days
-    positive_scale = (float(cycle_length) - lh_peak_day) / 14.0
-    return lh_peak_day + lh_offset_days * positive_scale
+    fixed_offset = LUTEAL_REFERENCE_FIXED_THROUGH_OFFSET_DAYS
+    if lh_offset_days <= fixed_offset:
+        return lh_peak_day + lh_offset_days
+    tail_start_day = lh_peak_day + fixed_offset
+    source_tail_days = 14.0 - fixed_offset
+    realized_tail_days = float(cycle_length) - tail_start_day
+    return tail_start_day + (lh_offset_days - fixed_offset) * (
+        realized_tail_days / source_tail_days
+    )
+
+
+def _localized_reference_day(
+    lh_peak_day: float,
+    lh_offset_days: int,
+    cycle_length: int,
+    timing_shift_days: float,
+    *,
+    center_offset_days: float,
+    spread_days: float,
+) -> float:
+    """Apply a smooth local timing perturbation without moving source endpoints."""
+
+    day = _luteal_reference_day(lh_peak_day, float(lh_offset_days), cycle_length)
+    if timing_shift_days == 0.0 or lh_offset_days in {-15, 14}:
+        return day
+    weight = math.exp(
+        -0.5 * ((float(lh_offset_days) - center_offset_days) / spread_days) ** 2
+    )
+    return day + timing_shift_days * weight
 
 
 def _ovulatory_estradiol_points(
@@ -937,14 +1062,15 @@ def _ovulatory_estradiol_points(
     follicular_length: int,
     estradiol_scale: float,
     estradiol_variant: str,
+    estradiol_timing_shift_days: float = 0.0,
+    luteal_shape_scale: float = 1.0,
 ) -> List[Tuple[float, float]]:
-    """Build an E2 envelope with an ovulation-anchored terminal maturation interval."""
+    """Build an E2 envelope from every mapped in-cycle Stricker daily median."""
 
     anchors = {anchor.name: anchor for anchor in HORMONE_ANCHORS}
     ovulation_day = float(follicular_length)
     lh_peak_day = ovulation_day - LH_PEAK_TO_OVULATION_DAYS
     early_value = anchors["early_follicular"].estradiol_pg_ml
-    mid_value = anchors["mid_follicular"].estradiol_pg_ml
     preovulatory_value = anchors["pre_ovulatory"].estradiol_pg_ml
     points: List[Tuple[float, float]] = [(1.0, early_value * estradiol_scale)]
 
@@ -973,38 +1099,22 @@ def _ovulatory_estradiol_points(
                 ]
             )
         points.extend(
-            [
-                (terminal_start, early_value * estradiol_scale),
-                (
-                    max(terminal_start + 1.0, ovulation_day - 8.0),
-                    mid_value * estradiol_scale,
-                ),
-            ]
+            [(terminal_start, early_value * estradiol_scale)]
         )
-    else:
-        follicular_mid = min(
-            ovulation_day - 2.0,
-            max(2.0, round(follicular_length * FOLLICULAR_MIDPOINT_FRACTION)),
-        )
-        points.append((follicular_mid, mid_value * estradiol_scale))
-
-    points.append(
-        (
-            max(2.0, ovulation_day - PRE_OVULATION_PEAK_LEAD_DAYS),
-            preovulatory_value * estradiol_scale,
-        )
-    )
     for reference in STRICKER_DAILY_SERUM_REFERENCE:
-        if reference.lh_offset_days < -1:
-            continue
-        x_value = _luteal_reference_day(
+        x_value = _localized_reference_day(
             lh_peak_day,
             reference.lh_offset_days,
             cycle_length,
+            estradiol_timing_shift_days,
+            center_offset_days=-1.0,
+            spread_days=2.5,
         )
-        if 1.0 < x_value < float(cycle_length):
-            points.append((x_value, reference.estradiol_pg_ml * estradiol_scale))
-    points.append((float(cycle_length), early_value * estradiol_scale))
+        if 1.0 < x_value <= float(cycle_length):
+            value = reference.estradiol_pg_ml
+            if reference.lh_offset_days > 0:
+                value = early_value + (value - early_value) * luteal_shape_scale
+            points.append((x_value, value * estradiol_scale))
     return points
 
 
@@ -1012,6 +1122,8 @@ def _ovulatory_progesterone_points(
     cycle_length: int,
     follicular_length: int,
     progesterone_scale: float,
+    progesterone_timing_shift_days: float = 0.0,
+    plateau_shape_scale: float = 1.0,
 ) -> List[Tuple[float, float]]:
     """Build a broad P4 envelope from all daily Stricker serum medians."""
 
@@ -1020,14 +1132,24 @@ def _ovulatory_progesterone_points(
     lh_peak_day = float(follicular_length) - LH_PEAK_TO_OVULATION_DAYS
     points: List[Tuple[float, float]] = [(1.0, baseline * progesterone_scale)]
     for reference in STRICKER_DAILY_SERUM_REFERENCE:
-        x_value = _luteal_reference_day(
+        x_value = _localized_reference_day(
             lh_peak_day,
             reference.lh_offset_days,
             cycle_length,
+            progesterone_timing_shift_days if reference.lh_offset_days > 0 else 0.0,
+            center_offset_days=6.0,
+            spread_days=3.0,
         )
-        if 1.0 < x_value < float(cycle_length):
-            points.append((x_value, reference.progesterone_ng_ml * progesterone_scale))
-    points.append((float(cycle_length), baseline * progesterone_scale))
+        if 1.0 < x_value <= float(cycle_length):
+            value = reference.progesterone_ng_ml
+            if 0 < reference.lh_offset_days < 14:
+                plateau_weight = math.exp(
+                    -0.5 * ((float(reference.lh_offset_days) - 7.0) / 3.0) ** 2
+                )
+                value = baseline + (value - baseline) * (
+                    1.0 + (plateau_shape_scale - 1.0) * plateau_weight
+                )
+            points.append((x_value, value * progesterone_scale))
     return points
 
 
@@ -1038,14 +1160,19 @@ def ovulatory_hormone_points(
     estradiol_scale: float,
     progesterone_scale: float,
     estradiol_variant: str = LONG_ESTRADIOL_DELAYED_EMERGENCE,
+    estradiol_timing_shift_days: float = 0.0,
+    progesterone_timing_shift_days: float = 0.0,
+    luteal_estradiol_shape_scale: float = 1.0,
+    progesterone_plateau_shape_scale: float = 1.0,
 ) -> Tuple[List[Tuple[float, float]], List[Tuple[float, float]]]:
     """Build estradiol and progesterone control points for an ovulatory cycle.
 
     Purpose:
         Stricker et al. 2006 reported daily LH-aligned serum medians. This function uses the full
-        daily luteal E2/P4 series, aligns the LH peak before the simulator's ovulation marker, and
-        scales only the post-LH interval to the realized luteal length. Long follicular phases use
-        an ovulation-anchored terminal maturation segment rather than horizontal template stretch.
+        daily E2/P4 series, aligns the LH peak before the simulator's ovulation marker, and scales
+        only the late-luteal decline after LH+7 to the realized cycle endpoint. Long follicular
+        phases use an ovulation-anchored terminal maturation segment rather than horizontal
+        template stretch.
 
     Args:
         cycle_length: Total cycle length in days.
@@ -1065,11 +1192,15 @@ def ovulatory_hormone_points(
         follicular_length,
         estradiol_scale,
         estradiol_variant,
+        estradiol_timing_shift_days,
+        luteal_estradiol_shape_scale,
     )
     progesterone_points = _ovulatory_progesterone_points(
         cycle_length,
         follicular_length,
         progesterone_scale,
+        progesterone_timing_shift_days,
+        progesterone_plateau_shape_scale,
     )
     return estradiol_points, progesterone_points
 
@@ -1165,6 +1296,12 @@ def render_cycle(
         cycle_p4_scale = profile.progesterone_scale * sample_unit_lognormal(rng, CYCLE_PROGESTERONE_SCALE_CV)
         if ovulatory:
             estradiol_variant = long_follicular_estradiol_variant(profile, cycle_index)
+            (
+                estradiol_timing_shift,
+                progesterone_timing_shift,
+                luteal_estradiol_shape_scale,
+                progesterone_plateau_shape_scale,
+            ) = cycle_waveform_variation(profile, cycle_index)
             estradiol_points, progesterone_points = ovulatory_hormone_points(
                 cycle_length,
                 follicular_length,
@@ -1172,6 +1309,10 @@ def render_cycle(
                 cycle_e2_scale,
                 cycle_p4_scale,
                 estradiol_variant,
+                estradiol_timing_shift,
+                progesterone_timing_shift,
+                luteal_estradiol_shape_scale,
+                progesterone_plateau_shape_scale,
             )
         else:
             estradiol_points, progesterone_points = anovulatory_hormone_points(
@@ -1297,12 +1438,23 @@ def render_cycle_compact(
         cycle_e2_scale = profile.estradiol_scale * sample_unit_lognormal(rng, CYCLE_ESTRADIOL_SCALE_CV)
         cycle_p4_scale = profile.progesterone_scale * sample_unit_lognormal(rng, CYCLE_PROGESTERONE_SCALE_CV)
         if ovulatory:
+            (
+                estradiol_timing_shift,
+                progesterone_timing_shift,
+                luteal_estradiol_shape_scale,
+                progesterone_plateau_shape_scale,
+            ) = cycle_waveform_variation(profile, cycle_index)
             _, progesterone_points = ovulatory_hormone_points(
                 cycle_length,
                 follicular_length,
                 luteal_length,
                 cycle_e2_scale,
                 cycle_p4_scale,
+                LONG_ESTRADIOL_DELAYED_EMERGENCE,
+                estradiol_timing_shift,
+                progesterone_timing_shift,
+                luteal_estradiol_shape_scale,
+                progesterone_plateau_shape_scale,
             )
         else:
             _, progesterone_points = anovulatory_hormone_points(

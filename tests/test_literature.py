@@ -34,6 +34,11 @@ class LiteratureRegistryTest(unittest.TestCase):
         self.assertIn("Primary", CITATIONS["li_2023_awhs"].evidence_role)
         self.assertIn("Held-out", CITATIONS["cunningham_2024_flo"].evidence_role)
         self.assertIn("Direction-only", CITATIONS["mortimer_2026_pcos"].evidence_role)
+        self.assertIn("Ultrasound", CITATIONS["roos_2015_true_ovulation"].evidence_role)
+        self.assertIn(
+            "joint-dependence",
+            CITATIONS["van_voorhis_2008_perimenopause"].evidence_role,
+        )
 
     def test_stricker_daily_reference_is_complete_and_lh_aligned(self) -> None:
         """The waveform source should preserve all published LH-relative daily medians."""

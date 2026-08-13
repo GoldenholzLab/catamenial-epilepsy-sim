@@ -156,6 +156,16 @@ ANOVULATORY_PERIMENOPAUSE_LONG_CYCLE_PROBABILITY = 0.65
 ANOVULATORY_SIGMA_MULTIPLIER = 1.15
 
 
+# Van Voorhis et al. 2008 reported that 64.7% of observed cycle intervals lasting at least
+# 36 days in the SWAN Daily Hormone Study were anovulatory. The simulator uses that estimate to
+# couple the fitted age-50+ long-episode component to ovulatory status while preserving its
+# calibrated marginal probability. This is a joint-dependence target, not a new marginal
+# cycle-length target.
+MENOPAUSE_TRANSITION_LONG_CYCLE_THRESHOLD_DAYS = 36
+MENOPAUSE_TRANSITION_LONG_CYCLE_ANOVULATORY_TARGET = 0.647
+MENOPAUSE_TRANSITION_ORDINARY_CYCLE_ANOVULATORY_TARGET = 0.081
+
+
 # Bull et al. 2019 showed a relatively stable luteal phase compared with the follicular phase.
 # These constants encode that structure while allowing clinical modifiers to shorten the luteal
 # phase modestly in peri-menarche, perimenopause, and PCOS.
@@ -198,6 +208,24 @@ EARLY_LUTEAL_MIN_OFFSET_DAYS = 1.5
 MID_LUTEAL_FRACTION = 0.55
 MID_LUTEAL_MIN_OFFSET_DAYS = 3.0
 PREMENSTRUAL_WITHDRAWAL_DAYS = 4
+
+
+# The daily Stricker series extends from LH-15 through LH+14. Offsets through the observed
+# midluteal maximum remain at one-day spacing; only the declining tail is compressed or expanded
+# to meet the realized cycle boundary. This avoids mechanically stretching the rise and peak with
+# every change in luteal length.
+LUTEAL_REFERENCE_FIXED_THROUGH_OFFSET_DAYS = 7.0
+
+
+# Roos et al. 2015 observed interindividual variation in serum estrogen and progesterone signals
+# aligned to ultrasound-confirmed ovulation. The latent simulator therefore allows modest
+# cycle-specific timing and relative-shape variation around the Stricker population-median
+# template. Values are generated from a separate deterministic hash stream so this waveform-only
+# heterogeneity cannot change cycle length, ovulation, bleeding, or the paper simulation RNG.
+WAVEFORM_TIMING_SHIFT_VALUES_DAYS = (-1.0, 0.0, 1.0)
+WAVEFORM_TIMING_SHIFT_WEIGHTS = (0.25, 0.50, 0.25)
+CYCLE_LUTEAL_ESTRADIOL_SHAPE_CV = 0.12
+CYCLE_PROGESTERONE_PLATEAU_SHAPE_CV = 0.08
 
 
 # When ovulation does not occur, progesterone remains low and estradiol shows only a blunted rise.
@@ -301,14 +329,30 @@ VALIDATION_MIN_PROGESTERONE_BOUND = 0.05
 VALIDATION_ESTRADIOL_PEAK_WIDTH_FRACTION = 0.80
 VALIDATION_ESTRADIOL_PEAK_WIDTH_DAYS_BOUNDS = (2.0, 5.0)
 VALIDATION_PROGESTERONE_WITHDRAWAL_MIN_DAYS = 3.0
-VALIDATION_PROGESTERONE_TERMINAL_TO_PEAK_MAX = 0.20
+VALIDATION_PROGESTERONE_TERMINAL_TO_PEAK_BOUNDS = (0.05, 0.18)
 VALIDATION_CROSS_CYCLE_PROGESTERONE_JUMP_MAX_NG_ML = 1.0
+VALIDATION_PROGESTERONE_PENULTIMATE_DROP_MAX_NG_ML = 1.0
 VALIDATION_PROGESTERONE_PLATEAU_FRACTION = 0.75
 VALIDATION_PROGESTERONE_PLATEAU_DAYS_BOUNDS = (3.0, 9.0)
 VALIDATION_PROGESTERONE_PEAK_OFFSET_BOUNDS = (3.0, 9.0)
 VALIDATION_PROGESTERONE_RISE_OFFSET_BOUNDS = (1.0, 4.0)
 VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_BOUNDS = (0.35, 0.80)
 VALIDATION_LONG_ESTRADIOL_TERMINAL_RISE_MAX_DAYS = 15.0
+
+
+# Nuanced waveform checks added after audit of the complete daily reference series. The Stricker
+# area ratio and mapped-point coverage are direct construction checks. Roos supplies the
+# data-driven reason to require nonzero peak-timing dispersion, but the exact SD floors are
+# investigator-set regression guards because the paper does not publish a directly portable
+# repeated-cycle SD for this simulator's event definition. The correlation ceiling prevents the
+# former deterministic whole-luteal time warp.
+VALIDATION_STRICKER_FOLLICULAR_E2_AREA_RATIO_BOUNDS = (0.90, 1.10)
+VALIDATION_STRICKER_MAPPED_E2_COVERAGE_MIN = 1.0
+VALIDATION_ESTRADIOL_PEAK_OFFSET_BOUNDS = (-3.0, -1.0)
+VALIDATION_ESTRADIOL_PEAK_OFFSET_SD_BOUNDS = (0.45, 2.50)
+VALIDATION_PROGESTERONE_PEAK_OFFSET_SD_BOUNDS = (0.45, 2.50)
+VALIDATION_LUTEAL_LENGTH_P4_PEAK_CORRELATION_ABS_MAX = 0.75
+VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_SD_BOUNDS = (0.03, 0.30)
 
 
 # Anckaert et al. 2021 used a different assay and a larger cohort than Stricker. The broad ratios
@@ -355,6 +399,12 @@ PERIMENOPAUSE_VALIDATION_EXPECTED_IRREGULARITY = 0.27
 PERIMENOPAUSE_VALIDATION_MIN_IRREGULARITY = 0.25
 PERIMENOPAUSE_VALIDATION_EXPECTED_OVULATION_RATE = 0.70
 PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS = (0.45, 0.80)
+PERIMENOPAUSE_LONG_CYCLE_ANOVULATORY_BOUNDS = (0.45, 0.80)
+# Van Voorhis reported a 56.6-percentage-point contrast (64.7% versus 8.1%) between
+# >=36-day and 21-35-day intervals. The simulator's explicit perimenopause scenario has a
+# different stage mix and a higher baseline anovulation rate, so only a positive, material
+# contrast is required; the published magnitude remains visible as context rather than a fit.
+PERIMENOPAUSE_LONG_VS_ORDINARY_ANOVULATION_DELTA_BOUNDS = (0.05, 0.80)
 
 PERI_MENARCHE_VALIDATION_EXPECTED_CYCLE_LENGTH = 30.5
 PERI_MENARCHE_VALIDATION_MIN_CYCLE_LENGTH = 30.0
