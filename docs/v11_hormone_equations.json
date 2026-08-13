@@ -1,0 +1,157 @@
+{
+  "document_title": "Appendix S1 equations",
+  "equations": [
+    {
+      "id": "cycle_irregularity",
+      "latex": "\\Delta_p=\\Pr\\!\\left(\\lvert L_i-L_{i-1}\\rvert\\ge 7\\right)=2\\left[1-\\Phi\\!\\left(\\frac{7}{\\sqrt{2}\\,\\sigma_L}\\right)\\right]",
+      "variables": [
+        {"latex": "\\Delta_p", "description": "the age-band probability that adjacent cycles differ in length by at least 7 days"},
+        {"latex": "L_i", "description_parts": [{"text": "the length in days of cycle "}, {"latex": "i"}]},
+        {"latex": "L_{i-1}", "description": "the length in days of the preceding cycle"},
+        {"latex": "i", "description": "the cycle index"},
+        {"latex": "\\Phi", "description": "the cumulative distribution function of a standard normal random variable"},
+        {"latex": "\\sigma_L", "description": "the latent within-person standard deviation of cycle length in days"}
+      ]
+    },
+    {
+      "id": "lognormal_sigma",
+      "latex": "\\sigma_{\\log}=\\sqrt{\\ln\\!\\left(1+c^2\\right)}",
+      "variables": [
+        {"latex": "\\sigma_{\\log}", "description": "the standard deviation on the natural-log scale"},
+        {"latex": "c", "description": "the requested coefficient of variation of the positive multiplier"}
+      ]
+    },
+    {
+      "id": "lognormal_mu",
+      "latex": "\\mu_{\\log}=-\\frac{\\sigma_{\\log}^2}{2}=-\\frac{1}{2}\\ln\\!\\left(1+c^2\\right)",
+      "variables": [
+        {"latex": "\\mu_{\\log}", "description": "the mean on the natural-log scale"},
+        {"latex": "\\sigma_{\\log}", "description": "the standard deviation on the natural-log scale"},
+        {"latex": "c", "description": "the requested coefficient of variation of the positive multiplier"}
+      ]
+    },
+    {
+      "id": "pchip_basis",
+      "latex": "t=\\frac{x-x_k}{h_k},\\quad h_{00}=2t^3-3t^2+1,\\quad h_{10}=t^3-2t^2+t,\\quad h_{01}=-2t^3+3t^2,\\quad h_{11}=t^3-t^2",
+      "variables": [
+        {"latex": "t", "description": "the normalized position within one interpolation interval"},
+        {"latex": "x", "description": "the requested cycle-day position"},
+        {"latex": "x_k", "description_parts": [{"text": "the position of control point "}, {"latex": "k"}]},
+        {"latex": "h_k", "description_parts": [{"text": "the interval width "}, {"latex": "x_{k+1}-x_k"}]},
+        {"latex": "k", "description": "the control-point interval index"},
+        {"latex": "h_{00}", "description": "the left-value cubic Hermite basis function"},
+        {"latex": "h_{10}", "description": "the left-slope cubic Hermite basis function"},
+        {"latex": "h_{01}", "description": "the right-value cubic Hermite basis function"},
+        {"latex": "h_{11}", "description": "the right-slope cubic Hermite basis function"}
+      ]
+    },
+    {
+      "id": "pchip_interpolation",
+      "latex": "y(x)=h_{00}y_k+h_{10}h_km_k+h_{01}y_{k+1}+h_{11}h_km_{k+1},\\qquad x_k\\le x\\le x_{k+1}",
+      "variables": [
+        {"latex": "y(x)", "description_parts": [{"text": "the interpolated hormone concentration at position "}, {"latex": "x"}]},
+        {"latex": "x", "description": "the requested cycle-day position"},
+        {"latex": "x_k", "description_parts": [{"text": "the position of control point "}, {"latex": "k"}]},
+        {"latex": "x_{k+1}", "description": "the position of the next control point"},
+        {"latex": "y_k", "description_parts": [{"text": "the hormone concentration at control point "}, {"latex": "k"}]},
+        {"latex": "y_{k+1}", "description": "the hormone concentration at the next control point"},
+        {"latex": "h_k", "description_parts": [{"text": "the interval width "}, {"latex": "x_{k+1}-x_k"}]},
+        {"latex": "m_k", "description_parts": [{"text": "the shape-preserving PCHIP derivative at control point "}, {"latex": "k"}]},
+        {"latex": "m_{k+1}", "description": "the shape-preserving PCHIP derivative at the next control point"},
+        {"latex": "h_{00}", "description": "the left-value basis function from Equation 4"},
+        {"latex": "h_{10}", "description": "the left-slope basis function from Equation 4"},
+        {"latex": "h_{01}", "description": "the right-value basis function from Equation 4"},
+        {"latex": "h_{11}", "description": "the right-slope basis function from Equation 4"},
+        {"latex": "k", "description": "the control-point interval index"}
+      ]
+    },
+    {
+      "id": "bridged_hormone_noise",
+      "latex": "\\widetilde{\\epsilon}_d=\\phi\\widetilde{\\epsilon}_{d-1}+\\eta_d,\\quad \\eta_d\\sim\\mathcal{N}\\!\\left(0,s^2(1-\\phi^2)\\right),\\quad \\phi=0.92;\\qquad \\epsilon_d=\\widetilde{\\epsilon}_d-\\left[\\widetilde{\\epsilon}_1+\\frac{d-1}{L-1}\\left(\\widetilde{\\epsilon}_L-\\widetilde{\\epsilon}_1\\right)\\right]",
+      "variables": [
+        {"latex": "\\widetilde{\\epsilon}_d", "description": "the unbridged fractional serial-noise state on day d"},
+        {"latex": "\\epsilon_d", "description": "the endpoint-bridged fractional serial-noise value applied on day d"},
+        {"latex": "d", "description": "the cycle-day index"},
+        {"latex": "L", "description": "the realized cycle length in days"},
+        {"latex": "\\phi", "description": "the first-order autoregressive coefficient fixed at 0.92"},
+        {"latex": "\\eta_d", "description": "the independent Gaussian innovation on day d"},
+        {"latex": "s", "description": "the stationary standard deviation of the hormone-specific fractional noise process"},
+        {"latex": "\\mathcal{N}", "description": "the normal distribution"}
+      ]
+    },
+    {
+      "id": "herzog_c1",
+      "latex": "C_1=\\frac{\\operatorname{ADSF}(M)}{\\operatorname{ADSF}(F+L)}",
+      "variables": [
+        {"latex": "C_1", "description": "the perimenstrual Herzog ratio"},
+        {"latex": "\\operatorname{ADSF}", "description": "average daily seizure frequency over the phase set in parentheses"},
+        {"latex": "M", "description": "menstrual-phase days"},
+        {"latex": "F", "description": "follicular-phase days"},
+        {"latex": "L", "description": "luteal-phase days"}
+      ]
+    },
+    {
+      "id": "herzog_c2",
+      "latex": "C_2=\\frac{\\operatorname{ADSF}(O)}{\\operatorname{ADSF}(F+L)}",
+      "variables": [
+        {"latex": "C_2", "description": "the periovulatory Herzog ratio"},
+        {"latex": "\\operatorname{ADSF}", "description": "average daily seizure frequency over the phase set in parentheses"},
+        {"latex": "O", "description": "ovulatory-phase days"},
+        {"latex": "F", "description": "follicular-phase days"},
+        {"latex": "L", "description": "luteal-phase days"}
+      ]
+    },
+    {
+      "id": "herzog_c3",
+      "latex": "C_3=\\frac{\\operatorname{ADSF}(O+L+M)}{\\operatorname{ADSF}(F)}",
+      "variables": [
+        {"latex": "C_3", "description": "the inadequate-luteal-phase Herzog ratio"},
+        {"latex": "\\operatorname{ADSF}", "description": "average daily seizure frequency over the phase set in parentheses"},
+        {"latex": "O", "description": "ovulatory-phase days"},
+        {"latex": "L", "description": "luteal-phase days"},
+        {"latex": "M", "description": "menstrual-phase days"},
+        {"latex": "F", "description": "follicular-phase days"}
+      ]
+    },
+    {
+      "id": "nb_c1_c2_model",
+      "latex": "\\log(\\mu_{icd})=\\beta_0+\\beta_M I_{M,icd}+\\beta_O I_{O,icd}+\\gamma_c",
+      "variables": [
+        {"latex": "\\mu_{icd}", "description": "the expected seizure count for participant i, cycle c, and day d"},
+        {"latex": "i", "description": "the participant index"},
+        {"latex": "c", "description": "the cycle index"},
+        {"latex": "d", "description": "the day index"},
+        {"latex": "\\beta_0", "description": "the intercept"},
+        {"latex": "\\beta_M", "description": "the menstrual-phase log rate-ratio coefficient"},
+        {"latex": "\\beta_O", "description": "the ovulatory-phase log rate-ratio coefficient"},
+        {"latex": "I_{M,icd}", "description": "the menstrual-phase indicator"},
+        {"latex": "I_{O,icd}", "description": "the ovulatory-phase indicator"},
+        {"latex": "\\gamma_c", "description_parts": [{"text": "the fixed effect for cycle "}, {"latex": "c"}]}
+      ]
+    },
+    {
+      "id": "nb_dispersion",
+      "latex": "\\alpha_i=\\begin{cases}1,&\\bar{y}_i\\le 0\\ \\mathrm{or}\\ s_i^2\\le\\bar{y}_i,\\\\ \\max\\!\\left(10^{-6},\\min\\!\\left(50,\\frac{s_i^2-\\bar{y}_i}{\\bar{y}_i^2}\\right)\\right),&s_i^2>\\bar{y}_i>0.\\end{cases}",
+      "variables": [
+        {"latex": "\\alpha_i", "description_parts": [{"text": "the negative-binomial dispersion for participant "}, {"latex": "i"}]},
+        {"latex": "i", "description": "the participant index"},
+        {"latex": "\\bar{y}_i", "description": "the participant-specific mean daily seizure count over the full diary"},
+        {"latex": "s_i^2", "description": "the participant-specific sample variance of daily seizure counts"}
+      ]
+    },
+    {
+      "id": "nb_c3_model",
+      "latex": "\\log(\\mu_{icd})=\\beta_0+\\beta_{OLM} I_{OLM,icd}+\\gamma_c",
+      "variables": [
+        {"latex": "\\mu_{icd}", "description": "the expected seizure count for participant i, cycle c, and day d"},
+        {"latex": "i", "description": "the participant index"},
+        {"latex": "c", "description": "the cycle index"},
+        {"latex": "d", "description": "the day index"},
+        {"latex": "\\beta_0", "description": "the intercept"},
+        {"latex": "\\beta_{OLM}", "description": "the log rate-ratio coefficient comparing combined ovulatory, luteal, and menstrual days with follicular days"},
+        {"latex": "I_{OLM,icd}", "description": "the combined ovulatory-luteal-menstrual phase indicator"},
+        {"latex": "\\gamma_c", "description_parts": [{"text": "the fixed effect for cycle "}, {"latex": "c"}]}
+      ]
+    }
+  ]
+}

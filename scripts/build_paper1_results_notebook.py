@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -16,15 +17,19 @@ CORE_DEFINITIONS = [
     "A_exact_any",
     "A_windowed_any",
     "A_windowed_excluding_C3",
+    "A_windowed_C1_or_C2",
     "A_windowed_C1_only",
     "A_windowed_C2_only",
     "A_windowed_C3_only",
     "B_minimum_data_any",
     "B_minimum_data_excluding_C3",
+    "B_minimum_data_C1_or_C2",
     "C_reproducibility_any",
+    "C_reproducibility_C1_or_C2",
     "C_reproducibility_12cycle_any",
     "D_nb_regression_any",
-    "D_nb_regression_window_alpha_any",
+    "D_nb_regression_C1_or_C2",
+    "D_nb_regression_window_alpha_C1_or_C2",
 ]
 HISTORICAL_DEFINITIONS = [
     "H1_newmark_penry_any",
@@ -37,32 +42,38 @@ FIGURES = [
     (
         "Figure 1. False-positive rate by window",
         "fig1_false_positive_by_window",
-        "Primary person-window false-positive rate for core definitions, split by cohort and window length.",
-        "Apparent classification rates are shown as percentages among classifiable participant windows for each defined observation window. The two cohorts are intentionally displayed separately because they represent different menstrual-cycle assumptions under the null.",
+        "Calendar-month false-positive rate for practical monitoring durations, split by cohort.",
+        "Apparent classification rates are shown as percentages among classifiable participant windows for random calendar windows. The dashed reference line marks 5%.",
     ),
     (
-        "Figure 2. Null n=30 study prevalence distribution",
-        "fig2_study_prevalence_distribution_3month_n30",
-        "Study-level Monte Carlo distribution for 3-month n=30 null studies, with 39.1% and 44.2% benchmarks.",
-        "Each curve summarizes 10,000 simulated studies of 30 participants using random 3-month windows and the windowed Herzog threshold definition. Vertical reference lines mark the benchmark apparent CE prevalence values.",
+        "Figure 2. C-pattern decomposition",
+        "fig2_pattern_decomposition",
+        "Mutually exclusive C1/C2/C3 pattern categories for full-diary windows.",
+        "Bars show the share of all attempted full-diary windows in each pattern category, including indeterminate windows, under strict Herzog phase labeling.",
     ),
     (
-        "Figure 3. Indeterminate versus false-positive frontier",
-        "fig3_indeterminate_vs_fpr_frontier",
+        "Figure 3. Study prevalence distribution",
+        "fig3_study_prevalence_distribution_3month",
+        "Study-level Monte Carlo distribution for 3-month null studies with n=30, n=50, and n=100.",
+        "Each curve summarizes simulated studies using random 3-month windows and the windowed Herzog threshold definition. The y-axis is the proportion of simulated studies; vertical reference lines mark benchmark apparent CE prevalence values.",
+    ),
+    (
+        "Figure 4. Indeterminate versus false-positive frontier",
+        "fig4_indeterminate_vs_fpr_frontier",
         "Tradeoff between rejecting underspecified windows and the false-positive rate among classifiable windows.",
         "Each point is a definition-by-window-by-cohort result. Points farther right have more indeterminate windows; points higher on the plot have more false positives among windows that remained classifiable.",
     ),
     (
-        "Figure 4. Historical versus core definitions",
+        "Appendix Figure. Historical versus core definitions",
         "fig4_historical_vs_core_definitions",
         "Assumption-based historical rules compared with core protocol definitions.",
         "The historical definitions are exploratory operationalizations and are plotted next to the core definitions only to show their null false-positive behavior under the same 3-month window setting.",
     ),
     (
-        "Figure 5. Null cycle-day seizure profile",
-        "fig5_null_cycle_day_profile",
-        "Cycle-day seizure profile in the daily audit sample; under the null this should not show true coupling.",
-        "The audit sample contains 1% of participant daily rows. Lines show average daily seizure frequency by observed menstrual cycle day after independent seizure and menstrual diaries were merged under the null.",
+        "Appendix QC Figure. Null cycle-day seizure profile",
+        "fig5_qc_null_cycle_day_profile",
+        "Quality-control cycle-day seizure profile in the daily audit sample.",
+        "The audit sample contains 1% of participant daily rows. Lines show average daily seizure frequency by observed menstrual cycle day with approximate Poisson error bars.",
     ),
 ]
 
@@ -74,15 +85,20 @@ DEFINITION_DISPLAY = {
     "A_exact_any": "Exact Herzog 2004, any CE pattern",
     "A_windowed_any": "Windowed Herzog thresholds",
     "A_windowed_excluding_C3": "Windowed Herzog thresholds, excluding C3",
+    "A_windowed_C1_or_C2": "Windowed Herzog C1/C2 union",
     "A_windowed_C1_only": "Windowed Herzog C1 only",
     "A_windowed_C2_only": "Windowed Herzog C2 only",
     "A_windowed_C3_only": "Windowed Herzog C3 only",
     "B_minimum_data_any": "Windowed Herzog with minimum data",
     "B_minimum_data_excluding_C3": "Windowed Herzog with minimum data, excluding C3",
+    "B_minimum_data_C1_or_C2": "Windowed Herzog C1/C2 with minimum data",
     "C_reproducibility_any": "Cycle reproducibility, 6-cycle rule",
+    "C_reproducibility_C1_or_C2": "Cycle reproducibility C1/C2, 6-cycle rule",
     "C_reproducibility_12cycle_any": "Cycle reproducibility, 12-cycle sensitivity",
-    "D_nb_regression_any": "Negative-binomial regression, stabilized dispersion",
+    "D_nb_regression_any": "Negative-binomial regression C1/C2, stabilized dispersion",
+    "D_nb_regression_C1_or_C2": "Negative-binomial regression C1/C2",
     "D_nb_regression_window_alpha_any": "Negative-binomial regression, window-only dispersion",
+    "D_nb_regression_window_alpha_C1_or_C2": "Negative-binomial regression C1/C2, window-only dispersion",
     "H1_newmark_penry_any": "Newmark-Penry perimenstrual rule",
     "H1_newmark_penry_66_7_any": "Newmark-Penry two-thirds sensitivity",
     "H2_duncan1993_any": "Duncan 1993 ten-day rule",
@@ -95,7 +111,7 @@ SUBSET_DISPLAY = {
     "ge_2_seizures_per_month": "At least 2 seizures per month",
     "strict_23_35_day_cycles_only": "Strict 23-35 day cycles only",
     "common_classifiable_subset": "Common classifiable subset",
-    "apparent_prevalence_all": "All 30 participants",
+    "apparent_prevalence_all": "All participants",
     "apparent_prevalence_classifiable": "Classifiable participants only",
 }
 TEXT_DISPLAY = {
@@ -106,8 +122,15 @@ TEXT_DISPLAY = {
     "SD cycle length <2 days": "Cycle length SD < 2 days",
     "SD cycle length 2 to <4 days": "Cycle length SD 2 to <4 days",
     "SD cycle length >=4 days": "Cycle length SD at least 4 days",
+    "strict_herzog": "Strict Herzog",
+    "luteal_anchored_ovulatory": "Luteal-anchored ovulatory",
+    "0 to 3": "0-3 seizure days",
+    "4 to 7": "4-7 seizure days",
+    "8 to 15": "8-15 seizure days",
+    "ge 16": ">=16 seizure days",
     "seizure frequency": "Seizure-frequency stratum",
     "cycle regularity": "Cycle-regularity stratum",
+    "window seizure days": "Window seizure-day stratum",
     "True": "Yes",
     "False": "No",
 }
@@ -122,10 +145,14 @@ COLUMN_DISPLAY = {
     "seizure_days_per_month": "Seizure days per month",
     "seizures_per_month": "Seizures per month",
     "definition": "CE definition",
+    "phase_mode": "Phase labeling",
+    "pattern_category": "Pattern category",
+    "n_participants": "Participants per study",
     "n_windows": "Windows analyzed",
     "n_classifiable": "Classifiable windows",
     "positives": "False-positive windows",
     "false_positive_rate": "False-positive rate",
+    "positive_rate_all_attempted": "Rate among all attempted",
     "FPR": "False-positive rate",
     "FPR (95% CI)": "False-positive rate (95% CI)",
     "wilson95_low": "95% CI lower",
@@ -238,7 +265,7 @@ def load_outputs(output_dir: Path) -> dict[str, Any]:
     required = [
         "participant_summary.parquet",
         "window_results.parquet",
-        "study_level_3month_n30.parquet",
+        "study_level_3month.parquet",
         "summary_tables.csv",
         "manifest.json",
     ]
@@ -248,7 +275,7 @@ def load_outputs(output_dir: Path) -> dict[str, Any]:
     return {
         "participants": pd.read_parquet(output_dir / "participant_summary.parquet"),
         "windows": pd.read_parquet(output_dir / "window_results.parquet"),
-        "study": pd.read_parquet(output_dir / "study_level_3month_n30.parquet"),
+        "study": pd.read_parquet(output_dir / "study_level_3month.parquet"),
         "summary": pd.read_csv(output_dir / "summary_tables.csv"),
         "manifest": json.loads((output_dir / "manifest.json").read_text(encoding="utf-8")),
     }
@@ -263,9 +290,9 @@ def build_cells(repo: Path, output_dir: Path, data: dict[str, Any]) -> list[dict
     cells.append(markdown_cell(cohort_definition_markdown()))
     cells.append(markdown_cell(protocol_plan_markdown(manifest)))
     cells.append(markdown_cell("## Reproducible function calls\n\nThese cells are the exact calls used to regenerate the analysis outputs. Run the smoke call for a quick end-to-end check; run the full call for the defined 100,000-participant analysis."))
-    cells.append(code_cell(reproduction_code()))
+    cells.append(code_cell(reproduction_code(output_dir, repo)))
     cells.append(markdown_cell("## Load the current populated outputs\n\nThe remaining notebook cells read the existing output artifacts. This keeps figure and table rendering fast and reproducible after either a smoke run or a full run."))
-    cells.append(code_cell(load_outputs_code()))
+    cells.append(code_cell(load_outputs_code(output_dir, repo)))
 
     cells.append(markdown_cell(table_intro("Table 1. Cohort and diary summary", "This table verifies that both defined cohorts are represented separately, that cycle summaries are available, and that seizure-burden metrics were carried through from the seizure simulator. It is the first QC table because every downstream apparent-classification estimate depends on the cohort construction and diary burden.")))
     cells.append(code_cell(table_1_code()))
@@ -282,42 +309,47 @@ def build_cells(repo: Path, output_dir: Path, data: dict[str, Any]) -> list[dict
     cells.append(markdown_cell(md_table(table_3(summary))))
     cells.append(markdown_cell(table_caption("Table 3", "False-positive and indeterminate rates for every prespecified observation window and core definition. Exact Herzog 2004 is expected to be classifiable only for 3-complete-cycle windows.")))
 
-    cells.append(markdown_cell(table_intro("Table 4. Null n=30 study-level prevalence benchmarks", "This table maps person-level false positives into apparent prevalence in small studies. It reports prevalence among all 30 participants, prevalence among classifiable participants only, and the probability of exceeding the 39.1% and 44.2% benchmark values.")))
+    cells.append(markdown_cell(table_intro("Table 4. Strict Herzog versus luteal-anchored ovulatory sensitivity", "This table addresses whether false-positive rates depend on the strict Herzog periovulatory window expanding with cycle length. Strict Herzog remains primary for historical comparability; the luteal-anchored mode fixes the ovulatory window at four pre-luteal days.")))
+    cells.append(code_cell(table_phase_mode_code()))
+    cells.append(markdown_cell(md_table(table_phase_mode(summary))))
+    cells.append(markdown_cell(table_caption("Table 4", "Full-diary and 3-month windowed Herzog results under strict Herzog and luteal-anchored ovulatory phase labeling.")))
+
+    cells.append(markdown_cell(table_intro("Table 5. Null study-level prevalence benchmarks", "This table maps person-level false positives into apparent prevalence in illustrative studies of 30, 50, and 100 participants. It reports prevalence among all participants, prevalence among classifiable participants only, and the probability of exceeding the 39.1% and 44.2% benchmark values.")))
     cells.append(code_cell(table_4_code()))
     cells.append(markdown_cell(md_table(table_4(summary))))
-    cells.append(markdown_cell(table_caption("Table 4", "Study-level Monte Carlo summary from 10,000 null studies of 30 participants using 3-month windows. The interval columns are the 2.5th and 97.5th percentiles of study-level apparent prevalence.")))
+    cells.append(markdown_cell(table_caption("Table 5", "Study-level Monte Carlo summary from null studies using 3-month windows. The interval columns are the 2.5th and 97.5th percentiles of study-level apparent prevalence.")))
 
-    cells.append(markdown_cell(table_intro("Table 5. Trial-like conditioned subsets", "These subsets answer whether common enrollment restrictions reduce false positives or mainly change the classifiable denominator. The common-classifiable subset supports head-to-head comparisons because every listed core definition is defined on the same windows.")))
+    cells.append(markdown_cell(table_intro("Table 6. Trial-like conditioned subsets", "These subsets answer whether common enrollment restrictions reduce false positives or mainly change the classifiable denominator. The common-classifiable subset supports head-to-head comparisons because every listed core definition is defined on the same windows.")))
     cells.append(code_cell(table_5_code()))
     cells.append(markdown_cell(md_table(table_5(summary))))
-    cells.append(markdown_cell(table_caption("Table 5", "Full-diary false-positive rates after applying trial-like eligibility restrictions or a common classifiable denominator. This separates changes in apparent risk from changes in analyzability.")))
+    cells.append(markdown_cell(table_caption("Table 6", "Full-diary false-positive rates after applying trial-like eligibility restrictions or a common classifiable denominator. This separates changes in apparent risk from changes in analyzability.")))
 
-    cells.append(markdown_cell(table_intro("Table 6. C1/C2/C3 decomposition and C3 exclusion", "This table directly addresses whether the heterogeneous-cohort signal is driven by C3 logic. It reports any CE, any CE excluding C3, and pattern-specific C1/C2/C3 rows for full-diary windows.")))
+    cells.append(markdown_cell(table_intro("Table 7. C1/C2/C3 decomposition and C3 exclusion", "This table directly addresses whether the heterogeneous-cohort signal is driven by C3 logic. It reports mutually exclusive pattern categories and C1/C2 union comparisons for full-diary windows.")))
     cells.append(code_cell(table_6_code()))
     cells.append(markdown_cell(md_table(table_6(summary))))
-    cells.append(markdown_cell(table_caption("Table 6", "Full-diary pattern decomposition and C3-exclusion sensitivity. C3 is evaluated only when ILP logic is applicable.")))
+    cells.append(markdown_cell(table_caption("Table 7", "Full-diary pattern decomposition and C3-exclusion sensitivity. C3 is evaluated only when ILP logic is applicable.")))
 
-    cells.append(markdown_cell(table_intro("Table 7. Negative-binomial dispersion sensitivity", "This table separates the stabilized-dispersion regression comparator from a non-oracle window-only dispersion sensitivity.")))
+    cells.append(markdown_cell(table_intro("Table 8. Negative-binomial dispersion sensitivity", "This table separates the full-diary stabilized-dispersion regression comparator from a full-window, window-only dispersion sensitivity.")))
     cells.append(code_cell(table_7_code()))
     cells.append(markdown_cell(md_table(table_7(summary))))
-    cells.append(markdown_cell(table_caption("Table 7", "Negative-binomial apparent classification rates using full-diary stabilized alpha and window-only alpha. Both use the same M/O model and Holm family.")))
+    cells.append(markdown_cell(table_caption("Table 8", "Negative-binomial apparent classification rates in full-diary windows using full-diary stabilized alpha and window-only alpha. Both use the same M/O model and Holm family.")))
 
-    cells.append(markdown_cell(table_intro("Table 8. Seizure-frequency and cycle-regularity strata", "The requested strata diagnose where false positives concentrate. Seizure-frequency strata use observed full-diary seizure-days per month; cycle-regularity strata use observed participant-level cycle-length SD.")))
+    cells.append(markdown_cell(table_intro("Table 9. Seizure-burden and cycle-regularity strata", "The requested strata diagnose where false positives concentrate. Seizure-frequency strata use observed full-diary seizure-days per month, and window-seizure-day strata use total seizure days within each analyzed window.")))
     cells.append(code_cell(table_8_code()))
     cells.append(markdown_cell(md_table(table_8(summary))))
-    cells.append(markdown_cell(table_caption("Table 8", "Full-diary apparent classification rates by observed seizure-frequency and cycle-regularity strata. These strata identify where null positives are concentrated.")))
+    cells.append(markdown_cell(table_caption("Table 9", "Apparent classification rates by observed seizure burden and cycle regularity strata. These strata identify where null positives are concentrated.")))
 
-    cells.append(markdown_cell(table_intro("Table 9. Assumption-based historical definitions", "Historical rules are exploratory operationalizations rather than literal replications, so they are flagged separately. This table keeps them out of the core endpoint table while still showing their null false-positive behavior.")))
+    cells.append(markdown_cell(table_intro("Table 10. Assumption-based historical definitions", "Historical rules are exploratory operationalizations rather than literal replications, so they are flagged separately. This table keeps them out of the core endpoint table while still showing their null false-positive behavior.")))
     cells.append(code_cell(table_9_code()))
     cells.append(markdown_cell(md_table(table_9(summary))))
-    cells.append(markdown_cell(table_caption("Table 9", "Apparent classification rates for exploratory historical definitions. These rows are deliberately labeled as assumption-based and should not be interpreted as literal historical replications.")))
+    cells.append(markdown_cell(table_caption("Table 10", "Apparent classification rates for exploratory historical definitions. These rows are deliberately labeled as assumption-based and should not be interpreted as literal historical replications.")))
 
-    cells.append(markdown_cell(table_intro("Table 10. Output manifest", "The manifest is machine-readable provenance: it lists every analysis artifact, size, checksum, and the assumptions that were not directly derivable from simulator outputs.")))
+    cells.append(markdown_cell(table_intro("Table 11. Output manifest", "The manifest is machine-readable provenance: it lists every analysis artifact, size, checksum, and the assumptions that were not directly derivable from simulator outputs.")))
     cells.append(code_cell(table_10_code()))
     cells.append(markdown_cell(md_table(table_10(manifest))))
-    cells.append(markdown_cell(table_caption("Table 10", "Machine-readable output provenance. The checksum prefix is included to support reproducibility checks without making the table unnecessarily wide.")))
+    cells.append(markdown_cell(table_caption("Table 11", "Machine-readable output provenance. The checksum prefix is included to support reproducibility checks without making the table unnecessarily wide.")))
 
-    cells.append(markdown_cell("## Publication-ready figures\n\nEach figure is written as both PNG for notebook viewing and PDF for publication workflows. Fractional outcomes are displayed on a 0-100% percentage scale. The code cell below is the function call that regenerates the figure set from the populated output tables."))
+    cells.append(markdown_cell("## Publication-ready figures\n\nEach figure is written as PNG for notebook viewing and PDF/SVG for publication workflows. Fractional outcomes are displayed on a 0-100% percentage scale. The code cell below is the function call that regenerates the figure set from the populated output tables."))
     cells.append(code_cell(figures_code()))
     for title, stem, description, caption in FIGURES:
         png_rel = rel_path(output_dir / f"{stem}.png", repo / "notebooks")
@@ -358,10 +390,11 @@ def cohort_definition_markdown() -> str:
         "rates of cycle modifiers such as PCOS, peri-menarche, perimenopause, dysmenorrhea, and cycle "
         "irregularity when available. It is contrasted with the **healthy ovulatory** cohort, which is "
         "restricted to adult ovulatory cycling with those medical modifiers disabled where the simulator "
-        "exposes those controls. In both cohorts, seizure diaries are generated independently from "
-        "menstrual diaries and then circularly shifted before merging, so any apparent catamenial "
-        "epilepsy classification is a false positive under the null. Positive-control true-coupling modes "
-        "are generated into separate output directories and should be interpreted as operating-characteristic sensitivities."
+        "exposes those controls. In both cohorts, seizure and menstrual diaries are generated from "
+        "separate deterministic random streams. HORMONE-CYCLE selects diary day 1 uniformly from "
+        "the first generated cycle and then proceeds forward without wrapping. The seizure and "
+        "menstrual diaries are aligned directly by calendar day without reordering, so any apparent "
+        "catamenial epilepsy classification is a false positive under the null."
     )
 
 
@@ -373,19 +406,25 @@ def protocol_plan_markdown(manifest: dict[str, Any]) -> str:
         "1. Simulate two cohorts separately and never pool results: healthy ovulatory and heterogeneous menstruating-age.\n"
         f"2. Full defined cohort sizes are `{display_cohort_sizes(full_sizes)}`; smoke mode uses `{config['analysis_modes']['smoke']['n_total']}` total participants.\n"
         f"3. For each participant, simulate an independent CHOCOLATES seizure diary and an independent hormone-cycle diary for `{config['analysis_modes']['full']['diary_months']}` months in full mode.\n"
-        "4. Apply a random circular shift before merging to break hidden start-date alignment.\n"
-        "5. Label Herzog phases on the full diary before subsetting windows.\n"
+        "4. Select diary day 1 uniformly from the first generated HORMONE-CYCLE cycle, continue forward without wrapping, and align the independently generated seizure and menstrual diaries directly by calendar day.\n"
+        "5. Label phases on the full diary before subsetting windows, using strict Herzog labels for primary analyses and a luteal-anchored fixed ovulatory window for sensitivity analyses.\n"
         "6. Sample calendar windows, full 36-month windows, and complete-cycle windows exactly as configured.\n"
-        "7. Classify windows using exact Herzog 2004, windowed Herzog thresholds, C3-exclusion and pattern-only sensitivities, minimum-data rules, reproducibility rules, stabilized/window-dispersion NB regression, and assumption-based historical definitions.\n"
-        "8. Summarize false positives and indeterminacy by cohort, window, definition, seizure-frequency stratum, cycle-regularity stratum, trial-like subsets, and study-level Monte Carlo benchmarks.\n"
-        "9. Save outputs as parquet/CSV, publication figures as PNG/PDF, a 1% daily audit sample, and a manifest.\n\n"
+        "7. Classify windows using exact Herzog 2004, windowed Herzog thresholds, C3-exclusion and pattern-only sensitivities, minimum-data rules, reproducibility rules, full-window stabilized/window-dispersion NB regression, and assumption-based historical definitions.\n"
+        "8. Summarize false positives and indeterminacy by cohort, phase mode, window, definition, seizure-burden stratum, participant-level status, pattern category, and study-level Monte Carlo benchmarks.\n"
+        "9. Save outputs as parquet/CSV, publication figures as PNG/PDF/SVG, a 1% daily audit sample, and a manifest.\n\n"
         "### Recorded assumptions\n\n"
         + "\n".join(f"- {display_text(item)}" for item in manifest.get("assumptions", []))
     )
 
 
-def reproduction_code() -> str:
-    return """from pathlib import Path
+def reproduction_code(output_dir: Path, repo: Path) -> str:
+    config_path = (
+        "config_random_start_full.yaml"
+        if (repo / "config_random_start_full.yaml").exists()
+        else "config.yaml"
+    )
+    progress_path = rel_path(output_dir / "progress.json", repo)
+    return f"""from pathlib import Path
 import sys
 
 ROOT = Path.cwd().parent if Path.cwd().name == "notebooks" else Path.cwd()
@@ -394,7 +433,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from paper1_null_ce.core.utils import load_config
 from paper1_null_ce.core.simulate import run_pipeline
 
-config = load_config(ROOT / "config.yaml")
+config = load_config(ROOT / "{config_path}")
 
 # Quick validation run used while developing and reviewing the pipeline:
 smoke_result = run_pipeline(config, mode="smoke")
@@ -403,21 +442,25 @@ smoke_result = run_pipeline(config, mode="smoke")
 # full_result = run_pipeline(config, mode="full")
 
 # During a long run, check ETA from another terminal:
-# python3.11 scripts/check_paper1_progress.py --progress outputs/progress.json
+# python3.11 scripts/check_paper1_progress.py --progress {progress_path}
 """
 
 
-def load_outputs_code() -> str:
-    return """from pathlib import Path
+def load_outputs_code(output_dir: Path, repo: Path) -> str:
+    output_path = rel_path(output_dir, repo)
+    return f"""from pathlib import Path
 import json
 import pandas as pd
 
 ROOT = Path.cwd().parent if Path.cwd().name == "notebooks" else Path.cwd()
-OUTPUT_DIR = ROOT / "outputs"
+OUTPUT_DIR = ROOT / "{output_path}"
 
 participant_summary = pd.read_parquet(OUTPUT_DIR / "participant_summary.parquet")
 window_results = pd.read_parquet(OUTPUT_DIR / "window_results.parquet")
-study_level = pd.read_parquet(OUTPUT_DIR / "study_level_3month_n30.parquet")
+study_path = OUTPUT_DIR / "study_level_3month.parquet"
+if not study_path.exists():
+    study_path = OUTPUT_DIR / "study_level_3month_n30.parquet"
+study_level = pd.read_parquet(study_path)
 summary_tables = pd.read_csv(OUTPUT_DIR / "summary_tables.csv")
 manifest = json.loads((OUTPUT_DIR / "manifest.json").read_text())
 
@@ -448,11 +491,13 @@ cohort_summary
 def table_2_code() -> str:
     return """primary_full = summary_tables[
     (summary_tables.table_type == "window_false_positive")
+    & (summary_tables.phase_mode == "strict_herzog")
     & (summary_tables.subset == "all")
     & (summary_tables.window_type == "full")
     & (summary_tables.definition.isin([
-        "A_windowed_any", "B_minimum_data_any",
-        "C_reproducibility_any", "D_nb_regression_any"
+        "A_windowed_any", "A_windowed_C1_or_C2",
+        "B_minimum_data_any", "B_minimum_data_C1_or_C2",
+        "C_reproducibility_any", "D_nb_regression_C1_or_C2"
     ]))
 ].copy()
 primary_full
@@ -462,10 +507,12 @@ primary_full
 def table_3_code() -> str:
     return """window_sensitivity = summary_tables[
     (summary_tables.table_type == "window_false_positive")
+    & (summary_tables.phase_mode == "strict_herzog")
     & (summary_tables.subset == "all")
     & (summary_tables.definition.isin([
-        "A_exact_any", "A_windowed_any", "B_minimum_data_any",
-        "C_reproducibility_any", "D_nb_regression_any"
+        "A_exact_any", "A_windowed_any", "A_windowed_C1_or_C2",
+        "B_minimum_data_C1_or_C2", "C_reproducibility_C1_or_C2",
+        "D_nb_regression_C1_or_C2"
     ]))
 ].copy()
 window_sensitivity
@@ -474,19 +521,35 @@ window_sensitivity
 
 def table_4_code() -> str:
     return """study_benchmarks = summary_tables[
-    (summary_tables.table_type == "study_level_3month_n30")
+    (summary_tables.table_type == "study_level_3month")
+    & (summary_tables.phase_mode == "strict_herzog")
     & (summary_tables.definition.isin([
-        "A_windowed_any", "B_minimum_data_any",
-        "C_reproducibility_any", "D_nb_regression_any"
+        "A_windowed_any", "B_minimum_data_C1_or_C2",
+        "C_reproducibility_C1_or_C2", "D_nb_regression_C1_or_C2"
     ]))
 ].copy()
 study_benchmarks
 """
 
 
+def table_phase_mode_code() -> str:
+    return """phase_mode_sensitivity = summary_tables[
+    (summary_tables.table_type == "window_false_positive")
+    & (summary_tables.subset == "all")
+    & (
+        (summary_tables.window_type == "full")
+        | ((summary_tables.window_type == "calendar") & (summary_tables.window_value.astype(str) == "3"))
+    )
+    & (summary_tables.definition.isin(["A_windowed_any", "A_windowed_C1_or_C2", "A_windowed_C3_only"]))
+].copy()
+phase_mode_sensitivity
+"""
+
+
 def table_5_code() -> str:
     return """trial_like_subsets = summary_tables[
     (summary_tables.table_type == "window_false_positive")
+    & (summary_tables.phase_mode == "strict_herzog")
     & (summary_tables.window_type == "full")
     & (summary_tables.subset.isin([
         "ge_1_seizure_day_per_month",
@@ -495,8 +558,9 @@ def table_5_code() -> str:
         "common_classifiable_subset",
     ]))
     & (summary_tables.definition.isin([
-        "A_windowed_any", "B_minimum_data_any",
-        "C_reproducibility_any", "D_nb_regression_any"
+        "A_windowed_any", "A_windowed_C1_or_C2",
+        "B_minimum_data_C1_or_C2",
+        "C_reproducibility_C1_or_C2", "D_nb_regression_C1_or_C2"
     ]))
 ].copy()
 trial_like_subsets
@@ -505,14 +569,10 @@ trial_like_subsets
 
 def table_6_code() -> str:
     return """pattern_decomposition = summary_tables[
-    (summary_tables.table_type == "window_false_positive")
-    & (summary_tables.subset == "all")
+    (summary_tables.table_type == "pattern_decomposition")
+    & (summary_tables.phase_mode == "strict_herzog")
     & (summary_tables.window_type == "full")
-    & (summary_tables.definition.isin([
-        "A_windowed_any", "A_windowed_excluding_C3",
-        "A_windowed_C1_only", "A_windowed_C2_only", "A_windowed_C3_only",
-        "B_minimum_data_any", "B_minimum_data_excluding_C3"
-    ]))
+    & (summary_tables.definition.isin(["A_windowed", "B_minimum_data", "D_nb_regression"]))
 ].copy()
 pattern_decomposition
 """
@@ -521,10 +581,11 @@ pattern_decomposition
 def table_7_code() -> str:
     return """nb_dispersion_sensitivity = summary_tables[
     (summary_tables.table_type == "window_false_positive")
+    & (summary_tables.phase_mode == "strict_herzog")
     & (summary_tables.subset == "all")
     & (summary_tables.window_type == "full")
     & (summary_tables.definition.isin([
-        "D_nb_regression_any", "D_nb_regression_window_alpha_any"
+        "D_nb_regression_C1_or_C2", "D_nb_regression_window_alpha_C1_or_C2"
     ]))
 ].copy()
 nb_dispersion_sensitivity
@@ -534,11 +595,12 @@ nb_dispersion_sensitivity
 def table_8_code() -> str:
     return """strata_rows = summary_tables[
     (summary_tables.table_type == "window_false_positive")
-    & (summary_tables.window_type == "full")
-    & (summary_tables.definition.isin(["A_windowed_any", "B_minimum_data_any", "D_nb_regression_any"]))
+    & (summary_tables.phase_mode == "strict_herzog")
+    & (summary_tables.definition.isin(["A_windowed_any", "A_windowed_C1_or_C2", "B_minimum_data_C1_or_C2", "D_nb_regression_C1_or_C2"]))
     & (
         summary_tables.subset.astype(str).str.startswith("seizure_frequency:")
         | summary_tables.subset.astype(str).str.startswith("cycle_regularity:")
+        | summary_tables.subset.astype(str).str.startswith("window_seizure_days_")
     )
 ].copy()
 strata_rows
@@ -548,6 +610,7 @@ strata_rows
 def table_9_code() -> str:
     return """historical_rows = summary_tables[
     (summary_tables.table_type == "window_false_positive")
+    & (summary_tables.phase_mode == "strict_herzog")
     & (summary_tables.subset == "all")
     & (summary_tables.window_type.isin(["calendar", "full"]))
     & (summary_tables.definition.isin([
@@ -615,9 +678,14 @@ def table_1(participants: pd.DataFrame) -> pd.DataFrame:
 def table_2(summary: pd.DataFrame) -> pd.DataFrame:
     data = summary[
         (summary.table_type == "window_false_positive")
+        & (summary.phase_mode == "strict_herzog")
         & (summary.subset == "all")
         & (summary.window_type == "full")
-        & (summary.definition.isin(["A_windowed_any", "B_minimum_data_any", "C_reproducibility_any", "D_nb_regression_any"]))
+        & (summary.definition.isin([
+            "A_windowed_any", "A_windowed_C1_or_C2",
+            "B_minimum_data_any", "B_minimum_data_C1_or_C2",
+            "C_reproducibility_any", "D_nb_regression_C1_or_C2",
+        ]))
     ].copy()
     data["FPR (95% CI)"] = data.apply(rate_ci, axis=1)
     out = data[
@@ -637,8 +705,13 @@ def table_2(summary: pd.DataFrame) -> pd.DataFrame:
 def table_3(summary: pd.DataFrame) -> pd.DataFrame:
     data = summary[
         (summary.table_type == "window_false_positive")
+        & (summary.phase_mode == "strict_herzog")
         & (summary.subset == "all")
-        & (summary.definition.isin(["A_exact_any", "A_windowed_any", "B_minimum_data_any", "C_reproducibility_any", "D_nb_regression_any"]))
+        & (summary.definition.isin([
+            "A_exact_any", "A_windowed_any", "A_windowed_C1_or_C2",
+            "B_minimum_data_C1_or_C2", "C_reproducibility_C1_or_C2",
+            "D_nb_regression_C1_or_C2",
+        ]))
     ].copy()
     data["window"] = data.apply(window_label, axis=1)
     data["FPR"] = data["false_positive_rate"]
@@ -659,15 +732,47 @@ def table_3(summary: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def table_phase_mode(summary: pd.DataFrame) -> pd.DataFrame:
+    data = summary[
+        (summary.table_type == "window_false_positive")
+        & (summary.subset == "all")
+        & (
+            (summary.window_type == "full")
+            | ((summary.window_type == "calendar") & (summary.window_value.astype(str) == "3"))
+        )
+        & (summary.definition.isin(["A_windowed_any", "A_windowed_C1_or_C2", "A_windowed_C3_only"]))
+    ].copy()
+    data["window"] = data.apply(window_label, axis=1)
+    data["FPR (95% CI)"] = data.apply(rate_ci, axis=1)
+    out = data[
+        [
+            "cohort",
+            "phase_mode",
+            "window",
+            "definition",
+            "n_classifiable",
+            "positives",
+            "FPR (95% CI)",
+            "indeterminate_rate",
+        ]
+    ].sort_values(["cohort", "window", "definition", "phase_mode"])
+    return format_table(out, {"n_classifiable": "int", "positives": "int", "indeterminate_rate": "pct"})
+
+
 def table_4(summary: pd.DataFrame) -> pd.DataFrame:
     data = summary[
-        (summary.table_type == "study_level_3month_n30")
-        & (summary.definition.isin(["A_windowed_any", "B_minimum_data_any", "C_reproducibility_any", "D_nb_regression_any"]))
+        (summary.table_type == "study_level_3month")
+        & (summary.phase_mode == "strict_herzog")
+        & (summary.definition.isin([
+            "A_windowed_any", "B_minimum_data_C1_or_C2",
+            "C_reproducibility_C1_or_C2", "D_nb_regression_C1_or_C2",
+        ]))
     ].copy()
     out = data[
         [
             "cohort",
             "definition",
+            "n_participants",
             "subset",
             "n_windows",
             "false_positive_rate",
@@ -676,7 +781,7 @@ def table_4(summary: pd.DataFrame) -> pd.DataFrame:
             "p_prevalence_ge_39_1",
             "p_prevalence_ge_44_2",
         ]
-    ].sort_values(["cohort", "definition", "subset"])
+    ].sort_values(["cohort", "definition", "n_participants", "subset"])
     out = out.rename(
         columns={
             "n_windows": "Monte Carlo studies",
@@ -703,6 +808,7 @@ def table_4(summary: pd.DataFrame) -> pd.DataFrame:
 def table_5(summary: pd.DataFrame) -> pd.DataFrame:
     data = summary[
         (summary.table_type == "window_false_positive")
+        & (summary.phase_mode == "strict_herzog")
         & (summary.window_type == "full")
         & (summary.subset.isin([
             "ge_1_seizure_day_per_month",
@@ -710,7 +816,11 @@ def table_5(summary: pd.DataFrame) -> pd.DataFrame:
             "strict_23_35_day_cycles_only",
             "common_classifiable_subset",
         ]))
-        & (summary.definition.isin(["A_windowed_any", "B_minimum_data_any", "C_reproducibility_any", "D_nb_regression_any"]))
+        & (summary.definition.isin([
+            "A_windowed_any", "A_windowed_C1_or_C2",
+            "B_minimum_data_C1_or_C2",
+            "C_reproducibility_C1_or_C2", "D_nb_regression_C1_or_C2",
+        ]))
     ].copy()
     data["FPR (95% CI)"] = data.apply(rate_ci, axis=1)
     out = data[
@@ -729,35 +839,33 @@ def table_5(summary: pd.DataFrame) -> pd.DataFrame:
 
 def table_6(summary: pd.DataFrame) -> pd.DataFrame:
     data = summary[
-        (summary.table_type == "window_false_positive")
-        & (summary.subset == "all")
+        (summary.table_type == "pattern_decomposition")
+        & (summary.phase_mode == "strict_herzog")
         & (summary.window_type == "full")
-        & (summary.definition.isin([
-            "A_windowed_any", "A_windowed_excluding_C3",
-            "A_windowed_C1_only", "A_windowed_C2_only", "A_windowed_C3_only",
-            "B_minimum_data_any", "B_minimum_data_excluding_C3",
-        ]))
+        & (summary.definition.isin(["A_windowed", "B_minimum_data", "D_nb_regression"]))
     ].copy()
-    data["FPR (95% CI)"] = data.apply(rate_ci, axis=1)
     out = data[
         [
             "cohort",
             "definition",
+            "pattern_category",
             "n_classifiable",
             "positives",
-            "FPR (95% CI)",
+            "false_positive_rate",
+            "positive_rate_all_attempted",
             "indeterminate_rate",
         ]
-    ].sort_values(["cohort", "definition"])
-    return format_table(out, {"n_classifiable": "int", "positives": "int", "indeterminate_rate": "pct"})
+    ].sort_values(["cohort", "definition", "pattern_category"])
+    return format_table(out, {"n_classifiable": "int", "positives": "int", "false_positive_rate": "pct", "positive_rate_all_attempted": "pct", "indeterminate_rate": "pct"})
 
 
 def table_7(summary: pd.DataFrame) -> pd.DataFrame:
     data = summary[
         (summary.table_type == "window_false_positive")
+        & (summary.phase_mode == "strict_herzog")
         & (summary.subset == "all")
         & (summary.window_type == "full")
-        & (summary.definition.isin(["D_nb_regression_any", "D_nb_regression_window_alpha_any"]))
+        & (summary.definition.isin(["D_nb_regression_C1_or_C2", "D_nb_regression_window_alpha_C1_or_C2"]))
     ].copy()
     data["window"] = data.apply(window_label, axis=1)
     data["FPR (95% CI)"] = data.apply(rate_ci, axis=1)
@@ -778,15 +886,28 @@ def table_7(summary: pd.DataFrame) -> pd.DataFrame:
 def table_8(summary: pd.DataFrame) -> pd.DataFrame:
     data = summary[
         (summary.table_type == "window_false_positive")
-        & (summary.window_type == "full")
-        & (summary.definition.isin(["A_windowed_any", "B_minimum_data_any", "D_nb_regression_any"]))
+        & (summary.phase_mode == "strict_herzog")
+        & (summary.definition.isin(["A_windowed_any", "A_windowed_C1_or_C2", "B_minimum_data_C1_or_C2", "D_nb_regression_C1_or_C2"]))
         & (
             summary.subset.astype(str).str.startswith("seizure_frequency:")
             | summary.subset.astype(str).str.startswith("cycle_regularity:")
+            | summary.subset.astype(str).str.startswith("window_seizure_days_")
         )
     ].copy()
-    data["stratum_type"] = np.where(data["subset"].str.startswith("seizure_frequency:"), "seizure frequency", "cycle regularity")
-    data["stratum"] = data["subset"].str.split(":", n=1).str[1]
+    data["stratum_type"] = np.select(
+        [
+            data["subset"].str.startswith("seizure_frequency:"),
+            data["subset"].str.startswith("cycle_regularity:"),
+            data["subset"].str.startswith("window_seizure_days_"),
+        ],
+        ["seizure frequency", "cycle regularity", "window seizure days"],
+        default="other",
+    )
+    data["stratum"] = np.where(
+        data["subset"].str.contains(":"),
+        data["subset"].str.split(":", n=1).str[1],
+        data["subset"].str.replace("window_seizure_days_", "", regex=False).str.replace("_", " ", regex=False),
+    )
     data["FPR"] = data["false_positive_rate"]
     out = data[
         [
@@ -809,6 +930,7 @@ def table_8(summary: pd.DataFrame) -> pd.DataFrame:
 def table_9(summary: pd.DataFrame) -> pd.DataFrame:
     data = summary[
         (summary.table_type == "window_false_positive")
+        & (summary.phase_mode == "strict_herzog")
         & (summary.subset == "all")
         & (summary.window_type.isin(["calendar", "full"]))
         & (summary.definition.isin(HISTORICAL_DEFINITIONS))
@@ -897,12 +1019,18 @@ def md_table(df: pd.DataFrame) -> str:
 
 
 def markdown_cell(source: str) -> dict[str, Any]:
-    return {"cell_type": "markdown", "metadata": {}, "source": source.splitlines(keepends=True)}
+    return {
+        "cell_type": "markdown",
+        "id": hashlib.sha256(f"markdown\0{source}".encode("utf-8")).hexdigest()[:12],
+        "metadata": {},
+        "source": source.splitlines(keepends=True),
+    }
 
 
 def code_cell(source: str) -> dict[str, Any]:
     return {
         "cell_type": "code",
+        "id": hashlib.sha256(f"code\0{source}".encode("utf-8")).hexdigest()[:12],
         "execution_count": None,
         "metadata": {},
         "outputs": [],
@@ -917,10 +1045,11 @@ def rel_path(path: Path, base: Path) -> str:
 
 
 def limitations_markdown(manifest: dict[str, Any]) -> str:
+    output_dir = manifest.get("output_dir", "the recorded output directory")
     return (
         "## Interpretation notes\n\n"
-        "- The notebook is populated from the current files in `outputs/`. If those files were produced by smoke mode, the numerical values are smoke-test values, not the final 100,000-participant estimates.\n"
-        "- Full-study values are produced by running `run_paper1_null_ce.py --config config.yaml --full`, then rebuilding this notebook.\n"
+        f"- The notebook is populated from the current files in `{output_dir}`. If those files were produced by smoke mode, the numerical values are smoke-test values, not the final 100,000-participant estimates.\n"
+        "- Full-study values are produced by running `run_paper1_null_ce.py --config config_random_start_full.yaml --full`, then rebuilding this notebook.\n"
         "- Exact Herzog 2004 results are intentionally present only for 3-complete-cycle windows.\n"
         "- Historical definitions are assumption-based operationalizations and should be kept separate from core endpoints.\n"
         "- The manifest assumptions are part of the analysis record:\n\n"

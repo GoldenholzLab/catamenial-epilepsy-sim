@@ -1,0 +1,147 @@
+{
+  "source_outputs": "outputs/no_circular_shift_full",
+  "primary_outputs_modified": false,
+  "primary_analysis_code_sha256": "bb88a232804621881b1b9948997912156aca042d2044d41600fd8682a7587c1d",
+  "primary_analysis_config_sha256": "754d14e80eee6c268d590d9893d9354f55cb8aa68da6b520bd0bae69e8eed9db",
+  "supplement_builder_sha256": "75b1fb3f708b33d2bb31c5856a94becb9785959b75c5fd6f78918ae6b34bbe44",
+  "cumulative_ratio_window": {
+    "phase_mode": "strict_herzog",
+    "window_type": "cycle",
+    "window_value": 3
+  },
+  "c3_nb_source": "deterministic 1% saved daily audit sample",
+  "figures": [
+    "outputs/draft_v5_direct_alignment_supplement/figS1_seizure_process_distributions.png",
+    "outputs/draft_v5_direct_alignment_supplement/figS1_seizure_process_distributions.pdf",
+    "outputs/draft_v5_direct_alignment_supplement/figS1_seizure_process_distributions.svg",
+    "outputs/draft_v5_direct_alignment_supplement/figS2_seizure_rhythm_distributions.png",
+    "outputs/draft_v5_direct_alignment_supplement/figS2_seizure_rhythm_distributions.pdf",
+    "outputs/draft_v5_direct_alignment_supplement/figS2_seizure_rhythm_distributions.svg",
+    "outputs/draft_v5_direct_alignment_supplement/figS3_menstrual_cycle_distributions.png",
+    "outputs/draft_v5_direct_alignment_supplement/figS3_menstrual_cycle_distributions.pdf",
+    "outputs/draft_v5_direct_alignment_supplement/figS3_menstrual_cycle_distributions.svg",
+    "outputs/draft_v5_direct_alignment_supplement/figS4_age_and_modifier_distributions.png",
+    "outputs/draft_v5_direct_alignment_supplement/figS4_age_and_modifier_distributions.pdf",
+    "outputs/draft_v5_direct_alignment_supplement/figS4_age_and_modifier_distributions.svg",
+    "outputs/draft_v5_direct_alignment_supplement/figS5_simulated_classification_associations.png",
+    "outputs/draft_v5_direct_alignment_supplement/figS5_simulated_classification_associations.pdf",
+    "outputs/draft_v5_direct_alignment_supplement/figS5_simulated_classification_associations.svg"
+  ],
+  "files": [
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/audit_realized_features.csv",
+      "bytes": 169912,
+      "sha256": "32afd0735c2bb940a57b652d089a30c2aecafd2d5fe066b8f92b3c5a88e436f1"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS1_seizure_process_distributions.pdf",
+      "bytes": 24549,
+      "sha256": "494dd12d9210618241aa96ede5b6a0fed90b02df2814a04db122a7cd52870436"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS1_seizure_process_distributions.png",
+      "bytes": 171402,
+      "sha256": "bc4f21202523527adf133c49c8541baa26e25caf483040706866602740dc3351"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS1_seizure_process_distributions.svg",
+      "bytes": 113685,
+      "sha256": "7a5ed290765010c3323cac62d1b85aaa2e1f49829ef10d426c723bb5e9f19558"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS2_seizure_rhythm_distributions.pdf",
+      "bytes": 24085,
+      "sha256": "9ae56aae727c8a0e130ab98a63e99dd33c528aa952b11811247e757508272d77"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS2_seizure_rhythm_distributions.png",
+      "bytes": 166407,
+      "sha256": "473d6bbdfc5e52638de015a4c0fbb80d1377cca987e64a5076d67417d835547f"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS2_seizure_rhythm_distributions.svg",
+      "bytes": 118338,
+      "sha256": "4bc7bbbce491a484a2f0faed939fa5a4fa6e0998e8354c7914dc4a17d7b5af8d"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS3_menstrual_cycle_distributions.pdf",
+      "bytes": 24604,
+      "sha256": "d4f55607becdbf24049b816b152dcda437fdc3112fe222faa0c451fe0a1e3ab0"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS3_menstrual_cycle_distributions.png",
+      "bytes": 163426,
+      "sha256": "c42b1f1f329046fb20afd58e96cbc48898d1e047a306dcbd0dfe5a26573a6ed6"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS3_menstrual_cycle_distributions.svg",
+      "bytes": 111673,
+      "sha256": "075dc015a50a2e49cbf9f1ff2fae246a9846b262df5d117576ba4bbeb26568f9"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS4_age_and_modifier_distributions.pdf",
+      "bytes": 19811,
+      "sha256": "997476db07158340e76b593169e6aca72b1679d0a14ae6c81e34a21498801e8a"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS4_age_and_modifier_distributions.png",
+      "bytes": 111138,
+      "sha256": "63bd776fb4f6649805c77a4eaff61ccbb1cc9913ad5ef19a50b71223d31b8387"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS4_age_and_modifier_distributions.svg",
+      "bytes": 67308,
+      "sha256": "1b227f9c4ed1929d7ca967b97d593883ef3a609a0918697eff2728ec81d88396"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS5_simulated_classification_associations.pdf",
+      "bytes": 22281,
+      "sha256": "997760ccfa42cd672852fa59e7a29f2f2828dfcf25e60efa4d9d27814a3db183"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS5_simulated_classification_associations.png",
+      "bytes": 166133,
+      "sha256": "dedf2b830e15acf3c49d41bad395b6041f9f6a53f3cb5874a654adfa9a1b3b82"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/figS5_simulated_classification_associations.svg",
+      "bytes": 75187,
+      "sha256": "aa77b5208a0cf68b68ada4796ed435fbb31431f4bafe7a513fe4ca24155691ca"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/tableS1_cumulative_herzog_ratios.csv",
+      "bytes": 5580,
+      "sha256": "99202a06339d30a9f93cd2423d3bc8768d3f64877aa6ee12e77f96e039dba797"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/tableS2_c3_window_sensitivity.csv",
+      "bytes": 2565,
+      "sha256": "fd4933f7675c0bbd5fd808df8d3d15718cd45431ff3f519a25c0d25b11ab3aa8"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/tableS3_minimum_data_sensitivity.csv",
+      "bytes": 10732,
+      "sha256": "d1dcd9fd5de921c35a4ca4968c5bb4cf6e1ba2c437b0c5d39f7267ba9cfa8d90"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/tableS4_simulated_classification_associations.csv",
+      "bytes": 38462,
+      "sha256": "dfa5a70a3e92a666f97e22198a3fae9e224b7f34a0105f46962bf80d66bc4c92"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/tableS5_simulator_parameters_and_assumptions.csv",
+      "bytes": 7467,
+      "sha256": "78cde285ad64539da6a7da4deac796852bedc9f58f94fdbc41bca5910988b8c0"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/tableS6_c3_nb_exploratory_participants.csv",
+      "bytes": 47733,
+      "sha256": "289cc605a11951a089f105484e710aee4a298d2ea5a0d4f6ab753261d5ad302a"
+    },
+    {
+      "path": "outputs/draft_v5_direct_alignment_supplement/tableS6_c3_nb_exploratory_summary.csv",
+      "bytes": 543,
+      "sha256": "554dfb2a826f96e6082f6313a6e3d27076d962ee5efa092be76f1d0746e8165a"
+    }
+  ]
+}

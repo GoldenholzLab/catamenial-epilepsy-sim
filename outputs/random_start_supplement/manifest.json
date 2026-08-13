@@ -1,0 +1,147 @@
+{
+  "source_outputs": "outputs/random_start_full",
+  "primary_outputs_modified": false,
+  "primary_analysis_code_sha256": "ebcf21a3856156ce085b73960e92a9350f1d77696405c8b31eb02da87621b521",
+  "primary_analysis_config_sha256": "9241326bb38ef3c728b060c20bac22a8ed87485a3a61708d58bc74e72fd697b0",
+  "supplement_builder_sha256": "691bbd870680ba1c741e000b25711de163efc59579f3eafcc68edf874bc0b2d9",
+  "cumulative_ratio_window": {
+    "phase_mode": "strict_herzog",
+    "window_type": "cycle",
+    "window_value": 3
+  },
+  "c3_nb_source": "deterministic 1% saved daily audit sample",
+  "figures": [
+    "outputs/random_start_supplement/figS1_seizure_process_distributions.png",
+    "outputs/random_start_supplement/figS1_seizure_process_distributions.pdf",
+    "outputs/random_start_supplement/figS1_seizure_process_distributions.svg",
+    "outputs/random_start_supplement/figS2_seizure_rhythm_distributions.png",
+    "outputs/random_start_supplement/figS2_seizure_rhythm_distributions.pdf",
+    "outputs/random_start_supplement/figS2_seizure_rhythm_distributions.svg",
+    "outputs/random_start_supplement/figS3_menstrual_cycle_distributions.png",
+    "outputs/random_start_supplement/figS3_menstrual_cycle_distributions.pdf",
+    "outputs/random_start_supplement/figS3_menstrual_cycle_distributions.svg",
+    "outputs/random_start_supplement/figS4_age_and_modifier_distributions.png",
+    "outputs/random_start_supplement/figS4_age_and_modifier_distributions.pdf",
+    "outputs/random_start_supplement/figS4_age_and_modifier_distributions.svg",
+    "outputs/random_start_supplement/figS5_simulated_classification_associations.png",
+    "outputs/random_start_supplement/figS5_simulated_classification_associations.pdf",
+    "outputs/random_start_supplement/figS5_simulated_classification_associations.svg"
+  ],
+  "files": [
+    {
+      "path": "outputs/random_start_supplement/audit_realized_features.csv",
+      "bytes": 169382,
+      "sha256": "c9cce39bd31cbfa75db40501c874e441961f27093d7ecfba1fc41b89086a58b2"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS1_seizure_process_distributions.pdf",
+      "bytes": 24549,
+      "sha256": "6443428f19d7ef0aacf4e2fab00f3472a1dcaacce29884a407458e826b1dec59"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS1_seizure_process_distributions.png",
+      "bytes": 171402,
+      "sha256": "bc4f21202523527adf133c49c8541baa26e25caf483040706866602740dc3351"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS1_seizure_process_distributions.svg",
+      "bytes": 113685,
+      "sha256": "f551816d61b4e8184482839997ddd1ba22eef030ffb378e5a139d0adcb6343ec"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS2_seizure_rhythm_distributions.pdf",
+      "bytes": 24085,
+      "sha256": "3e8303568f843c9f3c12782984fbcfe790575a3545dcde07ec367406e560ecf8"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS2_seizure_rhythm_distributions.png",
+      "bytes": 166407,
+      "sha256": "473d6bbdfc5e52638de015a4c0fbb80d1377cca987e64a5076d67417d835547f"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS2_seizure_rhythm_distributions.svg",
+      "bytes": 118338,
+      "sha256": "7bdb68035ae07cd9c82ddcce1266a4708a9765405c6815238d66bcc426979119"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS3_menstrual_cycle_distributions.pdf",
+      "bytes": 24598,
+      "sha256": "3b4c68169b47ccd274ac5a00bd931a5d78bf59dc4abde58037dd54fd2a6e2720"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS3_menstrual_cycle_distributions.png",
+      "bytes": 164208,
+      "sha256": "a56a8ea6b631e12c4ef8d4758889a73939dcfc0a87a61ed365741eacc7326283"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS3_menstrual_cycle_distributions.svg",
+      "bytes": 111439,
+      "sha256": "5fa32e30c4a54059fe0ab8c92206c281f17e7c59a52cd4ee0f7764bbe5ac2b4f"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS4_age_and_modifier_distributions.pdf",
+      "bytes": 19811,
+      "sha256": "ffa1cce57479f6437f5ba0f992dc7f4c23eebd9a2fcf98091aa37ed4db2dd90c"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS4_age_and_modifier_distributions.png",
+      "bytes": 111138,
+      "sha256": "63bd776fb4f6649805c77a4eaff61ccbb1cc9913ad5ef19a50b71223d31b8387"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS4_age_and_modifier_distributions.svg",
+      "bytes": 67308,
+      "sha256": "e574f861c3df1e230a8066ad05ea0d464b68e6751d2b55170b89a811e03b48d8"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS5_simulated_classification_associations.pdf",
+      "bytes": 22231,
+      "sha256": "35eb0d825e487536061b3b8692f100a138a5371b8e1f84332861dd2173b5af73"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS5_simulated_classification_associations.png",
+      "bytes": 167425,
+      "sha256": "5ed25bc9b8920c7b37db14e6b484a2e2cd1c862ba84ac99f5d16561125554e28"
+    },
+    {
+      "path": "outputs/random_start_supplement/figS5_simulated_classification_associations.svg",
+      "bytes": 74084,
+      "sha256": "677f4965899bf9be8507d5228656583ac37d93b15b6c48c7cd5cf6ad345d65fa"
+    },
+    {
+      "path": "outputs/random_start_supplement/tableS1_cumulative_herzog_ratios.csv",
+      "bytes": 5584,
+      "sha256": "57fabcffb23fa2f74352841c30e28a863fd9d56c6f9f031f55e35cdfb843bddf"
+    },
+    {
+      "path": "outputs/random_start_supplement/tableS2_c3_window_sensitivity.csv",
+      "bytes": 2572,
+      "sha256": "35a499f58b27e6bd66c4e856b245a76ace8e71bbc8d2294a8c8dc5f19a47efcd"
+    },
+    {
+      "path": "outputs/random_start_supplement/tableS3_minimum_data_sensitivity.csv",
+      "bytes": 10712,
+      "sha256": "27aedad0d7faf4c0053a0449e7576df0a5b88df5bac9fe05508b191d688eefec"
+    },
+    {
+      "path": "outputs/random_start_supplement/tableS4_simulated_classification_associations.csv",
+      "bytes": 38425,
+      "sha256": "b40ed17edc9523034ae6594500f0d6e4be645788b9309c952ef6283e95baffd5"
+    },
+    {
+      "path": "outputs/random_start_supplement/tableS5_simulator_parameters_and_assumptions.csv",
+      "bytes": 7744,
+      "sha256": "96b0170e02ff580e1be612952847d4d950ec0e18a4204a2847e074997435c264"
+    },
+    {
+      "path": "outputs/random_start_supplement/tableS6_c3_nb_exploratory_participants.csv",
+      "bytes": 47795,
+      "sha256": "6e2e40e36b0ddecc2b3a5142fb340032847c23cbd498f519f5c7233f94a14f52"
+    },
+    {
+      "path": "outputs/random_start_supplement/tableS6_c3_nb_exploratory_summary.csv",
+      "bytes": 544,
+      "sha256": "74f254aca7ae5b06a60935e83508f05c5cbd35ad57de8978d8f24fe53d6e2683"
+    }
+  ]
+}

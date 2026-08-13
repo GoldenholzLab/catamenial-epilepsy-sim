@@ -1,0 +1,308 @@
+{
+  "analysis_code_sha256": "bb88a232804621881b1b9948997912156aca042d2044d41600fd8682a7587c1d",
+  "analysis_config_sha256": "754d14e80eee6c268d590d9893d9354f55cb8aa68da6b520bd0bae69e8eed9db",
+  "assumptions": [
+    "Definition D uses a participant-full-diary method-of-moments negative-binomial alpha recorded in d_alpha; Poisson robust fallback is recorded in d_reason when statsmodels NB fitting fails. Definition D_window_alpha re-estimates alpha from the analyzed window as a non-oracle sensitivity.",
+    "Healthy ovulatory cohort used hormone_cycler build_patient_profile/render_cycle with ovulation_probability set to 1.0 because simulate_diary does not expose a public force-ovulation knob.",
+    "Historical definitions H1-H4 are assumption-based operationalizations and are flagged in summary outputs.",
+    "Study-level Monte Carlo samples each selected participant from a deterministic pool of precomputed random valid 3-month windows to avoid retaining all daily diaries in memory.",
+    "The hormone simulator exposes medical-factor knobs but no natural prevalence sampler; population medical factors were sampled from config.yaml rates."
+  ],
+  "config": {
+    "analysis_modes": {
+      "coupled_full": {
+        "chunk_size": 5000,
+        "cohort_sizes": {
+          "healthy_ovulatory": 50000,
+          "population": 50000
+        },
+        "diary_months": 36,
+        "n_jobs": -1,
+        "output_dir": "outputs_true_coupling",
+        "study_level_n_studies": 10000,
+        "true_coupling": {
+          "enabled": true,
+          "rate_ratio": 1.5,
+          "target_phase": "M"
+        }
+      },
+      "coupled_smoke": {
+        "chunk_size": 25,
+        "diary_months": 6,
+        "n_jobs": 1,
+        "n_total": 100,
+        "output_dir": "outputs_true_coupling_smoke",
+        "study_level_n_studies": 100,
+        "true_coupling": {
+          "enabled": true,
+          "rate_ratio": 1.5,
+          "target_phase": "M"
+        }
+      },
+      "full": {
+        "chunk_size": 5000,
+        "cohort_sizes": {
+          "healthy_ovulatory": 50000,
+          "population": 50000
+        },
+        "diary_months": 36,
+        "n_jobs": -1,
+        "output_dir": "outputs/no_circular_shift_full",
+        "study_level_n_studies": 10000
+      },
+      "smoke": {
+        "chunk_size": 25,
+        "diary_months": 6,
+        "n_jobs": 1,
+        "n_total": 100,
+        "output_dir": "outputs_smoke",
+        "study_level_n_studies": 100
+      }
+    },
+    "audit_daily_fraction": 0.01,
+    "bootstrap": {
+      "n_replicates": 1000
+    },
+    "chunk_size": 250,
+    "cohorts": {
+      "healthy_ovulatory": {
+        "age_range": [
+          18.0,
+          45.0
+        ],
+        "force_ovulatory_cycles": true
+      },
+      "population": {
+        "age_range": [
+          13.0,
+          54.9
+        ],
+        "force_ovulatory_cycles": false
+      }
+    },
+    "days_per_month": 30,
+    "default_seizure_frequency": null,
+    "definition_b": {
+      "min_cycle_window_cycles": 6,
+      "min_months": 4,
+      "min_seizure_days": 4
+    },
+    "historical": {
+      "h1_sensitivity_threshold": 0.667,
+      "h1_threshold": 0.5
+    },
+    "ilp_progesterone_threshold_ng_ml": 5.0,
+    "master_seed": 20260505,
+    "n_jobs": -1,
+    "output_dir": "outputs/no_circular_shift_full",
+    "phase_mode": "strict_herzog",
+    "phase_modes": [
+      "strict_herzog",
+      "luteal_anchored_ovulatory"
+    ],
+    "population_factor_rates": {
+      "dysmenorrhea": 0.12,
+      "pcos": 0.1,
+      "peri_menarche_if_age_lt_20": 0.6,
+      "perimenopause_if_age_gte_45": 0.55
+    },
+    "progress": {
+      "enabled": true,
+      "print_every_chunks": 1,
+      "print_updates": true,
+      "write_json": true
+    },
+    "regression": {
+      "enabled": true,
+      "evaluated_windows": [
+        {
+          "window_type": "full"
+        }
+      ],
+      "fallback_alpha": 1.0,
+      "window_alpha_sensitivity_windows": [
+        {
+          "window_type": "full"
+        }
+      ]
+    },
+    "reproducibility": {
+      "primary_min_complete_cycles": 6,
+      "sensitivity_min_complete_cycles": 12
+    },
+    "study_level": {
+      "benchmarks": [
+        0.391,
+        0.442
+      ],
+      "n_participants": 30,
+      "n_participants_values": [
+        30,
+        50,
+        100
+      ],
+      "n_studies": 10000,
+      "window_months": 3,
+      "window_pool_per_participant": 5
+    },
+    "suppress_infradian_seizure_cycles": false,
+    "thresholds": {
+      "C1": 1.69,
+      "C2": 1.83,
+      "C3": 1.62
+    },
+    "true_coupling": {
+      "enabled": false,
+      "rate_ratio": 1.5,
+      "target_phase": "M"
+    },
+    "windows": {
+      "calendar_months": [
+        1,
+        3,
+        4,
+        6,
+        9,
+        12,
+        18,
+        24,
+        36
+      ],
+      "cycle_counts": [
+        3,
+        6,
+        12
+      ]
+    }
+  },
+  "created_unix_time": 1785376850.7429252,
+  "files": [
+    {
+      "bytes": 7173053,
+      "path": "outputs/no_circular_shift_full/audit_daily_sample.parquet",
+      "sha256": "3f464c86447ca2fa34550010f6e411a6d0408ac1379b652bf0d35a0b21d168b6"
+    },
+    {
+      "bytes": 21283,
+      "path": "outputs/no_circular_shift_full/fig1_false_positive_by_window.pdf",
+      "sha256": "3494587331e2475126cbfdf98518229aef296d6e41730a7674258a454376a82c"
+    },
+    {
+      "bytes": 134321,
+      "path": "outputs/no_circular_shift_full/fig1_false_positive_by_window.png",
+      "sha256": "74c160cbca4bd49990913729de3635e6a0192ab34251ac7a67e4354b8353ec40"
+    },
+    {
+      "bytes": 80095,
+      "path": "outputs/no_circular_shift_full/fig1_false_positive_by_window.svg",
+      "sha256": "d6d976f6aad4be1e65f2a7e3b0856e2c990d9aaec06f5702ea52309090dfc86e"
+    },
+    {
+      "bytes": 18512,
+      "path": "outputs/no_circular_shift_full/fig2_pattern_decomposition.pdf",
+      "sha256": "e9ac170829d783692dd4c93fc1d70f6871455dad9f9233a7a7bb569f36919197"
+    },
+    {
+      "bytes": 75609,
+      "path": "outputs/no_circular_shift_full/fig2_pattern_decomposition.png",
+      "sha256": "6efdde0beccce5f222a4fd689b210b13e4ba53590cf6e2465d00068a4e95d5cb"
+    },
+    {
+      "bytes": 54049,
+      "path": "outputs/no_circular_shift_full/fig2_pattern_decomposition.svg",
+      "sha256": "b37932f7b7851a515b6a84cbe485e777270963683a9bf43c3a9dafd999498abf"
+    },
+    {
+      "bytes": 18302,
+      "path": "outputs/no_circular_shift_full/fig3_study_prevalence_distribution_3month.pdf",
+      "sha256": "2822203baa07cf4be144268fed6286cc79b41551c2c19b8b80d4363aa5ac2691"
+    },
+    {
+      "bytes": 107371,
+      "path": "outputs/no_circular_shift_full/fig3_study_prevalence_distribution_3month.png",
+      "sha256": "05ca36add60e76f2e813cecb4acd29f486d52ff9c08ab3253ba817d269f83c3c"
+    },
+    {
+      "bytes": 65824,
+      "path": "outputs/no_circular_shift_full/fig3_study_prevalence_distribution_3month.svg",
+      "sha256": "50aebaa9ab9259a976504e655614b8c58bb14cd8395e194325b6117248153788"
+    },
+    {
+      "bytes": 19312,
+      "path": "outputs/no_circular_shift_full/fig4_historical_vs_core_definitions.pdf",
+      "sha256": "b1a6a29e280390c3f2cfac27a339bc726409043bfac136e1d962555b07ed818b"
+    },
+    {
+      "bytes": 76759,
+      "path": "outputs/no_circular_shift_full/fig4_historical_vs_core_definitions.png",
+      "sha256": "af6c94a81de5c91a92249c1d42747c83b84f9ba9f36482a69d72ae1f1ad3905e"
+    },
+    {
+      "bytes": 51065,
+      "path": "outputs/no_circular_shift_full/fig4_historical_vs_core_definitions.svg",
+      "sha256": "1542907ee423c6dcbe366427e6b5fe7d6264b48fe43935227a6ec6029ec61dda"
+    },
+    {
+      "bytes": 27103,
+      "path": "outputs/no_circular_shift_full/fig4_indeterminate_vs_fpr_frontier.pdf",
+      "sha256": "6f3f5ffb25e565d50993f6ea7bb8ea186cdda0fc076351f56a10ec8e396b5ee6"
+    },
+    {
+      "bytes": 156198,
+      "path": "outputs/no_circular_shift_full/fig4_indeterminate_vs_fpr_frontier.png",
+      "sha256": "1cfe696198bbd998211c62ec133f0d8b18ef03a33ac464368597347c1f4fa245"
+    },
+    {
+      "bytes": 98774,
+      "path": "outputs/no_circular_shift_full/fig4_indeterminate_vs_fpr_frontier.svg",
+      "sha256": "ca94261e6516764215365d9aaeb3479a140bdb1181a32baefbd341e98b114e9e"
+    },
+    {
+      "bytes": 20475,
+      "path": "outputs/no_circular_shift_full/fig5_qc_null_cycle_day_profile.pdf",
+      "sha256": "f6df68d7126e80b6b09fbf31f03cf31fd4962839da966da99d00b7b8f788074d"
+    },
+    {
+      "bytes": 117727,
+      "path": "outputs/no_circular_shift_full/fig5_qc_null_cycle_day_profile.png",
+      "sha256": "bbd0b789b7afef274ceeaf7a19c2dca806b7ef7bd7996c6a6e348e0861c00015"
+    },
+    {
+      "bytes": 74860,
+      "path": "outputs/no_circular_shift_full/fig5_qc_null_cycle_day_profile.svg",
+      "sha256": "b874e9595cd736a6e33fdcb7a15a60c321c8d80367589be068bb11321c21aa22"
+    },
+    {
+      "bytes": 6918686,
+      "path": "outputs/no_circular_shift_full/participant_summary.parquet",
+      "sha256": "836fbb033f05f03166ca9e564abdb944e9b8656b38efb1457ab217c42a7d8e73"
+    },
+    {
+      "bytes": 2260,
+      "path": "outputs/no_circular_shift_full/progress.json",
+      "sha256": "ad3e67180a1d7f9d6ed8f3dfe362fdf77b6b634d52a4afa38735a0e205ae994e"
+    },
+    {
+      "bytes": 3015410,
+      "path": "outputs/no_circular_shift_full/study_level_3month.parquet",
+      "sha256": "a4c2a741c704f0173e0f46224fd8fb731095fbf2baa26d6a49ba71d4cc22abdc"
+    },
+    {
+      "bytes": 3015410,
+      "path": "outputs/no_circular_shift_full/study_level_3month_n30.parquet",
+      "sha256": "a4c2a741c704f0173e0f46224fd8fb731095fbf2baa26d6a49ba71d4cc22abdc"
+    },
+    {
+      "bytes": 4107049,
+      "path": "outputs/no_circular_shift_full/summary_tables.csv",
+      "sha256": "733262c9f4070ac466a0ba111fffea244b73c8ad883714c2c9514d77b9af72cd"
+    },
+    {
+      "bytes": 114596109,
+      "path": "outputs/no_circular_shift_full/window_results.parquet",
+      "sha256": "1898e8eada31fa1884162e275426833d1652aee246e523efb77b43bd42e79cee"
+    }
+  ],
+  "finalized_unix_time": 1785376930.413586,
+  "output_dir": "outputs/no_circular_shift_full"
+}

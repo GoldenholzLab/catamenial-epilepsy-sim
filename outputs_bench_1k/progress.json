@@ -1,0 +1,18 @@
+{
+  "chunk_end": 100,
+  "chunk_seconds": 83.45547629200155,
+  "chunk_start": 1,
+  "cohort": "healthy_ovulatory",
+  "elapsed": "1m 23s",
+  "elapsed_seconds": 83.45716708299005,
+  "eta": "12m 31s",
+  "eta_seconds": 751.1145037469105,
+  "message": "healthy_ovulatory participants 1-100 completed in 1m 23s",
+  "mode": "bench_1k",
+  "participants_completed": 100,
+  "participants_per_second": 1.1982194399261086,
+  "percent_complete": 10.0,
+  "stage": "participant_simulation",
+  "total_participants": 1000,
+  "updated_unix_time": 1783112062.5963578
+}

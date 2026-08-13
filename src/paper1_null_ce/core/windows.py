@@ -96,6 +96,15 @@ def sample_study_pool_windows(
 def subset_window(daily: pd.DataFrame, spec: WindowSpec) -> pd.DataFrame:
     if not spec.valid or spec.start_day is None or spec.end_day is None:
         return daily.iloc[0:0].copy()
+    # Simulated diaries use a contiguous one-based calendar index. Positional
+    # slicing is equivalent to the boolean mask below and avoids constructing
+    # 31 full-length masks per participant in the primary analysis.
+    if (
+        len(daily) > 0
+        and int(daily["calendar_day_index"].iloc[0]) == 1
+        and int(daily["calendar_day_index"].iloc[-1]) == len(daily)
+    ):
+        return daily.iloc[spec.start_day - 1 : spec.end_day].copy()
     return daily[
         (daily["calendar_day_index"] >= spec.start_day)
         & (daily["calendar_day_index"] <= spec.end_day)

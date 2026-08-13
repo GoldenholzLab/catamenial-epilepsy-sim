@@ -1,0 +1,2346 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Paper 1 v3 — Revision and Comment Review</title>
+  <style>
+    :root {
+      --ink: #18222c;
+      --muted: #5d6975;
+      --paper: #fbfaf7;
+      --panel: #ffffff;
+      --line: #dce1e5;
+      --navy: #183b56;
+      --teal: #0a746d;
+      --teal-soft: #e8f5f3;
+      --amber: #9a5a00;
+      --amber-soft: #fff4dc;
+      --red: #9b2c2c;
+      --red-soft: #fff0f0;
+      --blue: #285a9e;
+      --blue-soft: #edf4ff;
+      --violet: #6842a0;
+      --violet-soft: #f3edfc;
+      --shadow: 0 10px 28px rgba(24, 34, 44, 0.07);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 90% 0%, rgba(10, 116, 109, 0.08), transparent 34rem),
+        var(--paper);
+      font: 16px/1.58 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    a { color: var(--blue); text-underline-offset: 2px; }
+    a:hover { color: var(--navy); }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+    code {
+      padding: 0.08rem 0.28rem;
+      border-radius: 4px;
+      background: #f1f3f5;
+      font-size: 0.92em;
+    }
+    pre {
+      margin: 1rem 0 0;
+      padding: 1.1rem 1.2rem;
+      overflow: auto;
+      border: 1px solid #cdd8e1;
+      border-radius: 10px;
+      background: #10202c;
+      color: #eaf2f7;
+      white-space: pre-wrap;
+      font-size: 0.86rem;
+      line-height: 1.48;
+    }
+    h1, h2, h3, h4 {
+      color: var(--navy);
+      line-height: 1.18;
+      letter-spacing: -0.02em;
+    }
+    h1 { margin: 0; font-size: clamp(2.1rem, 5vw, 3.9rem); }
+    h2 { margin: 0 0 1rem; font-size: clamp(1.6rem, 2.4vw, 2.15rem); }
+    h3 { margin: 0 0 0.72rem; font-size: 1.18rem; }
+    h4 { margin: 0 0 0.55rem; font-size: 1rem; }
+    p { margin: 0.5rem 0 0; }
+    ul, ol { margin: 0.65rem 0 0; padding-left: 1.25rem; }
+    li + li { margin-top: 0.35rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+    }
+    th, td {
+      padding: 0.68rem 0.72rem;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f2f6f7;
+      color: var(--navy);
+      font-size: 0.9rem;
+    }
+    tbody tr:hover { background: #fbfcfc; }
+
+    .hero {
+      padding: 4.6rem max(1.2rem, calc((100vw - 1240px) / 2)) 3rem;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(130deg, rgba(255,255,255,0.96), rgba(232,245,243,0.78)),
+        var(--panel);
+    }
+    .eyebrow {
+      margin-bottom: 0.7rem;
+      color: var(--teal);
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .dek {
+      max-width: 850px;
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: 1.12rem;
+    }
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 1.35rem;
+    }
+    .hero-meta span {
+      padding: 0.42rem 0.7rem;
+      border: 1px solid #cddfdc;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.74);
+      color: #31515a;
+      font-size: 0.86rem;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 245px minmax(0, 1fr);
+      gap: 2.1rem;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 2rem 1.2rem 5rem;
+    }
+    nav {
+      position: sticky;
+      top: 1rem;
+      align-self: start;
+      max-height: calc(100vh - 2rem);
+      padding: 1rem;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.88);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    nav .nav-title {
+      margin: 0 0 0.55rem;
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    nav a {
+      display: block;
+      padding: 0.4rem 0.5rem;
+      border-radius: 7px;
+      color: #314350;
+      font-size: 0.91rem;
+      text-decoration: none;
+    }
+    nav a:hover { background: var(--teal-soft); color: var(--teal); }
+    nav .sub { padding-left: 1rem; color: var(--muted); font-size: 0.84rem; }
+
+    main { min-width: 0; }
+    section {
+      scroll-margin-top: 1rem;
+      margin-bottom: 2rem;
+      padding: clamp(1.15rem, 2.4vw, 2rem);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .section-intro {
+      max-width: 900px;
+      margin-bottom: 1rem;
+      color: var(--muted);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #fff;
+    }
+    .card p { color: #394854; }
+    .callout {
+      margin-top: 1rem;
+      padding: 1rem 1.1rem;
+      border-left: 5px solid var(--teal);
+      border-radius: 8px;
+      background: var(--teal-soft);
+    }
+    .callout.warn { border-color: var(--amber); background: var(--amber-soft); }
+    .callout.risk { border-color: var(--red); background: var(--red-soft); }
+    .callout.info { border-color: var(--blue); background: var(--blue-soft); }
+    .callout h3 { margin-bottom: 0.35rem; }
+    .badge {
+      display: inline-block;
+      margin: 0 0.36rem 0.28rem 0;
+      padding: 0.22rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      vertical-align: middle;
+    }
+    .accept { color: #075d57; background: var(--teal-soft); }
+    .modify { color: #7c4700; background: var(--amber-soft); }
+    .reject { color: #8b2222; background: var(--red-soft); }
+    .decision { color: #4c2b7e; background: var(--violet-soft); }
+    .codework { color: #214e88; background: var(--blue-soft); }
+    .priority {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.65rem;
+      height: 1.65rem;
+      margin-right: 0.42rem;
+      border-radius: 50%;
+      background: var(--navy);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+    .quote {
+      margin-top: 0.65rem;
+      padding: 0.7rem 0.85rem;
+      border-left: 3px solid #aebbc5;
+      background: #f7f8f9;
+      color: #42515d;
+      font-size: 0.92rem;
+    }
+    .suggestion {
+      margin-top: 0.7rem;
+      padding: 0.75rem 0.9rem;
+      border: 1px dashed #a9c1c9;
+      border-radius: 8px;
+      background: #fbfefe;
+      color: #253946;
+    }
+    .suggestion::before {
+      content: "Suggested wording";
+      display: block;
+      margin-bottom: 0.25rem;
+      color: var(--teal);
+      font-size: 0.73rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    details {
+      margin-top: 0.72rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+    }
+    summary {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.45rem;
+      padding: 0.9rem 1rem;
+      cursor: pointer;
+      list-style: none;
+      color: var(--navy);
+      font-weight: 750;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after {
+      content: "+";
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    details[open] summary::after { content: "−"; }
+    .detail-body {
+      padding: 0 1rem 1rem;
+      border-top: 1px solid #edf0f2;
+    }
+    .detail-body .anchor {
+      margin-top: 0.8rem;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+    .comment-id {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .formula {
+      margin-top: 0.7rem;
+      padding: 0.7rem 0.85rem;
+      border-radius: 8px;
+      background: #f4f7f8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.9rem;
+      overflow-wrap: anywhere;
+    }
+    .table-wrap {
+      margin-top: 1rem;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .table-wrap table { min-width: 650px; }
+    .panel-label {
+      padding: 0.55rem 0.72rem;
+      border-bottom: 1px solid var(--line);
+      background: #eaf2f3;
+      color: var(--navy);
+      font-weight: 800;
+    }
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem 1rem;
+      padding: 0;
+      list-style: none;
+    }
+    .checklist li {
+      position: relative;
+      margin: 0;
+      padding-left: 1.45rem;
+    }
+    .checklist li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--teal);
+      font-weight: 900;
+    }
+    .source-list li { overflow-wrap: anywhere; }
+    .small { color: var(--muted); font-size: 0.88rem; }
+    .footer-note {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; padding-top: 1rem; }
+      nav { position: static; max-height: none; }
+      nav .nav-links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .grid, .grid.three, .checklist { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hero { padding-top: 2.7rem; }
+      .shell { padding-left: 0.7rem; padding-right: 0.7rem; }
+      section { padding: 1rem; }
+      nav .nav-links { grid-template-columns: 1fr; }
+      summary { display: grid; grid-template-columns: auto 1fr auto; }
+      .badge { margin-top: 0.25rem; }
+    }
+    @media print {
+      body { background: white; font-size: 10.5pt; }
+      .hero { padding: 1.5rem 0; }
+      .shell { display: block; max-width: none; padding: 0; }
+      nav { display: none; }
+      section { break-inside: avoid; box-shadow: none; border-color: #bbb; }
+      details { break-inside: avoid; }
+      details > .detail-body { display: block; }
+      a { color: black; text-decoration: none; }
+      pre { color: black; background: #f5f5f5; border-color: #bbb; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="eyebrow">Expanded independent revision review · 28 July 2026</div>
+    <h1>Paper 1 v3: how to address every revision and comment</h1>
+    <p class="dek">
+      Recommendation ledger for <em>False Positive Catamenial Epilepsy Classification: A Simulation Study</em>,
+      updated for the 25 July coauthor pass. It covers all 47 margin comments, the substantive tracked edits,
+      two proposed supplemental-table families, and copy-ready prompts for work that would require code.
+    </p>
+    <div class="hero-meta">
+      <span>Original manuscript left untouched</span>
+      <span>47 comments reviewed · 13 new</span>
+      <span>Tracked insertions and deletions reviewed in accepted/rejected views</span>
+      <span>25 rendered pages visually checked</span>
+      <span>No scientific, simulation, or analytic code run</span>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav aria-label="Review navigation">
+      <div class="nav-title">Jump to</div>
+      <div class="nav-links">
+        <a href="#coauthor-update">What changed</a>
+        <a href="#bottom-line">Bottom line</a>
+        <a href="#supplement">Herzog-ratio supplement</a>
+        <a href="#assumption-supplement">Simulator-assumption supplement</a>
+        <a href="#comments">All 47 comments</a>
+        <a class="sub" href="#comments-front">Front matter</a>
+        <a class="sub" href="#comments-intro">Introduction</a>
+        <a class="sub" href="#comments-methods">Methods</a>
+        <a class="sub" href="#comments-results">Results &amp; discussion</a>
+        <a class="sub" href="#comments-tables">Tables &amp; figures</a>
+        <a href="#tracked">Tracked-edit ledger</a>
+        <a href="#prompts">Codex prompts</a>
+        <a href="#layout">Layout observations</a>
+        <a href="#sources">Source notes</a>
+      </div>
+    </nav>
+
+    <main>
+      <section id="coauthor-update">
+        <h2>What changed in the 25 July coauthor pass</h2>
+        <p class="section-intro">
+          Sharon Chiang added 13 comments and two substantive tracked passages. The new feedback is
+          methodologically valuable, but it separates into changes that can be made in prose now and
+          analyses that would require a deliberate scope decision and new code.
+        </p>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Resolved in substance</h3>
+            <p>
+              Affiliation 5 now contains the full UCSF department and institute. Verify only the journal’s
+              preferred state/country style. The stale margin comment can then be resolved.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Useful tracked caveat, but too long</h3>
+            <p>
+              The abstract now states that estimates depend on simulator assumptions. Keep that idea, but
+              compress it: the current accepted abstract contains about 258 whitespace-delimited words,
+              while the front matter still says 235, and two abstract lines spill onto an otherwise nearly
+              empty page 4.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Reframe the negative-binomial analysis</h3>
+            <p>
+              Do not call it an independent diagnostic comparator. CHOCOLATES generates counts with a
+              hierarchical gamma–Poisson/negative-binomial-like process, so the fitted NB model is best
+              described as a <strong>model-concordant statistical calibration check</strong>. Its near-5%
+              result is not evidence of diagnostic superiority or real-world validity.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Add a simulator-transparency package</h3>
+            <p>
+              Add a supplementary parameter table and validation figure covering seizure burden,
+              overdispersion, clustering, multidien periods/amplitudes, cycle length and variability,
+              ovulation/ILP behavior, age, and configured medical modifiers. Report sources, exact settings,
+              applicability, and which assumptions were varied.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Prioritize C3 transparency</h3>
+            <p>
+              Because C3 drives the largest apparent-positive rate, explain exactly how ILP is generated and
+              how C3 is restricted. In the current adapter, nonovulatory cycles and cycles lacking a valid
+              ovulation day or progesterone field are marked ILP; otherwise ILP is assigned when the maximum
+              progesterone on post-ovulation days 5–9 is below 5 ng/mL. C3 then compares O+L+M with F only
+              within flagged cycles.
+            </p>
+          </div>
+          <div class="card">
+            <h3>New analyses require an author-team scope decision</h3>
+            <p>
+              Scenario sensitivity, nonstationary seizure diaries, simulation-driver analyses, a C3 NB
+              model, and an interactive calculator are not copyedits. The first three would materially
+              strengthen the paper if performed prospectively; a clinical-facing calculator should be
+              deferred until empirical validation because a disclaimer cannot prevent patient-specific
+              overinterpretation.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout info">
+          <h3>Empirical validation is the right future direction</h3>
+          <p>
+            Keep the new Discussion paragraph, but refine it. Within-person time shifts preserve each
+            diary’s marginal structure, yet ordinary circular shifts create an artificial end-to-start
+            junction and rely on stationarity. Cross-person pairing breaks coupling but requires matching
+            and participant-level resampling. Present these as complementary empirical-null designs, not as
+            proof that any single shift removes biological coupling.
+          </p>
+        </div>
+      </section>
+
+      <section id="bottom-line">
+        <h2>Bottom line</h2>
+        <p class="section-intro">
+          Most revisions improve accessibility, but several should not be accepted as written because they
+          change the scientific meaning or introduce new ambiguity. I would resolve the following before
+          accepting changes globally.
+        </p>
+
+        <div class="callout warn">
+          <h3>New high-priority decisions</h3>
+          <ol>
+            <li>Rename the NB analysis a model-concordant calibration check throughout the abstract, introduction, methods, results, and discussion.</li>
+            <li>Add the simulator parameter table and distribution-level validation figure; an averages-only cohort table is not enough.</li>
+            <li>Expose the ILP/C3 algorithm and treat C3 sensitivity to model assumptions as a primary robustness question.</li>
+            <li>Either add a bounded scenario/nonstationarity analysis or state explicitly that model-form uncertainty remains unquantified.</li>
+          </ol>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <h3><span class="priority">1</span>Correct Table 3’s category labels</h3>
+            <p>
+              The entries are mutually exclusive <strong>participant-window categories</strong>, not
+              “individual cycle types.” The final 4.6%/4.2% column is <strong>C3 with C1 and/or C2</strong>,
+              not “Any.” “Any” would include every positive category and therefore cannot be 4.6%.
+            </p>
+          </div>
+          <div class="card">
+            <h3><span class="priority">2</span>Restore the Monte Carlo interval’s true meaning</h3>
+            <p>
+              Table 4’s range is the empirical <strong>2.5th–97.5th percentile interval across simulated
+              studies</strong>. It is not a confidence interval. The underlying summary code explicitly
+              computes quantiles.
+            </p>
+          </div>
+          <div class="card">
+            <h3><span class="priority">3</span>Separate “not applicable” from “indeterminate”</h3>
+            <p>
+              C3 is not evaluated in the healthy ovulatory cohort. Reporting 0/50,000, 0% positive, and
+              100% indeterminate suggests a failed test. Use “Not applicable” or omit the row.
+            </p>
+          </div>
+          <div class="card">
+            <h3><span class="priority">4</span>Do not call discordance an error without a reference standard</h3>
+            <p>
+              A participant’s impression and a diary-derived classification can disagree, but neither is an
+              established gold standard. Frame these as forms of <strong>discordance</strong>, not proven
+              false positives or false negatives.
+            </p>
+          </div>
+          <div class="card">
+            <h3><span class="priority">5</span>Reject the proposed Nyquist rationale</h3>
+            <p>
+              Nyquist sampling does not justify “four months or six cycles plus four seizure days,” and it
+              does not explain the seizure-day threshold. Describe this as an investigator-selected
+              minimum-data sensitivity unless it was prespecified or taken from prior work.
+            </p>
+          </div>
+          <div class="card">
+            <h3><span class="priority">6</span>Use precise Herzog terminology</h3>
+            <p>
+              Avoid “the Herzog method” and “championed by Andrew Herzog.” Introduce
+              <strong>phase definitions and pattern-specific seizure-frequency ratio thresholds introduced
+              by Herzog et al.</strong>, then use “Herzog criteria” as shorthand.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout risk">
+          <h3>Additional defects visible after accepting all tracked changes</h3>
+          <ul>
+            <li>Table 1 shows “31.5 7.8)” in the healthy age mean cell and then repeats 7.8 in the SD column.</li>
+            <li>The title character count remains 67, but the revised title contains 69 characters including spaces and punctuation.</li>
+            <li>The abstract word count remains 235 although the accepted abstract now contains about 258 whitespace-delimited words; verify the journal-specific count.</li>
+            <li>The corresponding author is “David M. Goldenholz,” while the author list and responsibility statement say “Daniel M. Goldenholz.” Verify the correct name.</li>
+            <li>Affiliation 5 is now complete, but affiliation 6 remains only “Stanford” and still needs a full department/institution/location.</li>
+            <li>The C3 prose says anovulatory cycles “without <code>ilp_flag</code>” do not contribute, but the adapter assigns ILP=true to nonovulatory cycles; reconcile the manuscript with the implemented denominator.</li>
+            <li>The inserted limitations sentence reads “Although limitations have been discussed ().” It is incomplete and has an empty citation.</li>
+            <li>Table 2’s note is stranded on a nearly empty page, and the example figure pasted below Figure 2 remains in the manuscript.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="supplement">
+        <h2>Recommended Herzog-ratio supplemental table</h2>
+        <p class="section-intro">
+          The pasted table is specifically a <strong>cumulative C1 distribution</strong> from 294 women in
+          the NIH Progesterone Treatment Trial: each row is the number and percentage with a baseline C1
+          ratio at or above the listed level. It is not a general pooled C1/C2/C3 table. A valid simulation
+          analogue should preserve that cumulative structure while keeping each pattern’s numerator,
+          denominator, and applicability separate.
+        </p>
+
+        <div class="callout">
+          <h3>Recommended design</h3>
+          <p>
+            Use one supplementary table with three panels: <strong>Panel A, C1; Panel B, C2; Panel C,
+            C3</strong>. The first column in every panel should be
+            <strong>“Herzog ratio threshold (≥)”</strong>. For direct historical comparability, use
+            <strong>three-complete-cycle windows with strict Herzog phase labeling</strong>. If the authors
+            instead want alignment with the manuscript’s 36-month headline, create a second table rather
+            than mixing durations in the same columns.
+          </p>
+        </div>
+
+        <div class="grid three">
+          <div class="card">
+            <h3>Panel A — C1</h3>
+            <div class="formula">C1 = ADSF(M) / ADSF(F + L)</div>
+            <p>Show healthy ovulatory and heterogeneous cohorts. Highlight the historical inflection threshold, 1.69.</p>
+          </div>
+          <div class="card">
+            <h3>Panel B — C2</h3>
+            <div class="formula">C2 = ADSF(O) / ADSF(F + L)</div>
+            <p>Show healthy ovulatory and heterogeneous cohorts. Highlight the historical inflection threshold, 1.83.</p>
+          </div>
+          <div class="card">
+            <h3>Panel C — C3</h3>
+            <div class="formula">C3 = ADSF(O + L + M) / ADSF(F)</div>
+            <p>Show only applicable inadequate-luteal-phase windows in the heterogeneous cohort. Highlight 1.62.</p>
+          </div>
+        </div>
+
+        <h3 style="margin-top:1.4rem">Table blueprint</h3>
+        <div class="table-wrap" role="region" aria-label="Supplemental table blueprint" tabindex="0">
+          <div class="panel-label">Panel A. C1 cumulative distribution in three-complete-cycle windows</div>
+          <table>
+            <thead>
+              <tr>
+                <th rowspan="2">Herzog ratio threshold (≥)</th>
+                <th colspan="2">Healthy ovulatory</th>
+                <th colspan="2">Heterogeneous menstruating-age</th>
+              </tr>
+              <tr>
+                <th>Participant-windows, n</th>
+                <th>% of classifiable</th>
+                <th>Participant-windows, n</th>
+                <th>% of classifiable</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>0</td><td>populate</td><td>100.00</td><td>populate</td><td>100.00</td></tr>
+              <tr><td>1</td><td>populate</td><td>populate</td><td>populate</td><td>populate</td></tr>
+              <tr><td><strong>1.69</strong></td><td>populate</td><td>populate</td><td>populate</td><td>populate</td></tr>
+              <tr><td>2</td><td>populate</td><td>populate</td><td>populate</td><td>populate</td></tr>
+              <tr><td>3</td><td>populate</td><td>populate</td><td>populate</td><td>populate</td></tr>
+              <tr><td>4–10, one row per integer</td><td>populate</td><td>populate</td><td>populate</td><td>populate</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small">
+          Repeat the same structure for C2 with 1.83 inserted between 1 and 2. For C3, use only the
+          heterogeneous cohort and insert 1.62. The healthy cohort is “not applicable,” not zero.
+        </p>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Threshold rows</h3>
+            <p>
+              Use ≥0, ≥1, the pattern-specific historical inflection threshold, then ≥2 through ≥10.
+              This exactly mirrors the logic of the 2015 C1 table while respecting the distinct C2 and C3
+              thresholds from the 1997 paper.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Denominator</h3>
+            <p>
+              The percentage should be cumulative among participant-windows with a defined ratio. Include
+              positive infinity when the numerator is positive and the comparator has zero seizures; exclude
+              undefined 0/0 or missing-phase ratios. Report attempted, defined, undefined, and not-applicable
+              counts in the panel note.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Uncertainty</h3>
+            <p>
+              The source table reports n and %. That is sufficient here and avoids a very wide table.
+              A Wilson interval would quantify Monte Carlo sampling under a fixed simulator, not model-form
+              uncertainty; include it only if required and label it explicitly.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Interpretation</h3>
+            <p>
+              Title the table as a <strong>cumulative ratio distribution under independence</strong>, not
+              prevalence. Only the 1.69, 1.83, and 1.62 rows correspond to the pattern-specific thresholds
+              used in the present classifier.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <h3>Do not silently combine the trial and simulation data</h3>
+          <p>
+            The published 2015 C1 table describes women with intractable epilepsy during a treatment-trial
+            baseline; the proposed table describes simulated null participant-windows. If an empirical
+            comparison is desired, reproduce the published values as a separately labeled reference panel
+            with its citation and population description, not as if the columns shared a study population.
+          </p>
+        </div>
+
+        <h3 style="margin-top:1.4rem">Proposed title and footnote</h3>
+        <div class="suggestion">
+          <strong>Supplementary Table X. Cumulative distributions of simulated Herzog
+          seizure-frequency ratios in three-complete-cycle windows under independence.</strong><br><br>
+          Values are cumulative counts and percentages of participant-windows with a defined pattern-specific
+          ratio at or above each listed threshold. Ratios were calculated using strict Herzog phase labeling:
+          C1 = ADSF(M)/ADSF(F+L), C2 = ADSF(O)/ADSF(F+L), and C3 =
+          ADSF(O+L+M)/ADSF(F) in windows with applicable inadequate-luteal-phase cycles. Positive infinite
+          ratios were retained; undefined ratios were excluded from the classifiable denominator and are
+          reported separately. C3 was not applicable to the healthy ovulatory cohort. Bold rows indicate the
+          pattern-specific inflection thresholds reported by Herzog et al. (C1, 1.69; C2, 1.83; C3, 1.62).
+          ADSF, average daily seizure frequency; M, menstrual; F, follicular; O, ovulatory; L, luteal.
+        </div>
+      </section>
+
+      <section id="assumption-supplement">
+        <h2>Recommended simulator-assumption supplement</h2>
+        <p class="section-intro">
+          This is distinct from the cumulative Herzog-ratio table. It should let a reader reconstruct what
+          population was simulated, identify which inputs were literature-calibrated versus
+          investigator-configured, and judge whether the generated distributions resemble the empirical
+          targets. Comments #76, #91, #103, #114, and #123 are best answered as one coherent transparency
+          and robustness package.
+        </p>
+
+        <div class="callout">
+          <h3>Supplementary Table Y — exact inputs and assumptions</h3>
+          <p>
+            Use columns: <strong>domain; parameter; code/config field; setting or distribution by cohort;
+            source/rationale; sampled at participant/cycle/day level; varied in sensitivity analysis; output
+            validation target</strong>. Put a versioned repository URL, release or commit, and analysis
+            manifest identifier in the note.
+          </p>
+        </div>
+
+        <div class="table-wrap" role="region" aria-label="Simulator parameter table blueprint" tabindex="0">
+          <table>
+            <thead>
+              <tr>
+                <th>Domain</th>
+                <th>Items that must be reported</th>
+                <th>What the current implementation reveals</th>
+                <th>Editorial recommendation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Seizure process</td>
+                <td>Monthly burden, overdispersion, cluster prevalence/propensity, multidien-period and amplitude distributions, interseizure limits, diary duration.</td>
+                <td>CHOCOLATES returns participant-level mean seizure frequency, overdispersion, clustering status, and cycle periods/amplitudes. The configured default seizure frequency is null, so these are sampled internally; infradian cycles are retained.</td>
+                <td>Extract the actual generator distributions and provenance from the version used. Do not substitute only the observed cohort means.</td>
+              </tr>
+              <tr>
+                <td>Menstrual process</td>
+                <td>Cycle length and within-person variability, bleeding duration, ovulation probability, follicular/luteal timing, hormone trajectories, age effects.</td>
+                <td>The healthy cohort is age 18–45 with ovulation forced; the heterogeneous cohort is age 13.0–54.9 with natural simulator ovulatory/anovulatory behavior.</td>
+                <td>Report both latent input distributions and realized output distributions by cohort.</td>
+              </tr>
+              <tr>
+                <td>Configured modifiers</td>
+                <td>PCOS, peri-menarche, perimenopause, dysmenorrhea, contraception/IUD settings, and any interactions.</td>
+                <td>Current population configuration samples PCOS 10%; peri-menarche 60% conditional on age &lt;20; perimenopause 55% conditional on age ≥45; dysmenorrhea 12%. The manuscript does not expose these values.</td>
+                <td>Label these as configured stress-test inputs unless every rate is externally validated for the intended population.</td>
+              </tr>
+              <tr>
+                <td>ILP and C3</td>
+                <td>Ovulatory status, progesterone window, threshold, missing-window fallback, and C3 applicability/denominator.</td>
+                <td>Nonovulatory cycles and cycles lacking a valid ovulation day or progesterone field are flagged ILP. In valid ovulatory cycles, the adapter uses the maximum progesterone on ovulation+5 through ovulation+9 days, falling back to post-ovulation days if needed, and flags ILP below 5.0 ng/mL.</td>
+                <td>State this algorithm in Methods or the supplement and cite the biological threshold source. “Irregular luteal flag” is not the implemented construct.</td>
+              </tr>
+              <tr>
+                <td>Null construction</td>
+                <td>Independence, circular-shift target and distribution, random seed, phase mode, windows, missingness.</td>
+                <td>The seizure diary is circularly shifted uniformly before merging; master seed 20260505; strict Herzog primary with luteal-anchored sensitivity; 36-month diaries.</td>
+                <td>Explain the artificial wrap boundary and whether any missingness, treatment changes, or secular trends are absent.</td>
+              </tr>
+              <tr>
+                <td>Software provenance</td>
+                <td>Package name, version, release/commit, repository, dependency lock, and archived manifest.</td>
+                <td><code>hormone_cycler</code> is bundled in this repository and declares version 0.1.0; it is not presently identified in the paper by a standalone publication or software citation.</td>
+                <td>Cite the repository and exact archived version/commit. If a DOI release does not exist, do not imply that HORMONE-CYCLE has a peer-reviewed source paper.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Supplementary Figure X — input/output validation</h3>
+            <p>
+              Compare simulated and empirical distributions, not just averages. Candidate panels are
+              seizures/month, seizure days/month, overdispersion, clustering, dominant multidien period and
+              amplitude, cycle length, within-person cycle variability, ovulatory fraction, ILP fraction,
+              age, and modifier prevalence. ECDFs or aligned density/quantile plots are preferable to an
+              overcrowded set of histograms.
+            </p>
+          </div>
+          <div class="card">
+            <h3>When microdata are unavailable</h3>
+            <p>
+              Overlay published medians, quantiles, or target bands and label them as summary-level
+              calibration targets. A visual match to one or two moments is not distributional validation,
+              and no panel should imply empirical validation where only an investigator-selected setting is
+              available.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Robustness, not just Monte Carlo precision</h3>
+            <p>
+              Bootstrap intervals within one simulation setting quantify finite-sample variation under that
+              setting. They do not quantify uncertainty across seizure, cycle, ILP, or nonstationarity
+              assumptions. Report a prespecified scenario envelope or sensitivity distribution separately.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Clinically interpretable language</h3>
+            <p>
+              Call associations with model features <strong>simulation drivers of apparent
+              classification</strong>, not patient-level clinical risk factors. Defer a calculator until
+              those relations have been checked in real paired diaries.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="comments">
+        <h2>Margin-comment ledger</h2>
+        <p class="section-intro">
+          Every comment is listed below with a recommended disposition. “Modify” means the underlying concern
+          is valid, but the proposed wording or formatting should not be accepted exactly as entered.
+        </p>
+
+        <h3 id="comments-front">Front matter and abstract</h3>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#8 · KW</span>
+            Replace “null” in the running title
+            <span class="badge accept">Accept</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              “False Positive Catamenial Classification” is clearer to a clinical audience than “Null
+              Catamenial Classification.” Retain the change, but use <strong>false-positive</strong> when it
+              functions as a compound modifier in prose.
+            </p>
+            <div class="anchor">Anchor: running title.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#10 · RS</span>
+            Move Wesley Kerr to second author
+            <span class="badge decision">Author decision</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Do not treat this as a copyedit. Confirm author order explicitly with the full author group,
+              reconcile it with the CRediT statement, and document agreement before submission. If Wesley is
+              second author, the contributor statement should describe the study-shaping contributions that
+              justify the change.
+            </p>
+            <div class="anchor">Anchor: author list.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#25 · RS</span>
+            “@Sharon to fill” UCSF affiliation
+            <span class="badge accept">Resolved in latest draft</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The latest accepted view now gives “Department of Neurology and Weill Institute for
+              Neurosciences, University of California, San Francisco, San Francisco, United States.”
+              Confirm the journal’s preferred state and country style, then resolve this stale comment.
+            </p>
+            <div class="anchor">Anchor: affiliation 5.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#42 · RS</span>
+            Set up the convenient “Herzog method” shorthand
+            <span class="badge modify">Modify</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The concern is correct, but the current abstract sentence is ungrammatical and
+              “championed by Andrew Herzog” is too personal and imprecise. Define the components
+              operationally, cite them, and introduce “Herzog criteria” as shorthand.
+            </p>
+            <div class="suggestion">
+              We applied the phase definitions and pattern-specific seizure-frequency ratio thresholds
+              introduced by Herzog and colleagues (hereafter, the Herzog criteria) to estimate C1-, C2-, and
+              C3-specific false-positive classifications.
+            </div>
+            <div class="anchor">Anchor: abstract objective/method sentence.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#43 · CS</span>
+            Is NB included as a diagnostic comparator or for calibration?
+            <span class="badge modify">Clarify as calibration only</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The manuscript should answer this consistently: NB is a <strong>model-concordant statistical
+              calibration check</strong> for the simulated C1/C2 null, not an independent clinical
+              diagnostic comparator. The generator and fitted analysis both use negative-binomial-like
+              count structure, so approximately 5% rejection supports implementation-level calibration
+              under related assumptions; it does not validate the simulator against patients or establish
+              NB as a superior way to diagnose catamenial epilepsy.
+            </p>
+            <div class="suggestion">
+              As a model-concordant statistical calibration check—not as an alternative clinical diagnostic
+              method—we evaluated full-diary negative-binomial C1/C2 tests under the simulated null.
+            </div>
+            <div class="anchor">Anchor: abstract Methods sentence.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#48 · CS</span>
+            Add the simulator-conditional caveat to the abstract
+            <span class="badge modify">Keep, but compress</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The caveat is important for abstract skimmers, but the tracked wording repeats
+              “simulation/simulated” and pushes two lines onto page 4. It also leaves the displayed abstract
+              count stale: the accepted abstract has roughly 258 whitespace-delimited words, not 235.
+            </p>
+            <div class="suggestion">
+              These rates are conditional on the specified seizure and menstrual-cycle models and should
+              not be interpreted as empirical prevalence estimates.
+            </div>
+            <div class="anchor">Anchor: final abstract sentence.</div>
+          </div>
+        </details>
+
+        <h3 id="comments-intro" style="margin-top:1.5rem">Introduction and citations</h3>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#51 · KW</span>
+            Clarify “selected trial participants”
+            <span class="badge modify">Modify</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Replace the vague phrase with the actual sampling frame. A concise option is “participants
+              enrolled in the NIH Progesterone Treatment Trial”; add “with intractable focal-onset seizures”
+              only if that exactly matches the cited analysis. Also make clear whether 44.2% refers to any
+              catamenial classification and which baseline rule produced it.
+            </p>
+            <div class="anchor">Anchor: introduction, historical 44% prevalence sentence.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#60 · KW</span>
+            Add PMIDs 30857949, 24944264, and 37452790
+            <span class="badge modify">Use selectively</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Of these, <strong>Voinescu et al. 2023 (PMID 37452790)</strong> directly supports discordance:
+              prior self-reported catamenial patterns did not predict diary-defined patterns in the small
+              eligible sample. <strong>Stephen et al. 2019 (PMID 30857949)</strong> is a broad management
+              review, and <strong>Herzog &amp; Frye 2014 (PMID 24944264)</strong> concerns allopregnanolone and
+              treatment response. They are reasonable background citations but do not establish a
+              three-part error taxonomy.
+            </p>
+            <p>
+              Reframe the added paragraph as discordance because neither self-report nor the quantitative
+              rule is a gold standard.
+            </p>
+            <div class="suggestion">
+              Prospective diary classifications may disagree with participants’ prior reports of
+              catamenial seizure exacerbation. Such discordance can reflect unrecognized diary-defined
+              patterns, perceived patterns not confirmed by the selected quantitative criterion, or
+              instability of classification across limited observation windows.
+            </div>
+            <div class="anchor">Anchor: newly added introduction paragraph on subjective report and quantitative criteria.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#64 · KW</span>
+            Cite sparse-event and ratio vulnerability
+            <span class="badge modify">Use line-specific support</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The suggested papers support different pieces of the claim:
+              Herzog et al. 2023 (PMID 36931823) addresses statistical versus clinical seizure clustering;
+              Glynn &amp; Buring 1996 (PMID 8611837) addresses recurrent-event rates and individual
+              heterogeneity; Möller &amp; Ahrenfeldt 2021 (PMID 34064019) addresses inference when one group
+              has zero events. None, by itself, proves that the exact Herzog ADSF ratios are unstable.
+            </p>
+            <p>
+              Either cite the three claims separately or shorten the statement to the transparent
+              mathematical issue: a small comparator count can yield a large or undefined ratio.
+            </p>
+            <div class="anchor">Anchor: introduction, sparse counts/comparator phases.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#66 · CS</span>
+            Mention the NB calibration check in the introduction
+            <span class="badge accept">Accept with corrected framing</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Add one clause to the final aim paragraph so the abstract does not introduce the analysis
+              without context. Avoid “comparator method,” which suggests an alternative diagnostic strategy.
+            </p>
+            <div class="suggestion">
+              We also used a model-concordant negative-binomial C1/C2 analysis as a statistical calibration
+              check under the simulated null.
+            </div>
+            <div class="anchor">Anchor: final Introduction paragraph.</div>
+          </div>
+        </details>
+
+        <h3 id="comments-methods" style="margin-top:1.5rem">Methods</h3>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#68 · KW</span>
+            Cite CHOCOLATES and HORMONE-CYCLE at first mention
+            <span class="badge accept">Accept with provenance detail</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Cite Goldenholz &amp; Westover 2023 for CHOCOLATES. HORMONE-CYCLE appears to be the local
+              <code>hormone_cycler</code> package (version 0.1.0) rather than a peer-reviewed publication.
+              Cite a software release/repository with version and commit, or a companion paper if one exists;
+              do not create a conventional journal citation unless it has actually been published.
+            </p>
+            <div class="anchor">Anchor: Study design, first simulator mention.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#70 · CS</span>
+            Which paper or repository is HORMONE-CYCLE from?
+            <span class="badge accept">Add exact software provenance</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The current repository bundles HORMONE-CYCLE as the local <code>hormone_cycler</code> package,
+              declared version 0.1.0. I did not find a separate source paper or archival software citation
+              in the repository. Cite the public project repository, exact release/commit used for the run,
+              license, and archived analysis manifest; add a DOI only if an actual archived release exists.
+            </p>
+            <p>
+              A repository citation establishes provenance, not empirical validation. Keep the literature
+              citations for each menstrual/hormone target separate from the software citation.
+            </p>
+            <div class="anchor">Anchor: Diary simulators, first HORMONE-CYCLE description.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#75 · KW</span>
+            Reference HORMONE-CYCLE configuration rates
+            <span class="badge modify">Add parameter provenance</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Cite sources for each prevalence/configuration input and add a supplementary
+              source-to-parameter table. The manuscript already says these values are configuration-sampled
+              and that the cohort is an assumption-driven stress test; preserve that qualification. A
+              software citation alone does not validate the population rates.
+            </p>
+            <div class="anchor">Anchor: cohort definitions and configured PCOS/perimenarche/perimenopause rates.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#76 · CS</span>
+            Add a supplementary table of simulator assumptions and parameters
+            <span class="badge accept">Strongly accept</span>
+            <span class="badge codework">Prompt 6</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              This is the clearest way to make the study auditable. Use the separate
+              <a href="#assumption-supplement">simulator-assumption supplement</a> above; do not squeeze
+              these inputs into the cumulative Herzog-ratio table. Include both latent generator inputs and
+              realized output summaries, with sources and cohort-specific applicability.
+            </p>
+            <p>
+              At minimum report seizure burden, overdispersion, clustering, multidien periods/amplitudes,
+              interseizure constraints, cycle length/variability, bleeding, ovulation, phase lengths,
+              progesterone/ILP rules, age, configured medical modifiers, diary length, phase modes, circular
+              shift, missingness, and software versions.
+            </p>
+            <div class="anchor">Anchor: Diary simulators paragraph and Appendix/STRESS sentence.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#77 · KW</span>
+            Define PCOS before use
+            <span class="badge accept">Already resolved</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The Cohorts paragraph already introduces “polycystic ovary syndrome (PCOS)” before the later
+              simulator paragraph. No additional expansion is needed unless the sections are reordered.
+            </p>
+            <div class="anchor">Anchor: Diary simulators paragraph.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#78 · KW</span>
+            Define IUD
+            <span class="badge accept">Accept</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Expand at first occurrence as “intrauterine device (IUD).” Because the abbreviation appears
+              only in a list, an even cleaner option is “hormonal and copper intrauterine devices” with no
+              abbreviation.
+            </p>
+            <div class="anchor">Anchor: Diary simulators paragraph.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#81 · KW</span>
+            Cite Herzog for the phase scheme
+            <span class="badge modify">Accept citation; fix terminology</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Cite Herzog et al. 1997 for the phase boundaries. Change “Strict Herzog phases were the
+              primary outcome” because phase labels are not an outcome.
+            </p>
+            <div class="suggestion">
+              Strict Herzog phase labeling was the primary phase-definition scheme.
+            </div>
+            <div class="anchor">Anchor: Phase labeling and definitions.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#85 · KW</span>
+            Cite Herzog for unlabeled days
+            <span class="badge accept">Accept with clarification</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Cite the 1997 phase definitions and state explicitly that days outside M, F, O, and L were
+              left unlabeled. This helps readers understand both the observed-day denominators and why some
+              windows are not classifiable.
+            </p>
+            <div class="anchor">Anchor: strict phase-boundary sentence.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#90 · KW</span>
+            Support thresholds 1.69, 1.83, and 1.62 rather than rounded 2
+            <span class="badge accept">Accept; correct C3 wording</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Cite Herzog et al. 1997, which reports the curve inflection points C1=1.69, C2=1.83, and
+              C3=1.62 and then proposes an approximately twofold clinical definition. The present analysis
+              uses the exact inflection values, so say that explicitly.
+            </p>
+            <p>
+              Also replace “among inadequate-luteal-phase days” with “in windows/cycles designated as
+              inadequate-luteal-phase,” because the applicability is cycle-level, not a special set of
+              individual days.
+            </p>
+            <div class="anchor">Anchor: C3 formula.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#87 · CS</span>
+            Where did the pattern-specific values come from?
+            <span class="badge accept">Cite the original derivation</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Cite Herzog, Klein, and Ransil 1997 at the threshold equations. That paper reports the
+              distributional inflection values C1=1.69, C2=1.83, and C3=1.62. Distinguish these exact
+              analysis thresholds from the subsequently simplified clinical shorthand of an approximately
+              twofold increase.
+            </p>
+            <div class="anchor">Anchor: C1/C2/C3 equations.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#91 · CS</span>
+            Explain how C3 and the inadequate-luteal-phase indicator were generated
+            <span class="badge accept">High-priority methods addition</span>
+            <span class="badge codework">Prompt 6</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Accept, and use “inadequate luteal phase,” not “irregular luteal.” The current adapter marks
+              every nonovulatory cycle—and any cycle without a valid ovulation day or progesterone
+              field—as ILP. For a valid ovulatory cycle, it takes the maximum simulated progesterone on
+              post-ovulation days 5–9 (falling back to all post-ovulation days if that window is absent) and
+              flags ILP when this value is below 5.0 ng/mL. The C3 ratio is then calculated from flagged
+              cycles as ADSF(O+L+M)/ADSF(F).
+            </p>
+            <p>
+              Report the biological source for the 5.0-ng/mL threshold, the prevalence of flagged cycles by
+              cohort and modifier, how incomplete/missing luteal windows are handled, and how C3
+              applicability differs between pooled-window and reproducibility analyses. Because C3 drives
+              the largest result, vary the ILP rule/threshold in robustness analyses if scientifically
+              defensible.
+            </p>
+            <p>
+              Reconcile the current prose saying that “anovulatory … cycles without <code>ilp_flag</code>
+              did not contribute” with the adapter, which explicitly assigns ILP=true to nonovulatory
+              cycles. Under the implemented path, that sentence does not describe the usual anovulatory
+              case.
+            </p>
+            <div class="anchor">Anchor: C3 applicability paragraph.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#92 · KW</span>
+            Define <code>ilp_flag</code>
+            <span class="badge accept">Replace code variable with prose</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Do not expose an internal snake-case field in the manuscript. Say “a simulator-generated
+              inadequate-luteal-phase (ILP) indicator,” then define how the simulator assigns it and cite or
+              document the relevant source/parameter rule in the supplement.
+            </p>
+            <div class="anchor">Anchor: C3 applicability sentence.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#94 · KW</span>
+            Cite Herzog 2004 for the exact three-cycle rule
+            <span class="badge accept">Accept</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Cite Herzog et al. 2004 for the three-complete-cycle eligibility and two-of-three-cycle
+              reproducibility rule. Make sure the implementation’s 23–35-day eligibility rule is sourced to
+              the same operational definition or separately to the 1997 phase study as appropriate.
+            </p>
+            <div class="anchor">Anchor: Exact Herzog 2004 paragraph.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#95 · KW</span>
+            Explain the four-month/six-cycle/four-seizure-day minimum
+            <span class="badge reject">Do not use proposed Nyquist rationale</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The proposed sampling-theorem argument does not derive these thresholds and does not justify
+              the minimum of four seizure days. Unless the rule was prespecified or borrowed from published
+              work, label it as an investigator-selected minimum-data sensitivity intended to reduce
+              classifications dominated by very sparse seizure counts. If the team wants to defend the
+              numerical cutoffs empirically, that requires a dedicated sensitivity analysis; see Prompt 2.
+            </p>
+            <div class="suggestion">
+              As a prespecified minimum-data sensitivity, we required sufficient observation time and at
+              least four seizure days to reduce classifications driven by extremely sparse event counts;
+              these thresholds were pragmatic rather than biologically derived.
+            </div>
+            <div class="anchor">Anchor: Herzog plus ≥4 seizure-day minimum.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#96 · CS</span>
+            The NB fit is concordant with CHOCOLATES’ count process
+            <span class="badge accept">Reframe throughout</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              This caveat is essential. CHOCOLATES uses a hierarchical gamma–Poisson/negative-binomial-like
+              generator, so NB inference is advantaged by model-family concordance even though the fitted
+              daily fixed-effect model is not identical to the full simulator. Call the result a
+              calibration or negative-control benchmark. Do not present it as an alternative method for
+              diagnosing catamenial epilepsy or as independent validation of CHOCOLATES/HORMONE-CYCLE.
+            </p>
+            <div class="suggestion">
+              Because CHOCOLATES uses a negative-binomial-like count process, this analysis was included as a
+              model-concordant calibration check of null rejection behavior, not as an alternative clinical
+              diagnostic method or an independent validation of the simulator.
+            </div>
+            <div class="anchor">Anchor: Regression comparator Methods and Discussion interpretation.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#97 · KW</span>
+            Explain why negative-binomial regression was selected
+            <span class="badge accept">Accept</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Add one rationale sentence: seizure counts are recurrent, heterogeneous, and overdispersed,
+              making a negative-binomial model more appropriate than a simple Poisson model; CHOCOLATES was
+              designed to reproduce this mean–variance structure. Cite the CHOCOLATES paper and any specific
+              Chiang/Therayill paper only after verifying that it directly supports longitudinal
+              negative-binomial seizure modeling.
+            </p>
+            <div class="anchor">Anchor: Regression comparator heading.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#98 · KW</span>
+            Why is there no C3 negative-binomial comparator?
+            <span class="badge modify">Explain scope or add a separate model</span>
+            <span class="badge codework">Prompt 4</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              State that the current model contains menstrual and ovulatory indicators and therefore tests
+              C1/C2 only. A valid C3 analogue would need a separate F-versus-(O+L+M) contrast restricted to
+              applicable ILP cycles/windows, with its own multiplicity and classifiability rules. Do not imply
+              the existing regression silently covers C3. If reviewers are likely to demand it, use Prompt 4
+              to add a predeclared exploratory comparator.
+            </p>
+            <div class="anchor">Anchor: NB model specification.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#99 · CS</span>
+            Add a C3 negative-binomial analysis because C3 is highest
+            <span class="badge modify">Potentially useful, but not sufficient</span>
+            <span class="badge codework">Prompt 4</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              A predeclared exploratory C3 NB contrast would answer the symmetry question and may be worth
+              adding. It requires a separate F-versus-(O+L+M) model restricted to ILP-applicable cycles, with
+              prespecified multiplicity, effect-size, dispersion, and minimum-data rules. It would still be
+              model-concordant; a near-5% result would not validate the simulator’s ILP/C3 mechanism.
+            </p>
+            <p>
+              Prioritize transparent ILP generation and C3 assumption sensitivity before this model. If the
+              author team does not add it, state explicitly that the NB check covers C1/C2 only and that C3
+              lacks a regression calibration check.
+            </p>
+            <div class="anchor">Anchor: NB model specification and C3 exclusion.</div>
+          </div>
+        </details>
+
+        <h3 id="comments-results" style="margin-top:1.5rem">Results and discussion</h3>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#103 · CS</span>
+            Quantify model-assumption sensitivity and add nonstationary seizure diaries
+            <span class="badge codework">New analysis · Prompt 7</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              This would materially strengthen the manuscript because the current binomial/Wilson intervals
+              quantify Monte Carlo uncertainty only within one configured model. They do not show how much
+              the headline rates change when seizure burden, dispersion, clustering, multidien rhythms,
+              cycle variability, or ILP assumptions change.
+            </p>
+            <p>
+              Use a prespecified scenario design rather than changing many settings opportunistically after
+              viewing results. For nonstationarity, include rate steps and gradual trends with timing
+              independent of menstrual phase, covering plausible magnitude/duration ranges for treatment
+              changes and disease evolution. Report false-positive rates by scenario, the scenario envelope,
+              classifiability, and pattern. Do not pool scenario variation into a conventional patient
+              confidence interval.
+            </p>
+            <p>
+              If this expansion is outside the present paper’s scope, say explicitly that medication
+              changes and secular trends were not modeled and that model-form uncertainty remains
+              unquantified; do not imply that a narrow Monte Carlo interval supplies that uncertainty.
+            </p>
+            <div class="anchor">Anchor: Results/limitations; proposed new robustness analysis.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#107 · KW</span>
+            Replace “nominal” with plain language
+            <span class="badge modify">Accept concern; reject current replacement</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              “Comparable to the p&lt;0.05 Type I error threshold” is statistically incorrect: p&lt;0.05 is
+              a decision rule, while 5% is the prespecified error rate. Use plain language without conflating
+              the two.
+            </p>
+            <div class="suggestion">
+              The false-positive rate was 4.1% in the healthy ovulatory cohort and 4.2% in the heterogeneous
+              cohort, close to the prespecified 5% Type I error rate.
+            </div>
+            <div class="anchor">Anchor: NB regression Results paragraph.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#112 · KW</span>
+            “Calibration should not be interpreted as clinical usefulness”
+            <span class="badge accept">Move interpretation</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Keep the observed rates and denominator alignment in Results. Move the interpretive sentence
+              to Discussion, where essentially the same point already appears. Avoid repeating it in both
+              places.
+            </p>
+            <div class="anchor">Anchor: NB regression Results paragraph.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#113 · KW</span>
+            Define “rows with fewer than 1,000 classifiable windows”
+            <span class="badge accept">Clarify unit of analysis</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              “Rows” refers to definition-by-window-by-cohort estimates, not participants. State that in the
+              narrative and repeat it in the table footnote.
+            </p>
+            <div class="suggestion">
+              Definition-by-window-by-cohort estimates based on fewer than 1,000 classifiable
+              participant-windows were flagged as unstable and were not interpreted.
+            </div>
+            <div class="anchor">Anchor: Observation-window Results paragraph.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#114 · CS</span>
+            Analyze characteristics associated with apparent false-positive classification
+            <span class="badge modify">Accept analysis; constrain interpretation</span>
+            <span class="badge codework">Prompt 7</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              A driver analysis can be useful, especially for multidien strength/period, clustering,
+              seizure burden, menstrual irregularity, age, PCOS, peri-menarche, and perimenopause. Frame the
+              result as associations between <strong>simulator inputs/realizations and simulated apparent
+              classification</strong>. It cannot establish clinical patient risk until externally
+              validated.
+            </p>
+            <p>
+              Prespecify features and bins, keep diary window and classification definition explicit, and
+              use participant-level uncertainty. Because many inputs are correlated or mechanically feed
+              the ILP/C3 rule, show standardized stratified rates and a multivariable sensitivity model;
+              avoid presenting opaque feature-importance scores as causal explanations. Analyze
+              nonstationarity consistency as a separate repeated-measures question.
+            </p>
+            <p>
+              Defer the proposed calculator. Even with a warning, a numerical “probability” tool is likely
+              to be read as patient-specific clinical guidance. A research-only explorer could follow
+              empirical validation and robust scenario analysis, with uncertainty decomposed into Monte
+              Carlo, participant, and model-setting components.
+            </p>
+            <div class="anchor">Anchor: proposed new driver analysis and calculator.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#115 · CS</span>
+            Discuss empirical validation with real paired diaries
+            <span class="badge modify">Accept direction; refine design claims</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Keep the tracked Discussion addition, but remove “empirical real-world” redundancy and avoid
+              claiming that an arbitrary circular shift necessarily removes all biological coupling.
+              Circular shifts preserve each observed sequence but introduce an artificial end-to-start
+              adjacency and rely on stationarity; treatment changes, missingness, and slow trends can make
+              the surrogate null invalid. Time-shift tests with truncation or carefully excluded shifts are
+              useful sensitivity designs.
+            </p>
+            <p>
+              Cross-person seizure/menstrual pairing is complementary. Match or stratify on age, diary
+              duration, cycle characteristics, and relevant modifiers; prevent repeated-donor dependence
+              from being treated as independent; preserve observed missingness; and resample at the
+              participant level. Compare the full empirical-null distribution with the simulated-null
+              distribution, not only their means.
+            </p>
+            <div class="suggestion">
+              Future work should compare these simulation-based rates with empirical-null distributions
+              derived from longitudinal paired seizure and menstrual diaries, using complementary
+              preregistered within-person time-shift and matched cross-person pairing designs that preserve
+              relevant temporal structure, missingness, and participant-level dependence.
+            </div>
+            <div class="anchor">Anchor: new Discussion paragraph on empirical validation.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#121 · RS</span>
+            Cite the 2024 practical review on phase-label limitations
+            <span class="badge modify">Accept source; rewrite sentence</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The source is relevant and authored by a coauthor, but the inserted fragment is incomplete.
+              Integrate the limitation directly and cite Alshakhouri et al. 2024. The key issue is fixed phase
+              assignment, including the expanding “ovulatory” interval in longer cycles.
+            </p>
+            <div class="suggestion">
+              Strict Herzog labeling was retained for historical comparability despite recognized
+              limitations of assigning fixed menstrual phases, particularly the expanding periovulatory
+              interval in longer cycles. The luteal-anchored sensitivity therefore tested a fixed
+              periovulatory definition.
+            </div>
+            <div class="anchor">Anchor: Discussion, strict Herzog labeling paragraph.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#123 · CS</span>
+            Add a distribution-level simulator-validation figure
+            <span class="badge accept">Strongly accept</span>
+            <span class="badge codework">Prompt 6</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Add a supplementary figure comparing simulated distributions with empirical targets for
+              seizure burden, overdispersion, clustering, multidien period/amplitude, cycle length,
+              within-person cycle variability, ovulatory/ILP fractions, age, and relevant modifiers. Use the
+              same definitions and units in both sources. Averages in Table 1 cannot show tail behavior or
+              multimodality that may drive ratio classification.
+            </p>
+            <p>
+              Where participant-level empirical data are unavailable, show published quantiles or target
+              bands and label the comparison as summary-level calibration. Do not call a figure
+              “validation” if it only replots simulated outputs without an observed reference.
+            </p>
+            <div class="anchor">Anchor: Appendix/STRESS validation material.</div>
+          </div>
+        </details>
+
+        <h3 id="comments-tables" style="margin-top:1.5rem">Tables and figures</h3>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#201 · KW</span>
+            Insert page breaks to keep Table 2 together
+            <span class="badge reject">Current break worsens layout</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              In the rendered revision, Table 2 occupies page 19 while its two-line note is orphaned on page
+              20. Keep the title, table, and note together. If the journal template cannot fit the table,
+              use landscape orientation, split it into clearly labeled cohort panels, or move the full table
+              to the supplement and retain a concise main-text table.
+            </p>
+            <div class="anchor">Anchor: Table 2 page break.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#202 · KW</span>
+            Use formatting—or a figure—to expose Table 2’s structure
+            <span class="badge modify">Keep as a table; improve grouping</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The exact denominators and confidence intervals matter, so a table is preferable to a figure.
+              Use cohort bands, indentation, and blank repeated cohort/window cells. If length remains a
+              problem, keep the primary 36-month and 3-month rows in the main manuscript and place the full
+              definition-by-window table in the supplement.
+            </p>
+            <div class="anchor">Anchor: Table 2 formatting.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#236 · KW</span>
+            Define “Indeterminate”
+            <span class="badge accept">Define and separate from N/A</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Define an indeterminate participant-window as one in which an applicable rule could not return
+              positive or negative because required observed phases, cycles, events, or denominator
+              information were insufficient. List exact reason codes in the supplement. A rule that is not
+              applicable to a cohort is not indeterminate.
+            </p>
+            <div class="anchor">Anchor: Table 2 header.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#243 · KW</span>
+            Explain “11.2% (11.0%–11.5%)”
+            <span class="badge accept">Label 95% Wilson CI</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              In Table 2, this is a 95% Wilson confidence interval for a simple simulated proportion. Label it
+              in the column header or footnote: “Classifiable, % (95% Wilson CI).” Do not generalize this
+              wording to Table 4, whose ranges are empirical Monte Carlo percentiles.
+            </p>
+            <div class="anchor">Anchor: first Table 2 classifiable rate.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#263 · KW</span>
+            Healthy C3 shows 0 / 50,000
+            <span class="badge reject">Replace with not applicable</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The result is odd because the implementation does not apply C3 in the healthy ovulatory cohort.
+              Do not present this as zero false positives or 100% indeterminate. Use “Not applicable,” an em
+              dash, or omit the row with a footnote explaining C3 applicability.
+            </p>
+            <div class="anchor">Anchor: Table 2, healthy C3-only row.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#372 · KW</span>
+            Add windowed Herzog C3-only results
+            <span class="badge accept">Add to supplement</span>
+            <span class="badge codework">Prompt 2</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Table 2 already contains the 36-month C3-only row, but the supplement’s window-length
+              sensitivity table does not show C3-only across windows. Add a heterogeneous-cohort C3-only
+              sensitivity table or panel for the same calendar/cycle durations used elsewhere. Mark the
+              healthy cohort not applicable.
+            </p>
+            <div class="anchor">Anchor: Table 2 footnote.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#375 · KW</span>
+            Group Table 3 categories so they add to 100%
+            <span class="badge modify">Correct concept; labels currently wrong</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The visual grouping goal is good, but all seven displayed columns are mutually exclusive
+              participant-window categories and together sum to 100%. They are not individual cycle types
+              plus composites. Use this order:
+              <strong>None | Indeterminate | C1 only | C2 only | C1+C2 | C3 only | C3 with C1 and/or
+              C2</strong>. A single spanning header such as “Mutually exclusive participant-window category”
+              is accurate.
+            </p>
+            <div class="anchor">Anchor: Table 3.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#502 · KW</span>
+            Explain 39.1% and 44.2% benchmarks
+            <span class="badge modify">Retain only with explicit sourcing</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The 39.1% benchmark comes from the Herzog 2004 three-cycle/two-of-three rule. The 44.2% value
+              is commonly reported as 130/294 from the NIH Progesterone Trial, but the manuscript should
+              state the exact classification definition and source chain. Rename the columns
+              “Pr(apparent prevalence ≥39.1%)” and “Pr(apparent prevalence ≥44.2%)” so “P” is not mistaken for
+              a p value. If 44.2% cannot be tied to a clearly matching definition, remove it.
+            </p>
+            <div class="anchor">Anchor: Table 4 benchmark columns.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#631 · KW</span>
+            “Why 10%?” in Figure 1
+            <span class="badge reject">Remove 10% line unless prespecified</span>
+            <span class="badge codework">Prompt 3</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Five percent has a clear connection to the regression comparator’s prespecified Type I error
+              rate. Ten percent appears arbitrary. Remove the 10% reference unless there is a protocol-based
+              rationale. The caption should also say that the 5% line is a visual calibration reference and
+              is not a target for the ratio rules.
+            </p>
+            <div class="anchor">Anchor: Figure 1 legend.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#636 · KW</span>
+            Reorder Figure 2 stack, move legend right, wrap x labels
+            <span class="badge accept">Accept with semantic safeguards</span>
+            <span class="badge codework">Prompt 3</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              Implement the layout request. Put non-C1/C2 categories lower in the stack and the C1/C2-related
+              categories at the top so the top-edge distances can be compared across bars. The legend order
+              must exactly match the visible stack order, and the x-axis labels should wrap onto multiple
+              lines. Preserve “not applicable” semantics for C3 in the healthy cohort and avoid visually
+              implying that its zero-height C3 segments are observed zeros.
+            </p>
+            <div class="anchor">Anchor: Figure 2 legend and chart.</div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            <span class="comment-id">#638 · KW</span>
+            Pasted stacked-bar example
+            <span class="badge accept">Use as reference, then remove</span>
+          </summary>
+          <div class="detail-body">
+            <p>
+              The example communicates the intended layout, but it is unrelated study content and must not
+              remain in the submission file. Remove it once Figure 2 is revised.
+            </p>
+            <div class="anchor">Anchor: image inserted below Figure 2.</div>
+          </div>
+        </details>
+      </section>
+
+      <section id="tracked">
+        <h2>Substantive tracked-edit ledger</h2>
+        <p class="section-intro">
+          The document contains many low-level Word revision objects, especially table-cell formatting
+          changes. The ledger below consolidates them into the author-level edits a coauthor must actually
+          decide. This covers every substantive text, table, figure-title, and layout change visible in the
+          accepted-versus-rejected comparison.
+        </p>
+
+        <div class="table-wrap" role="region" aria-label="Tracked edit ledger" tabindex="0">
+          <table>
+            <thead>
+              <tr>
+                <th>Location</th>
+                <th>Tracked change</th>
+                <th>Recommendation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Title</td>
+                <td>“Catamenial Epilepsy ClassificationSimulation” → “False Positive Catamenial Epilepsy Classification: A Simulation Study”</td>
+                <td><span class="badge accept">Accept</span> Clear and correctly scoped. Recalculate metadata: the revised title is 69 characters, not 67.</td>
+              </tr>
+              <tr>
+                <td>Running title</td>
+                <td>“Catamenial Classification” → “False Positive Catamenial Classification”</td>
+                <td><span class="badge accept">Accept</span></td>
+              </tr>
+              <tr>
+                <td>Authors/affiliations</td>
+                <td>Add Wesley Kerr as second author; add Pittsburgh affiliations 2–4; complete the UCSF department/institute as affiliation 5.</td>
+                <td><span class="badge decision">Partly resolved</span> Confirm author order and CRediT roles; retain the completed UCSF affiliation after journal-style review; standardize hyphens/dashes and full institutional names.</td>
+              </tr>
+              <tr>
+                <td>Correspondence</td>
+                <td>No tracked correction to “David M. Goldenholz.”</td>
+                <td><span class="badge modify">Verify</span> The author list says Daniel M. Goldenholz. Resolve the name mismatch and add complete correspondence details required by the journal.</td>
+              </tr>
+              <tr>
+                <td>Contributorship</td>
+                <td>Existing grouped statement leaves Wesley’s new study-shaping role implicit.</td>
+                <td><span class="badge modify">Update after authorship decision</span> Use individual CRediT roles rather than one grouped list if the journal permits.</td>
+              </tr>
+              <tr>
+                <td>Abstract objective</td>
+                <td>Repair malformed objective and explicitly say “false positive rate.”</td>
+                <td><span class="badge accept">Accept</span> Hyphenate “false-positive” when adjectival elsewhere.</td>
+              </tr>
+              <tr>
+                <td>Abstract terminology</td>
+                <td>Add “championed by Andrew Herzog” and “we used C1, C2, and C3 pattern-specific false positives.”</td>
+                <td><span class="badge reject">Replace</span> Use the operational “Herzog criteria” wording proposed under comment #42.</td>
+              </tr>
+              <tr>
+                <td>Abstract conclusion</td>
+                <td>Add “False positive” before catamenial classification and add a two-sentence simulator-conditional caveat.</td>
+                <td><span class="badge modify">Accept concepts; compress</span> Use “False-positive catamenial epilepsy classification…” and end with: “These rates are conditional on the specified seizure and menstrual-cycle models and should not be interpreted as empirical prevalence estimates.” Recalculate the abstract count.</td>
+              </tr>
+              <tr>
+                <td>Introduction</td>
+                <td>Add a three-part taxonomy of quantitative and subjective “errors.”</td>
+                <td><span class="badge modify">Reframe</span> Describe discordance; do not label either side false without a gold standard. Cite Voinescu 2023 for the direct self-report/diary comparison.</td>
+              </tr>
+              <tr>
+                <td>Introduction scope</td>
+                <td>Expand “diagnostic problem” to false-positive and false-negative identification.</td>
+                <td><span class="badge reject">Narrow</span> This simulation evaluates specificity-like false positives only. Mention false negatives as future work, not a studied endpoint.</td>
+              </tr>
+              <tr>
+                <td>Introduction aim</td>
+                <td>Add “false positive” to the simulated apparent-classification aim.</td>
+                <td><span class="badge accept">Accept</span></td>
+              </tr>
+              <tr>
+                <td>Study design</td>
+                <td>Name CHOCOLATES and HORMONE-CYCLE; add “no more than chance relationship.”</td>
+                <td><span class="badge modify">Accept provenance</span> Cite both; say diaries were generated independently and the circular shift guarded against shared start-date alignment. “No more than chance” is less direct than “independent.”</td>
+              </tr>
+              <tr>
+                <td>Phase scheme</td>
+                <td>“Strict Herzog phases were primary” → “were the primary outcome”; add “In accordance with the Herzog definitions.”</td>
+                <td><span class="badge reject">Fix</span> Phase labeling is a scheme, not an outcome. Cite 1997 and use “primary phase-definition scheme.”</td>
+              </tr>
+              <tr>
+                <td>Pattern labels</td>
+                <td>Add perimenstrual C1, periovulatory C2, and luteal C3 descriptors.</td>
+                <td><span class="badge accept">Accept</span> “Luteal C3” is less precise than “inadequate-luteal-phase C3”; use the latter.</td>
+              </tr>
+              <tr>
+                <td>C3 formula</td>
+                <td>Add “among inadequate-luteal-phase days.”</td>
+                <td><span class="badge reject">Correct</span> Say “in applicable inadequate-luteal-phase cycles/windows.”</td>
+              </tr>
+              <tr>
+                <td>Exact 2004 rule</td>
+                <td>Add “reporting” to “Exact Herzog 2004.”</td>
+                <td><span class="badge modify">Optional</span> “Exact Herzog 2004 criterion” or “implementation” is clearer than “reporting.” Add citation.</td>
+              </tr>
+              <tr>
+                <td>Primary outcome</td>
+                <td>Add false-positive terminology and an independence clause.</td>
+                <td><span class="badge accept">Accept concept</span> Shorten to “The primary outcome was the participant-window false-positive classification rate among classifiable windows under independence.”</td>
+              </tr>
+              <tr>
+                <td>NB Results</td>
+                <td>Add “comparable to the p&lt;0.05 Type I error threshold” and explain C3 exclusion.</td>
+                <td><span class="badge modify">Partly accept</span> Replace the p-value wording with “close to the prespecified 5% Type I error rate.” Keep the denominator-alignment sentence.</td>
+              </tr>
+              <tr>
+                <td>Discussion limitation</td>
+                <td>Insert “Although limitations have been discussed ().”</td>
+                <td><span class="badge reject">Rewrite</span> Integrate the specific phase-label limitation and cite Alshakhouri et al. 2024.</td>
+              </tr>
+              <tr>
+                <td>Discussion empirical validation</td>
+                <td>Add a paragraph proposing an empirical-null distribution by shifting real seizure diaries relative to real menstrual diaries.</td>
+                <td><span class="badge modify">Accept direction; qualify</span> Remove “empirical real-world,” acknowledge stationarity and wrap-boundary limitations, and add matched cross-person pairing as a complementary design with participant-level resampling.</td>
+              </tr>
+              <tr>
+                <td>Table 1 structure</td>
+                <td>Add grouped Age and Cycle length headers and SD columns; repair clipped cohort names.</td>
+                <td><span class="badge modify">Retain grouping; repair values</span> Healthy age mean currently reads “31.5 7.8)” and duplicates SD. Remove the stray empty top-left row and change “simulated patients” to “simulated participants.”</td>
+              </tr>
+              <tr>
+                <td>Table 2 headers</td>
+                <td>Add grouped “False Positive Rate,” clarify window/definition columns.</td>
+                <td><span class="badge accept">Accept with style edits</span> Hyphenate “False-positive rate” and label the classifiable interval “95% Wilson CI.”</td>
+              </tr>
+              <tr>
+                <td>Table 2 pagination</td>
+                <td>Insert page break before Table 2.</td>
+                <td><span class="badge reject">Revise layout</span> The note is orphaned on page 20.</td>
+              </tr>
+              <tr>
+                <td>Table 3 headers/data</td>
+                <td>Add None and Indeterminate values; label C1/C2/C3 “Individual Cycle Type,” C1+C2/Any “Composite.”</td>
+                <td><span class="badge reject">Scientifically incorrect labels</span> All seven categories are mutually exclusive participant-window categories; “Any” must be “C3 with C1 and/or C2.”</td>
+              </tr>
+              <tr>
+                <td>Table 4 headers</td>
+                <td>Add grouped “False Positive Rate,” change interval to “95% CI,” retain P ≥39.1% and P ≥44.2%.</td>
+                <td><span class="badge reject">Correct definitions</span> Use “Mean apparent prevalence,” “2.5th–97.5th percentiles,” and “Pr(apparent prevalence ≥…).”</td>
+              </tr>
+              <tr>
+                <td>Figure 1 title/caption</td>
+                <td>Add “length of” and independence wording; retain 5% and 10% lines.</td>
+                <td><span class="badge modify">Accept clarity</span> Remove unexplained 10% line and state the 5% line is a visual reference.</td>
+              </tr>
+              <tr>
+                <td>Figure 2 title</td>
+                <td>“Types of False Positive Catamenial Cycles.”</td>
+                <td><span class="badge reject">Rename</span> Bars are participant-window pattern categories, not cycles. Prefer “Pattern decomposition of false-positive catamenial classifications.”</td>
+              </tr>
+              <tr>
+                <td>Figure 3 title/caption</td>
+                <td>“False positive rate in simulated studies”; add “studies with” before sample sizes.</td>
+                <td><span class="badge modify">Accept concept</span> Use “False-positive rates in simulated studies.” Explain the two historical reference lines in the caption.</td>
+              </tr>
+              <tr>
+                <td>Page breaks</td>
+                <td>Multiple manual breaks inserted around sections/tables/figures.</td>
+                <td><span class="badge reject">Reflow after final content</span> The longer abstract now leaves only two caveat lines plus Classification/Search Terms on page 4; other near-empty/orphaned pages remain. Use keep-with-next/table row settings rather than fixed breaks where possible.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="prompts">
+        <h2>Copy-ready Codex prompts</h2>
+        <p class="section-intro">
+          These prompts are intentionally implementation-specific. They ask Codex to inspect and reuse
+          existing outputs, preserve the original analysis, and verify semantics. No code was run as part of
+          this review.
+        </p>
+
+        <details open>
+          <summary>
+            Prompt 1 — Build the Herzog-ratio supplemental table
+            <span class="badge codework">Recommended</span>
+          </summary>
+          <div class="detail-body">
+<pre>Work in the catamenial-epilepsy-sim repository. Add a publication-ready supplemental table that mirrors the cumulative layout of Herzog 2015 Table 1, but reports the existing null-simulation ratio distributions.
+
+Important constraints
+- Do not alter the simulation, classifier thresholds, random seeds, or existing result files.
+- Do not rerun the full simulation unless the required pattern-specific ratio columns are genuinely absent.
+- Prefer existing outputs/window_results.parquet. First inspect its schema and confirm the grain and the availability of rr_C1, rr_C2, rr_C3, cohort, phase_mode, window_type, window_value, participant identifier, and relevant applicability/reason fields.
+- Use strict_herzog phase labeling and three-complete-cycle windows for the historically comparable table. If the repository represents this as window_type="cycle" and window_value=3, document that mapping. Do not mix 36-month and three-cycle estimates in the same table.
+
+Table design
+- Title: “Supplementary Table X. Cumulative distributions of simulated Herzog seizure-frequency ratios in three-complete-cycle windows under independence.”
+- Panel A: C1 = ADSF(M)/ADSF(F+L), both cohorts.
+- Panel B: C2 = ADSF(O)/ADSF(F+L), both cohorts.
+- Panel C: C3 = ADSF(O+L+M)/ADSF(F), heterogeneous cohort only and only where C3 is applicable.
+- The first column in each panel must be “Herzog ratio threshold (≥).”
+- Threshold rows:
+  - C1: 0, 1, 1.69, 2, 3, 4, 5, 6, 7, 8, 9, 10
+  - C2: 0, 1, 1.83, 2, 3, 4, 5, 6, 7, 8, 9, 10
+  - C3: 0, 1, 1.62, 2, 3, 4, 5, 6, 7, 8, 9, 10
+- For each cohort/panel, report cumulative n and percent of participant-windows with a defined ratio at or above the threshold.
+- Count +infinity as a defined ratio and as ≥ every finite threshold. Exclude undefined 0/0 or missing-phase ratios from the classifiable denominator.
+- Report attempted, defined, undefined, and not-applicable counts in the panel note. C3 in the healthy cohort is “not applicable,” never 0% or 100% indeterminate.
+- Use one row per participant-window. Detect and fail on duplicate keys rather than silently double-counting.
+- The ≥0 row should equal the defined-ratio denominator and therefore display 100.00%.
+- Keep n and % in the Word table. If uncertainty is added to a machine-readable CSV, label it “95% Wilson CI” and explain that it does not include simulator model-form uncertainty.
+
+Implementation
+- Add a focused summarization function or script; do not modify core classification behavior.
+- Integrate the rendered table into scripts/build_neurology_submission_docs.py and the appendix output.
+- Also save a tidy CSV with columns: panel, pattern, cohort, phase_mode, window_type, window_value, threshold, n_attempted, n_applicable, n_defined, n_undefined, n_at_or_above, pct_defined_at_or_above.
+- Add tests for monotone non-increasing cumulative counts, 100% at threshold 0, exact threshold ordering, +infinity handling, undefined-ratio exclusion, duplicate detection, and C3 not-applicable handling.
+- At the canonical thresholds (1.69, 1.83, 1.62), reconcile the cumulative counts against the corresponding existing pattern-positive outputs. If they differ, stop and explain the denominator or applicability mismatch rather than forcing equality.
+- Render the updated appendix DOCX and visually verify that each panel header, note, and threshold row remains together and readable.
+
+Return a concise change summary, output paths, tests run, and any reconciliation differences.</pre>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            Prompt 2 — Add C3-only window sensitivity and justify minimum-data thresholds
+            <span class="badge codework">For comments #95 and #372</span>
+          </summary>
+          <div class="detail-body">
+<pre>Using existing simulation outputs only, extend the supplement with C3-only false-positive results across the same calendar and complete-cycle observation windows already reported for the windowed Herzog definitions.
+
+- Do not rerun or change the simulation.
+- Use the existing A_windowed_C3_only result if present in outputs/window_results.parquet and summary outputs.
+- Restrict C3 results to the heterogeneous cohort and applicable inadequate-luteal-phase windows. Display the healthy ovulatory cohort as not applicable, not zero and not indeterminate.
+- For each window, report attempted, applicable/classifiable, positive, false-positive rate among classifiable windows with 95% Wilson CI, positive rate among all attempted windows, and indeterminate reasons.
+- Add the panel to the appendix builder, not the already dense main Table 2.
+- Verify that full-diary C3-only values reconcile with the existing 37.0% among applicable heterogeneous-cohort windows.
+
+Separately, assess the investigator-selected “≥4 months or ≥6 cycles plus ≥4 seizure days” rule without invoking Nyquist sampling:
+- Tabulate how results change across sensible nearby minimums (for example 2, 3, 4, and 6 seizure days and the already available window durations) only if these classifications can be derived from existing participant-window rows. Do not generate new diaries.
+- Treat this as a sensitivity analysis, not a search for an optimal cutoff.
+- Report both classifiable and all-attempted rates so stricter rules are not made to look conservative merely by declining classification.
+- Add a short methods note saying the minimum-data rule is pragmatic/investigator-selected unless a prespecified or published source is found.
+
+Add targeted tests, rebuild the appendix, and report any missing fields that prevent a no-rerun implementation.</pre>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            Prompt 3 — Revise Figures 1 and 2 without changing data
+            <span class="badge codework">For comments #631, #636, #638</span>
+          </summary>
+          <div class="detail-body">
+<pre>Revise the publication figures using the existing summary data. Do not rerun the simulation or alter any values.
+
+Figure 1 (src/paper1_null_ce/core/plots.py)
+- Remove the unexplained 10% horizontal reference line.
+- Retain a 5% line only as a clearly labeled visual reference to the prespecified regression Type I error rate.
+- In the caption, state that 5% is not an expected target for the Herzog ratio rules.
+- Keep cohort panels, definitions, window durations, colors, and bar values unchanged.
+
+Figure 2 (fig2_pattern_decomposition in src/paper1_null_ce/core/plots.py)
+- Use the exact mutually exclusive categories:
+  none; indeterminate; C3 only; C3 with C1 and/or C2; C1 only; C2 only; C1+C2.
+- Put none/indeterminate/C3-related categories lower in each stack and C1/C2-related categories at the top so top-edge distances allow C1/C2 comparisons.
+- Put the legend outside on the right. Its order must match the visible bottom-to-top stack order or be explicitly labeled to remove ambiguity.
+- Wrap x-axis labels onto multiple lines; do not solve overlap primarily by shrinking text.
+- Preserve the fact that C3 is not applicable in the healthy cohort; do not imply that zero-height C3 segments are measured zero rates.
+- Rename the title/caption to “Pattern decomposition of false-positive catamenial classifications.” The unit is participant-windows, not cycles.
+- Remove the unrelated example chart from the manuscript generation input.
+
+Regenerate PNG, PDF, and SVG outputs, update the manuscript/appendix figure assets, run existing plot tests plus targeted legend/order tests, and render the manuscript to confirm no clipping or overlap.</pre>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            Prompt 4 — Optional exploratory C3 negative-binomial comparator
+            <span class="badge codework">For comments #98 and #99</span>
+          </summary>
+          <div class="detail-body">
+<pre>Design and implement an explicitly exploratory negative-binomial C3 calibration check without changing the existing primary C1/C2 regression analysis. Treat all NB analyses as model-concordant statistical checks, not independent diagnostic comparators or evidence of clinical superiority.
+
+Before coding, document the estimand and applicability:
+- Restrict to heterogeneous-cohort participant-windows with applicable inadequate-luteal-phase cycles.
+- Define the contrast as follicular days versus the combined ovulatory+luteal+menstrual days, matching the C3 ADSF numerator/denominator.
+- Decide prospectively whether cycle fixed effects, an ILP interaction, or restriction to ILP cycles best matches the existing C3 ratio definition. Explain the choice.
+- Preserve daily seizure counts, a log link, and an overdispersion strategy consistent with the existing stabilized full-diary NB comparator.
+- Specify one-sided testing, multiplicity handling relative to C1/C2, the ratio-effect threshold requirement (1.62), minimum cycles, and indeterminate/fallback behavior before examining results.
+
+Implementation constraints
+- Keep the current C1/C2 model and all existing results unchanged.
+- Add new fields/definitions with clearly exploratory names.
+- Report classifiable and all-attempted rates plus exact failure reasons.
+- Add simulation-free unit tests using small constructed daily datasets for null, positive, zero-denominator, missing-phase, and non-applicable cases.
+- Reconcile the C3 model’s applicability denominator with A_windowed_C3_only before interpretation.
+
+Return the model specification first. If the data structure cannot support a faithful C3 contrast, stop and explain why instead of implementing a misleading analogue.</pre>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            Prompt 5 — Repair manuscript-generator table semantics and layout
+            <span class="badge codework">Recommended before rebuilding DOCX</span>
+          </summary>
+          <div class="detail-body">
+<pre>Update scripts/build_neurology_submission_docs.py and related manuscript-generation code without changing analytic data.
+
+Required corrections
+1. Table 1
+   - Healthy age mean must be 31.5 and SD 7.8 in separate cells; remove the stray “7.8)” from the mean cell.
+   - Remove any empty superheader row/cells that render as a blank band.
+   - Use “simulated participants,” not “simulated patients.”
+2. Table 2
+   - Label the classifiable rate as “% (95% Wilson CI).”
+   - Replace healthy-cohort C3-only 0/50,000, 0%, and 100% indeterminate with “Not applicable” and a footnote.
+   - Keep the table note with the table; do not leave it on an otherwise empty page.
+3. Table 3
+   - Use one spanning header: “Mutually exclusive participant-window category.”
+   - Column order: None | Indeterminate | C1 only | C2 only | C1+C2 | C3 only | C3 with C1 and/or C2.
+   - Do not use “Individual Cycle Type,” “Composite,” or “Any.”
+   - Assert that the seven category percentages sum to 100% within rounding for every row.
+4. Table 4
+   - Rename “95% CI” to “2.5th–97.5th percentiles.”
+   - Rename P ≥39.1% and P ≥44.2% to “Pr(apparent prevalence ≥39.1%)” and “Pr(apparent prevalence ≥44.2%).”
+   - Add a note that ranges are empirical percentiles across 10,000 simulated studies, not confidence intervals.
+5. Front matter
+   - Recalculate title, abstract, and text counts.
+   - Flag the Daniel/David Goldenholz mismatch for author confirmation; do not guess.
+   - Retain the completed UCSF affiliation after journal-style review; require a complete department/institution/location for affiliation 6, which currently says only “Stanford.”
+   - Keep author order/affiliations configurable and fail on bare one-token institutional placeholders or phrases such as “to fill,” without rejecting a legitimate acronym embedded in a complete affiliation.
+
+Add tests for all semantic labels and assertions. Rebuild and render both manuscript and appendix. Visually inspect all table pages and report remaining page-break/orphan issues.</pre>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            Prompt 6 — Add simulator-parameter table, C3 algorithm detail, and validation figure
+            <span class="badge codework">For comments #70, #76, #91, and #123</span>
+          </summary>
+          <div class="detail-body">
+<pre>Work in the catamenial-epilepsy-sim repository. Build a publication-ready simulator-transparency package for the appendix without changing scientific outputs or rerunning the full simulation unless an explicitly required realized distribution is absent.
+
+Stage 1: provenance and field audit
+- Identify the exact CHOCOLATES and hormone_cycler versions/commits used by the completed run from the manifest, repository history, and generated metadata. Do not substitute the current checkout if it differs from the run provenance.
+- Inventory config.yaml, the simulator adapters, generator source, outputs/manifest.json, participant summaries, cycle summaries, and existing validation artifacts.
+- Create a source map for every reported input: literature-calibrated, simulator-native, investigator-configured, derived by the adapter, or realized output.
+- Stop and report discrepancies where the manuscript description, config, adapter, and run manifest disagree.
+
+Supplementary Table Y
+- Columns: domain; parameter; code/config field; cohort; setting or sampling distribution; sampling level (participant/cycle/day); source/rationale; varied in sensitivity analysis (yes/no); realized validation target; run version/commit.
+- Seizure rows must include monthly burden, seizure days, overdispersion, clustering prevalence/propensity, multidien period and amplitude distributions, interseizure constraints, diary duration, and any default/fallback values.
+- Menstrual rows must include age, cycle length and within-person variability, bleeding duration, ovulation probability, follicular/luteal timing, hormone trajectories, PCOS, peri-menarche, perimenopause, dysmenorrhea, contraception/IUD settings, and missingness.
+- Null-construction rows must include independence, circular-shift target and shift distribution, master seed, phase modes, windows, and cohort sizes.
+- Report configured rates exactly, but label them as stress-test assumptions unless their external-population provenance is verified.
+
+C3/ILP algorithm note
+- Document the implementation exactly: nonovulatory-cycle handling; the progesterone summary window relative to ovulation; fallback when that window is absent; the 5.0-ng/mL threshold and its source; incomplete/missing-cycle behavior; and how C3 applicability differs across pooled-window and reproducibility definitions.
+- Use “simulator-generated inadequate-luteal-phase indicator,” not ilp_flag or “irregular luteal flag.”
+- Reconcile the number and proportion of ILP-applicable cycles/windows with existing C3 denominators.
+
+Supplementary Figure X
+- Compare simulated distributions with empirical targets using the same units and definitions.
+- Candidate panels: seizures/month, seizure days/month, overdispersion, cluster status/propensity, dominant multidien period and amplitude, cycle length, within-person cycle-length SD, ovulatory fraction, ILP fraction, age, and configured modifier prevalence.
+- Prefer aligned ECDF/quantile or density plots. Overlay empirical microdata only when access and definitions permit; otherwise show clearly labeled published medians/quantiles/target bands.
+- Do not call a simulated-only panel validation. Distinguish participant-, cycle-, and diary-level distributions and display sample sizes.
+- Include source citations in the caption or a linked source table.
+
+Implementation and QA
+- Prefer existing summary/parquet outputs. If a required field is absent, first state whether it can be recovered from saved audit data; do not silently rerun.
+- Add deterministic table/figure builders and tests for exact configured values, units, cohort applicability, provenance completeness, ILP denominator reconciliation, and nonempty empirical-source labels.
+- Integrate the table and figure into the appendix builder. Render the DOCX/PDF and inspect every affected page for clipped legends, unreadable panels, and orphaned notes.
+- Return changed files, output paths, tests, provenance gaps, and any claims that must remain “calibration target” rather than “validated.”</pre>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            Prompt 7 — Quantify assumption sensitivity, nonstationarity, and simulation drivers
+            <span class="badge codework">For comments #103 and #114</span>
+          </summary>
+          <div class="detail-body">
+<pre>Extend the null-simulation study with a prespecified robustness and driver analysis. Do not begin a large run by trial and error.
+
+Phase A: frozen analysis specification
+1. Inventory which participant-level latent inputs and realized features are saved: seizure burden, overdispersion, clustered status/propensity, multidien periods and amplitudes, cycle length/variability, ovulatory/ILP fraction, age, PCOS, peri-menarche, perimenopause, and other modifiers.
+2. Propose a bounded scenario design that varies scientifically important assumptions without an unreviewable Cartesian explosion. Separate:
+   - seizure-process scenarios;
+   - menstrual/ILP scenarios;
+   - diary observation/missingness scenarios;
+   - nonstationary seizure-rate scenarios.
+3. For every numeric range, cite an empirical source or label it an investigator-defined stress range. Freeze scenario values, seeds/replicates, primary outcomes, contrasts, and multiplicity before examining scenario results.
+4. For nonstationarity, include prespecified step and gradual rate changes with onset timing sampled independently of menstrual phase. Preserve seizure temporal structure where possible. Include stable controls and document whether treatment-like changes affect mean rate only or also dispersion/clustering/rhythms.
+5. Return the specification, estimated compute/storage cost, and a minimal-versus-full option before executing the full experiment.
+
+Phase B: implementation after the specification is accepted
+- Keep the current primary run immutable and write new results under a versioned sensitivity output directory with its own manifest.
+- Use common random numbers or paired seeds across scenarios where valid so scenario contrasts are efficient and auditable.
+- Report apparent-positive rate, classifiability, all-attempted rate, and C1/C2/C3 decomposition by cohort, window, definition, and scenario.
+- Separate Monte Carlo uncertainty within a scenario from variation across model settings. Report a scenario envelope/distribution, not a single confidence interval that conflates the two.
+- Include explicit nonstationarity results and consistency of participant classification before/after the change; account for repeated windows within participants.
+
+Simulation-driver analysis
+- Treat features as simulator inputs/realizations and outcomes as simulated apparent classifications. Do not call them clinical risk factors or causal effects.
+- Prespecify feature transforms/bins, use participant-level uncertainty, and keep the classification definition/window explicit.
+- Provide standardized stratified rates plus an interpretable multivariable model. Address correlated inputs and mechanically related features (especially ILP features driving C3). Avoid opaque feature-importance rankings as the main result.
+- For dominant multidien periods, include prespecified interpretable bands such as near 7, 14, 21, 28, and 35 days plus longer periods, while retaining continuous-period sensitivity and reporting amplitude/rhythmicity strength.
+- Use held-out or cross-fitted performance only if prediction is presented; the scientific emphasis should be marginal rates and associations, not a patient calculator.
+
+Outputs and verification
+- Produce a tidy scenario-results file, a manuscript-ready robustness table/figure, a driver table/figure, and a complete manifest.
+- Add unit tests for scenario assignment, menstrual-phase-independent change timing, paired-seed behavior, repeated-participant uncertainty, C3 applicability, and deterministic summaries.
+- Reconcile the unchanged baseline scenario to the published primary outputs before interpreting any extension.
+- Do not build or publish a clinical probability calculator. At most, document what empirical validation and uncertainty decomposition would be required before a research-only explorer could be considered.</pre>
+          </div>
+        </details>
+
+        <details open>
+          <summary>
+            Prompt 8 — Design an empirical-null validation using real paired diaries
+            <span class="badge codework">For comment #115, if data become available</span>
+          </summary>
+          <div class="detail-body">
+<pre>Design a preregisterable empirical validation of the simulated apparent-positive rates using longitudinal seizure and menstrual diaries. Begin with a data-access, privacy, and analysis-plan audit; do not touch patient-level data until authorization, de-identification, and an approved output location are confirmed.
+
+Data and estimands
+- Define inclusion, diary duration, seizure ascertainment, menstrual onset ascertainment, ovulation/ILP availability, medication-change fields, missingness, and participant-level identifiers.
+- Apply the same phase labels, C1/C2/C3 definitions, observation windows, minimum-data rules, and classifiability semantics as the simulation paper.
+- Primary estimand: distribution of apparent-positive classifications under an empirical independence null, by pattern, cohort/stratum, and window.
+
+Empirical-null design A: within-participant time shifts
+- Preserve each participant’s observed seizure and menstrual sequences and missingness.
+- Do not assume an ordinary circular shift is automatically valid. It creates an end-to-start adjacency and relies on stationarity.
+- Predefine allowed shifts, exclude shifts too close to the observed alignment or harmonics that preserve relevant phase alignment, and consider truncated shifts that avoid wrap boundaries.
+- Identify or stratify nonstationary segments (for example medication changes or secular trends) before shifting. Do not use data-dependent shift choices selected to produce a desired null rate.
+- Generate enough shifts per participant for stable individual and pooled empirical-null summaries.
+
+Empirical-null design B: matched cross-participant pairing
+- Pair each seizure diary with menstrual diaries from other participants matched/stratified on age, diary duration, cycle regularity, ovulatory/ILP information, and other available modifiers.
+- Prevent self-pairing and document donor reuse. Account for dependence caused by repeated use of the same seizure or menstrual diary.
+- Preserve observed missingness and calendar coverage; include sensitivity analyses for seasonality and secular calendar effects.
+
+Inference and comparison
+- Resample at the participant level and preserve all shifts/pairs belonging to a participant within a replicate.
+- Report classifiable and all-attempted rates, pattern decomposition, empirical-null percentiles, and uncertainty.
+- Compare the empirical-null and simulated-null distributions using aligned definitions and stratification, not only averages. Diagnose mismatches in seizure burden, clustering, multidien rhythms, cycle variability, ILP prevalence, and nonstationarity.
+- Keep within-shift Monte Carlo uncertainty, participant sampling uncertainty, and design/model uncertainty distinct.
+- Treat findings as validation or falsification of specific simulation assumptions, not as an estimate of true catamenial prevalence.
+
+Implementation safeguards
+- Write a frozen analysis configuration and synthetic test fixtures before reading outcome summaries.
+- Add tests for no self-pairing, permitted shifts, missingness preservation, no leakage across resamples, repeated-donor dependence, definition parity with the simulation pipeline, and deterministic seeds.
+- Return the preregistration-style specification first. Then implement only after the required data and governance conditions are confirmed.</pre>
+          </div>
+        </details>
+      </section>
+
+      <section id="layout">
+        <h2>Layout observations from the rendered draft</h2>
+        <p class="section-intro">
+          These are not reasons to change the science, but they should be fixed after the content decisions
+          are settled.
+        </p>
+        <ul class="checklist">
+          <li>Page 2 contains only the contributorship block and substantial blank space.</li>
+          <li>Page 4 contains only the last two lines of the new abstract caveat, Classification of Evidence, and Search Terms; shortening the caveat should let the abstract close on page 3.</li>
+          <li>The displayed abstract count remains 235, while the accepted abstract contains about 258 whitespace-delimited words; recalculate using the journal’s rules.</li>
+          <li>Page 17 contains only the final reference and is otherwise blank before the tables section.</li>
+          <li>Table 2’s footnote is alone on page 20.</li>
+          <li>Table 1 has an empty-looking grouped-header band and a corrupted age cell.</li>
+          <li>Figure 2’s x-axis labels overlap in the accepted view.</li>
+          <li>The pasted example figure makes page 24 crowded and must be deleted.</li>
+          <li>Several manual page breaks should be replaced with keep-with-next/keep-together behavior.</li>
+        </ul>
+        <div class="callout info">
+          <h3>Recommended order of operations</h3>
+          <p>
+            Resolve scientific labels and author decisions first; rebuild tables and figures second; then
+            remove manual page breaks and perform final pagination. Doing layout before the table semantics
+            are stable will create avoidable rework.
+          </p>
+        </div>
+      </section>
+
+      <section id="sources">
+        <h2>Source notes</h2>
+        <p class="section-intro">
+          These links were used to interpret the coauthor comments and the pasted table. They are not a
+          replacement for the manuscript’s final reference-manager workflow.
+        </p>
+        <ol class="source-list">
+          <li>
+            Herzog AG, Klein P, Ransil BJ. <a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1528-1157.1997.tb01197.x">Three Patterns of Catamenial Epilepsy</a>.
+            <em>Epilepsia</em>. 1997;38(10):1082–1088. Defines M/F/O/L phases and reports inflection points C1=1.69, C2=1.83, C3=1.62.
+          </li>
+          <li>
+            Herzog AG. <a href="https://www.seizure-journal.com/article/S1059-1311%2815%2900052-7/fulltext">Catamenial epilepsy: Update on prevalence, pathophysiology and treatment from the findings of the NIH Progesterone Treatment Trial</a>.
+            <em>Seizure</em>. 2015;28:18–25. Source of the pasted cumulative C1 table for 294 women.
+          </li>
+          <li>
+            Herzog AG, Harden CL, Liporace J, et al. <a href="https://doi.org/10.1002/ana.20214">Frequency of catamenial seizure exacerbation in women with localization-related epilepsy</a>.
+            <em>Ann Neurol</em>. 2004;56(3):431–434. Source for the three-cycle/two-of-three rule and 39.1% benchmark.
+          </li>
+          <li>
+            Voinescu PE, Kelly M, French JA, et al. <a href="https://pubmed.ncbi.nlm.nih.gov/37452790/">Catamenial epilepsy occurrence and patterns in a mixed population of women with epilepsy</a>.
+            <em>Epilepsia</em>. 2023;64(9):e194–e199. Directly relevant to self-report versus prospective diary classification.
+          </li>
+          <li>
+            Alshakhouri M, Sharpe C, Bergin P, Sumner RL. <a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/epi.17820">Female sex steroids and epilepsy: Part 2. A practical and human focus on catamenial epilepsy</a>.
+            <em>Epilepsia</em>. 2024;65(3):569–582. Relevant to practical limitations of current tracking and phase assignment.
+          </li>
+          <li>
+            Herzog AG, Carrazana E, Rabinowicz AL. <a href="https://pubmed.ncbi.nlm.nih.gov/36931823/">A comparison of statistical versus clinical classifiers of seizure clustering in women with catamenial and noncatamenial epilepsy</a>.
+            <em>Epilepsia</em>. 2023;64(6):1507–1515.
+          </li>
+          <li>
+            Möller S, Ahrenfeldt LJ. <a href="https://pubmed.ncbi.nlm.nih.gov/34064019/">Estimating Relative Risk When Observing Zero Events</a>.
+            <em>Int J Environ Res Public Health</em>. 2021;18(11):5527.
+          </li>
+          <li>
+            Glynn RJ, Buring JE. <a href="https://pubmed.ncbi.nlm.nih.gov/8611837/">Ways of measuring rates of recurrent events</a>.
+            <em>BMJ</em>. 1996;312:364–367.
+          </li>
+          <li>
+            Goldenholz DM, Westover MB. <a href="https://doi.org/10.1111/epi.17471">Flexible realistic simulation of seizure occurrence recapitulating statistical properties of seizure diaries</a>.
+            <em>Epilepsia</em>. 2023;64(2):396–405. CHOCOLATES provenance.
+          </li>
+          <li>
+            Goldenholz Laboratory. <a href="https://github.com/GoldenholzLab/catamenial-epilepsy-sim">catamenial-epilepsy-sim repository</a>.
+            The current repository bundles <code>hormone_cycler</code> version 0.1.0. The manuscript should
+            cite the exact archived release/commit and run manifest rather than relying on an unversioned URL.
+          </li>
+          <li>
+            Yuan AE, Shou W. <a href="https://doi.org/10.1371/journal.pbio.3002758">A rigorous and versatile statistical test for correlations between stationary time series</a>.
+            <em>PLoS Biol</em>. 2024;22(8):e3002758. Relevant to the limitations of cyclic-permutation
+            surrogates and the use of truncated time shifts under stationarity.
+          </li>
+          <li>
+            Stephen LJ, Harden C, Tomson T, Brodie MJ. <a href="https://pubmed.ncbi.nlm.nih.gov/30857949/">Management of epilepsy in women</a>.
+            <em>Lancet Neurol</em>. 2019;18(5):481–491. Broad background, not direct support for the proposed error taxonomy.
+          </li>
+          <li>
+            Herzog AG, Frye CA. <a href="https://pubmed.ncbi.nlm.nih.gov/24944264/">Allopregnanolone levels and seizure frequency in progesterone-treated women with epilepsy</a>.
+            <em>Neurology</em>. 2014;83(4):345–348. Treatment-response context, not direct support for subjective/quantitative discordance.
+          </li>
+        </ol>
+
+        <div class="footer-note">
+          Review scope: <code>paper1_draft_v3_WTK_RS_SC_072526.docx</code> was inspected in tracked, accepted,
+          and rejected views; all 47 comments and 25 rendered pages were checked. The manuscript and
+          repository analysis outputs were not edited, and no scientific analyses were executed. Code
+          references in the prompts reflect the repository’s current organization, including
+          <code>src/paper1_null_ce/core/plots.py</code>,
+          <code>src/paper1_null_ce/core/summarize.py</code>, and
+          <code>scripts/build_neurology_submission_docs.py</code>.
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

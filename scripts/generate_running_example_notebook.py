@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import json
 import os
@@ -37,16 +38,19 @@ def to_source_lines(text: str) -> List[str]:
 def markdown_cell(text: str) -> Dict[str, object]:
     """Return a notebook markdown cell."""
 
+    source = textwrap.dedent(text).strip()
     return {
         "cell_type": "markdown",
+        "id": hashlib.sha256(f"markdown\0{source}".encode("utf-8")).hexdigest()[:12],
         "metadata": {},
-        "source": to_source_lines(textwrap.dedent(text).strip()),
+        "source": to_source_lines(source),
     }
 
 
 def code_cell(text: str, execution_count: int | None = None, stdout: str = "") -> Dict[str, object]:
     """Return a notebook code cell with optional captured stdout."""
 
+    source = textwrap.dedent(text).strip()
     outputs: List[Dict[str, object]] = []
     if stdout:
         outputs.append(
@@ -58,10 +62,11 @@ def code_cell(text: str, execution_count: int | None = None, stdout: str = "") -
         )
     return {
         "cell_type": "code",
+        "id": hashlib.sha256(f"code\0{source}".encode("utf-8")).hexdigest()[:12],
         "metadata": {},
         "execution_count": execution_count,
         "outputs": outputs,
-        "source": to_source_lines(textwrap.dedent(text).strip()),
+        "source": to_source_lines(source),
     }
 
 
@@ -88,9 +93,11 @@ import csv
 import math
 import os
 import random
+import sys
 from pathlib import Path
 
 ROOT = Path.cwd()
+sys.path.insert(0, str(ROOT / "src"))
 MPLCONFIGDIR = Path("/tmp") / "catamenial-epilepsy-sim-mplconfig"
 CACHE_DIR = Path("/tmp") / "catamenial-epilepsy-sim-cache"
 MPLCONFIGDIR.mkdir(exist_ok=True)
@@ -109,6 +116,7 @@ ONE_HEALTHY_PATH = ROOT / "oneHealthy.csv"
 COHORT_OVERVIEW_FIG = OUTPUT_DIR / "running_example_cohort_overview.png"
 COHORT_AGE_FIG = OUTPUT_DIR / "running_example_age_patterns.png"
 HEALTHY_FIG = OUTPUT_DIR / "running_example_one_healthy.png"
+HEALTHY_KINETICS_FIG = OUTPUT_DIR / "running_example_hormone_kinetics.png"
 
 SEED = 20260315
 NUM_PATIENTS = 1000
@@ -279,10 +287,10 @@ def age_group(age_years: float) -> str:
     return "40-52"
 
 
-def cycle_irregularity(cycle_lengths: list[int], threshold_days: int = 7) -> float:
+def mean_absolute_adjacent_difference(cycle_lengths: list[int]) -> float:
     if len(cycle_lengths) < 2:
         return float("nan")
-    diffs = [abs(right - left) >= threshold_days for left, right in zip(cycle_lengths[:-1], cycle_lengths[1:])]
+    diffs = [abs(right - left) for left, right in zip(cycle_lengths[:-1], cycle_lengths[1:])]
     return sum(diffs) / len(diffs)
 """
 
@@ -359,10 +367,13 @@ cycles_df = pd.DataFrame(cycle_rows)
 patient_irregularity = (
     cycles_df.sort_values(["patient_id", "cycle_index"])
     .groupby("patient_id")["cycle_length"]
-    .apply(lambda s: cycle_irregularity([int(value) for value in s.tolist()]))
-    .reset_index(name="irregularity_rate")
+    .apply(lambda s: mean_absolute_adjacent_difference([int(value) for value in s.tolist()]))
+    .reset_index(name="mean_absolute_adjacent_difference_days")
 )
 profiles_df = profiles_df.merge(patient_irregularity, on="patient_id", how="left")
+profiles_df["irregular_participant"] = (
+    profiles_df["mean_absolute_adjacent_difference_days"] >= 7.0
+)
 
 factor_summary_df = pd.DataFrame(
     [
@@ -400,7 +411,8 @@ cohort_summary_df = pd.DataFrame(
         {"metric": "Observed mean cycle length (days)", "value": cycles_df["cycle_length"].mean()},
         {"metric": "Observed ovulatory cycle rate", "value": cycles_df["ovulatory"].mean()},
         {"metric": "Observed mean bleeding days per cycle", "value": cycles_df["bleeding_days"].mean()},
-        {"metric": "Mean patient irregularity rate", "value": profiles_df["irregularity_rate"].dropna().mean()},
+        {"metric": "Mean absolute adjacent-cycle difference (days)", "value": profiles_df["mean_absolute_adjacent_difference_days"].dropna().mean()},
+        {"metric": "Participants meeting the >=7-day irregularity definition", "value": profiles_df["irregular_participant"].mean()},
     ]
 )
 
@@ -447,7 +459,11 @@ axes[0, 1].set_ylabel("Percent of patients")
 axes[0, 1].tick_params(axis="x", rotation=25)
 
 box_groups = [cycles_df.loc[cycles_df["age_group"] == label, "cycle_length"] for label in ["12-19", "20-29", "30-39", "40-52"]]
-axes[1, 0].boxplot(box_groups, labels=["12-19", "20-29", "30-39", "40-52"], patch_artist=True)
+axes[1, 0].boxplot(
+    box_groups,
+    tick_labels=["12-19", "20-29", "30-39", "40-52"],
+    patch_artist=True,
+)
 axes[1, 0].set_title("Cycle length by age band")
 axes[1, 0].set_ylabel("Cycle length (days)")
 
@@ -465,7 +481,7 @@ plt.close(fig)
 irregularity_by_age_df = (
     profiles_df.groupby("age_group")
     .agg(
-        mean_irregularity=("irregularity_rate", "mean"),
+        irregular_participant_prevalence=("irregular_participant", "mean"),
         mean_personal_target=("personal_cycle_mean_days", "mean"),
     )
     .reset_index()
@@ -526,6 +542,65 @@ healthy_df = pd.DataFrame(healthy_rows)
 healthy_df.to_csv(ONE_HEALTHY_PATH, index=False)
 
 healthy_cycles_df = pd.DataFrame([flatten_cycle_row(cycle.to_dict()) for cycle in healthy_result.cycles])
+
+complete_cycle_indices = [
+    int(cycle_index)
+    for cycle_index, group in healthy_df.groupby("cycle_index")
+    if (
+        len(group) == int(group["cycle_length"].iloc[0])
+        and int(group["cycle_day"].iloc[0]) == 1
+        and int(group["cycle_day"].iloc[-1]) == int(group["cycle_length"].iloc[0])
+    )
+]
+complete_ovulatory_indices = [
+    cycle_index
+    for cycle_index in complete_cycle_indices
+    if bool(healthy_cycles_df.loc[healthy_cycles_df["cycle_index"] == cycle_index, "ovulatory"].iloc[0])
+]
+kinetic_cycle_index = complete_ovulatory_indices[0]
+kinetic_cycle_df = healthy_df.loc[healthy_df["cycle_index"] == kinetic_cycle_index].copy()
+kinetic_following_df = healthy_df.loc[healthy_df["cycle_index"] == kinetic_cycle_index + 1].head(1)
+kinetic_plot_df = pd.concat([kinetic_cycle_df, kinetic_following_df], ignore_index=True)
+
+ovulation_day = int(kinetic_cycle_df.loc[kinetic_cycle_df["ovulation"] == 1, "cycle_day"].iloc[0])
+follicular_e2 = kinetic_cycle_df.loc[kinetic_cycle_df["cycle_day"] <= ovulation_day, "estradiol_pg_ml"]
+peak_width_days = int((follicular_e2 >= 0.80 * follicular_e2.max()).sum())
+progesterone_values = kinetic_cycle_df["progesterone_ng_ml"].tolist()
+progesterone_peak = max(progesterone_values)
+progesterone_peak_day = progesterone_values.index(progesterone_peak) + 1
+progesterone_plateau_days = sum(value >= 0.75 * progesterone_peak for value in progesterone_values)
+progesterone_rise_day = next(
+    day
+    for day, value in enumerate(progesterone_values, start=1)
+    if day >= ovulation_day and value >= 5.0
+)
+luteal_e2 = kinetic_cycle_df.loc[
+    kinetic_cycle_df["cycle_day"] > ovulation_day, "estradiol_pg_ml"
+]
+luteal_e2_peak_ratio = float(luteal_e2.max() / follicular_e2.max())
+withdrawal_transitions = 0
+for earlier, later in zip(reversed(progesterone_values[:-1]), reversed(progesterone_values[1:])):
+    if later < earlier:
+        withdrawal_transitions += 1
+    else:
+        break
+cross_cycle_jump = abs(
+    float(kinetic_following_df["progesterone_ng_ml"].iloc[0])
+    - float(kinetic_cycle_df["progesterone_ng_ml"].iloc[-1])
+)
+
+healthy_kinetics_df = pd.DataFrame(
+    [
+        {"metric": "Preovulatory estradiol width at >=80% maximum (days)", "value": peak_width_days},
+        {"metric": "Luteal E2 peak / follicular E2 peak", "value": luteal_e2_peak_ratio},
+        {"metric": "Progesterone width at >=75% maximum (days)", "value": progesterone_plateau_days},
+        {"metric": "Progesterone peak offset from ovulation (days)", "value": progesterone_peak_day - ovulation_day},
+        {"metric": "Progesterone 5 ng/mL rise offset (days)", "value": progesterone_rise_day - ovulation_day},
+        {"metric": "Consecutive progesterone-decline transitions before bleeding", "value": withdrawal_transitions},
+        {"metric": "Final-cycle progesterone / cycle maximum", "value": progesterone_values[-1] / max(progesterone_values)},
+        {"metric": "Progesterone jump across cycle boundary (ng/mL)", "value": cross_cycle_jump},
+    ]
+)
 healthy_summary_df = pd.DataFrame(
     [
         {"metric": "Diary days", "value": len(healthy_df)},
@@ -570,6 +645,43 @@ fig.savefig(HEALTHY_FIG, dpi=180, bbox_inches="tight")
 plt.close(fig)
 
 print(f"Wrote healthy-patient figure to {HEALTHY_FIG}")
+
+fig, axes = plt.subplots(3, 1, figsize=(13, 8.5), sharex=True, gridspec_kw={"height_ratios": [3, 3, 1]})
+x_values = list(range(1, len(kinetic_plot_df) + 1))
+boundary_x = len(kinetic_cycle_df) + 0.5
+
+axes[0].plot(x_values, kinetic_plot_df["estradiol_pg_ml"], color="#C44E52", linewidth=2.2)
+axes[0].set_ylabel("Estradiol (pg/mL)")
+axes[0].set_title("Complete ovulatory cycle and first day of the next cycle")
+
+axes[1].plot(x_values, kinetic_plot_df["progesterone_ng_ml"], color="#4C72B0", linewidth=2.2)
+axes[1].set_ylabel("Progesterone (ng/mL)")
+
+bleeding_positions = [
+    position
+    for position, bleeding in zip(x_values, kinetic_plot_df["uterine_bleeding"])
+    if int(bleeding) == 1
+]
+axes[2].bar(bleeding_positions, [1.0] * len(bleeding_positions), color="#DD8452", width=0.85, label="Bleeding")
+ovulation_positions = [
+    position
+    for position, ovulation in zip(x_values, kinetic_plot_df["ovulation"])
+    if int(ovulation) == 1
+]
+axes[2].scatter(ovulation_positions, [1.08] * len(ovulation_positions), marker="^", s=65, color="#55A868", label="Ovulation")
+axes[2].set_ylabel("Events")
+axes[2].set_xlabel("Day within displayed interval")
+axes[2].set_ylim(0, 1.25)
+axes[2].legend(frameon=False, loc="upper right")
+
+for axis in axes:
+    axis.axvline(boundary_x, color="#666666", linestyle="--", linewidth=1.2, label="Cycle boundary")
+fig.suptitle("Hormone-waveform check: luteal E2 rebound and broad P4 summit", fontsize=15)
+fig.tight_layout()
+fig.savefig(HEALTHY_KINETICS_FIG, dpi=180, bbox_inches="tight")
+plt.close(fig)
+
+print(f"Wrote hormone-kinetic figure to {HEALTHY_KINETICS_FIG}")
 """
 
 
@@ -629,7 +741,7 @@ def build_input_rows(namespace: Dict[str, object]) -> List[Dict[str, object]]:
             "Input": "Peri-menarche / perimenopause flags",
             "Value used": "Not explicitly sampled",
             "Source / note": (
-                "The simulator already encodes age effects from Li et al. 2024 and related calibration. "
+                "The simulator already encodes age effects from Li et al. 2023 and related calibration. "
                 "Leaving these subgroup flags off avoids double counting explicit stage modifiers."
             ),
         },
@@ -645,16 +757,19 @@ def build_reference_markdown(namespace: Dict[str, object]) -> str:
     lines = [
         "## Full citations",
         "",
-        "The notebook uses the simulator's built-in calibration references plus four additional input-distribution references.",
+        "The notebook uses the simulator's built-in calibration, held-out, context, and direction/range references plus four additional input-distribution references. Evidence roles are declared in the machine-readable validation report.",
         "",
     ]
     for citation in extra.values():
         lines.append(f"- {citation['reference']} [{citation['url']}]({citation['url']})")
     lines.append("")
-    lines.append("### Simulator calibration citations")
+    lines.append("### Simulator scientific-source registry")
     lines.append("")
     for citation in literature.values():
-        lines.append(f"- {citation.full_reference} [{citation.url}]({citation.url})")
+        lines.append(
+            f"- **{citation.evidence_role}.** {citation.full_reference} "
+            f"[{citation.url}]({citation.url})"
+        )
     return "\n".join(lines)
 
 
@@ -675,6 +790,7 @@ def main() -> None:
     factor_summary_df = namespace["factor_summary_df"]
     age_band_summary_df = namespace["age_band_summary_df"]
     healthy_summary_df = namespace["healthy_summary_df"]
+    healthy_kinetics_df = namespace["healthy_kinetics_df"]
 
     cohort_summary_rows = cohort_summary_df.to_dict(orient="records")
     factor_summary_rows = factor_summary_df.to_dict(orient="records")
@@ -688,10 +804,14 @@ def main() -> None:
         ["age_group", "patients", "cycles", "mean_cycle_length", "ovulatory_cycle_rate", "mean_bleeding_days"],
     )
     healthy_summary_table = dataframe_to_markdown(healthy_summary_rows, ["metric", "value"])
+    healthy_kinetics_table = dataframe_to_markdown(
+        healthy_kinetics_df.to_dict(orient="records"), ["metric", "value"]
+    )
 
     overview_fig = namespace["COHORT_OVERVIEW_FIG"].relative_to(ROOT)
     age_fig = namespace["COHORT_AGE_FIG"].relative_to(ROOT)
     healthy_fig = namespace["HEALTHY_FIG"].relative_to(ROOT)
+    healthy_kinetics_fig = namespace["HEALTHY_KINETICS_FIG"].relative_to(ROOT)
 
     references_md = build_reference_markdown(namespace)
 
@@ -708,6 +828,7 @@ def main() -> None:
             - Medication probabilities are taken from U.S. National Survey of Family Growth estimates when the simulator can represent the method directly.
             - PCOS and dysmenorrhea prevalences are mapped onto the simulator's supported factor flags using published prevalence data.
             - Explicit `peri_menarche` and `perimenopause` subgroup flags are left off because the simulator already embeds age effects in its baseline cycle model, and enabling those flags across the general population would double count stage effects.
+            - Participant irregularity uses the Apple Women's Health Study participant-level estimand: mean adjacent-cycle difference of at least seven days. The table footnote omits “absolute,” but the methods define adjacent-cycle differences as absolute values; the notebook follows that convention.
             """
         ),
         code_cell(IMPORTS_CODE, execution_count=1, stdout=imports_stdout),
@@ -767,6 +888,18 @@ def main() -> None:
             ## Healthy-patient plot
 
             ![Healthy patient figure]({healthy_fig.as_posix()})
+
+            ### Hormone-kinetic verification
+
+            The zoomed cycle below uses separate physical scales for estradiol and progesterone,
+            shows the secondary luteal estradiol rise and broadened progesterone summit, and
+            includes the first day of the following cycle so the absence of a vertical reset is
+            directly visible. The waveform uses all daily LH-aligned Stricker serum medians; its
+            subphase amplitudes are checked independently against Anckaert et al.'s 85-woman cohort.
+
+            {healthy_kinetics_table}
+
+            ![Hormone kinetic verification]({healthy_kinetics_fig.as_posix()})
             """
         ),
         markdown_cell(references_md),

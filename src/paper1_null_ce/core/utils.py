@@ -140,6 +140,27 @@ def file_sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def analysis_code_fingerprint(repo_root: Path | None = None) -> str:
+    """Hash the exact analysis source tree and configuration used for a run."""
+
+    root = repo_root or Path(__file__).resolve().parents[3]
+    paths = [
+        root / "config.yaml",
+        root / "run_paper1_null_ce.py",
+        *sorted((root / "src" / "paper1_null_ce").rglob("*.py")),
+        *sorted((root / "src" / "chocolates").rglob("*.py")),
+        *sorted((root / "src" / "hormone_cycler").rglob("*.py")),
+    ]
+    digest = hashlib.sha256()
+    for path in paths:
+        relative = path.relative_to(root).as_posix().encode("utf-8")
+        digest.update(relative)
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def write_manifest(output_dir: str | Path, config: dict[str, Any], assumptions: list[str]) -> Path:
     """Write a machine-readable manifest for every output file currently in output_dir."""
 
@@ -156,6 +177,10 @@ def write_manifest(output_dir: str | Path, config: dict[str, Any], assumptions: 
     manifest = {
         "created_unix_time": time.time(),
         "output_dir": str(out),
+        "analysis_code_sha256": analysis_code_fingerprint(),
+        "analysis_config_sha256": hashlib.sha256(
+            json.dumps(config, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest(),
         "files": files,
         "config": config,
         "assumptions": assumptions,

@@ -1,0 +1,27 @@
+{
+  "source_outputs": "outputs",
+  "primary_outputs_modified": false,
+  "cumulative_ratio_window": {
+    "phase_mode": "strict_herzog",
+    "window_type": "cycle",
+    "window_value": 3
+  },
+  "c3_nb_source": "deterministic 1% saved daily audit sample",
+  "figures": [
+    "outputs/draft_v5_supplement/figS1_seizure_process_distributions.png",
+    "outputs/draft_v5_supplement/figS1_seizure_process_distributions.pdf",
+    "outputs/draft_v5_supplement/figS1_seizure_process_distributions.svg",
+    "outputs/draft_v5_supplement/figS2_seizure_rhythm_distributions.png",
+    "outputs/draft_v5_supplement/figS2_seizure_rhythm_distributions.pdf",
+    "outputs/draft_v5_supplement/figS2_seizure_rhythm_distributions.svg",
+    "outputs/draft_v5_supplement/figS3_menstrual_cycle_distributions.png",
+    "outputs/draft_v5_supplement/figS3_menstrual_cycle_distributions.pdf",
+    "outputs/draft_v5_supplement/figS3_menstrual_cycle_distributions.svg",
+    "outputs/draft_v5_supplement/figS4_age_and_modifier_distributions.png",
+    "outputs/draft_v5_supplement/figS4_age_and_modifier_distributions.pdf",
+    "outputs/draft_v5_supplement/figS4_age_and_modifier_distributions.svg",
+    "outputs/draft_v5_supplement/figS5_simulated_classification_associations.png",
+    "outputs/draft_v5_supplement/figS5_simulated_classification_associations.pdf",
+    "outputs/draft_v5_supplement/figS5_simulated_classification_associations.svg"
+  ]
+}

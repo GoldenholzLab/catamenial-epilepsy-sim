@@ -1,0 +1,160 @@
+{
+  "registry_size": 17,
+  "pubmed_records": 17,
+  "passed": true,
+  "records": [
+    {
+      "key": "li_2023_awhs",
+      "pmid": "37248288",
+      "doi": "10.1038/s41746-023-00848-1",
+      "title": "Menstrual cycle length variation by demographic characteristics from the Apple Women's Health Study",
+      "evidence_role": "Primary healthy-cycle calibration target",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "bull_2019_natural_cycles",
+      "pmid": "31482137",
+      "doi": "10.1038/s41746-019-0152-7",
+      "title": "Real-world menstrual cycle characteristics of more than 600,000 menstrual cycles",
+      "evidence_role": "Phase-timing and bleeding calibration target",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "cunningham_2024_flo",
+      "pmid": "38702411",
+      "doi": "10.1038/s41598-024-60373-3",
+      "title": "Chronicling menstrual cycle patterns across the reproductive lifespan with real-world data",
+      "evidence_role": "Held-out external healthy-cycle cross-check",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "stricker_2006_reference",
+      "pmid": "16776638",
+      "doi": "10.1515/CCLM.2006.160",
+      "title": "Establishment of detailed reference values for luteinizing hormone, follicle stimulating hormone, estradiol, and progesterone during different phases of the menstrual cycle on the Abbott ARCHITECT analyzer",
+      "evidence_role": "Daily hormone-shape calibration and face-validity target",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "fraser_2011_bleeding",
+      "pmid": "22065325",
+      "doi": "10.1055/s-0031-1287662",
+      "title": "The FIGO recommendations on terminologies and definitions for normal and abnormal uterine bleeding",
+      "evidence_role": "Normal/abnormal uterine-bleeding terminology and range context",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "mortimer_2026_pcos",
+      "pmid": "41297783",
+      "doi": "10.1016/j.ajog.2025.11.031",
+      "title": "Variability of menstrual cycles by age, polycystic ovary syndrome, and early-life cycle irregularity in the Apple Women's Health Study",
+      "evidence_role": "Direction-only PCOS cycle-length and variability check",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "doi_2005_pcos_hormones",
+      "pmid": "15932911",
+      "doi": "10.1093/humrep/dei093",
+      "title": "Irregular cycles and steroid hormones in polycystic ovary syndrome",
+      "evidence_role": "Direction-only PCOS ovulatory-status and steroid-pattern check",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "jarrett_2020_pcos",
+      "pmid": "32785651",
+      "doi": "10.1210/clinem/dgaa515",
+      "title": "Ultrasound characterization of disordered antral follicle development in women with polycystic ovary syndrome",
+      "evidence_role": "Direction-only PCOS follicular and hormone-pattern context",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "who_1986_adolescent_cycles",
+      "pmid": "3721946",
+      "doi": "",
+      "title": "World Health Organization multicenter study on menstrual and ovulatory patterns in adolescent girls. II. Longitudinal study of menstrual patterns in the early postmenarcheal period, duration of bleeding episodes and menstrual cycles. World Health Organization Task Force on Adolescent Reproductive Health",
+      "evidence_role": "Direction-only peri-menarche cycle-length and regularity check",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "venturoli_1986_menarche",
+      "pmid": "3491030",
+      "doi": "10.1159/000180567",
+      "title": "Menstrual irregularities in adolescents: hormonal pattern and ovarian morphology",
+      "evidence_role": "Direction-only peri-menarche ovulation and hormone-pattern check",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "zhang_2008_menarche",
+      "pmid": "18252789",
+      "doi": "10.1210/jc.2007-1846",
+      "title": "Onset of ovulation after menarche in girls: a longitudinal study",
+      "evidence_role": "Peri-menarche hormone-pattern context and limitation",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "santoro_2011_perimenopause",
+      "pmid": "21961713",
+      "doi": "10.1016/j.ogc.2011.05.004",
+      "title": "Reproductive hormones and the menopause transition",
+      "evidence_role": "Direction-only perimenopause cycle and hormone-pattern check",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "edelman_2014_ocp",
+      "pmid": "25072731",
+      "doi": "10.1002/14651858.CD004695.pub3",
+      "title": "Continuous or extended cycle vs. cyclic use of combined hormonal contraceptives for contraception",
+      "evidence_role": "Direction/range check for combined oral-contraceptive regimens",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "xiao_1995_lng_iud",
+      "pmid": "7554977",
+      "doi": "10.1016/0010-7824(95)00102-G",
+      "title": "Effect of levonorgestrel-releasing intrauterine device on hormonal profile and menstrual pattern after long-term use",
+      "evidence_role": "Direction/range check for long-term levonorgestrel-IUD ovarian function",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "faundes_1980_copper_iud",
+      "pmid": "7439408",
+      "doi": "10.1016/S0015-0282(16)45131-9",
+      "title": "The menstrual cycle in women using an intrauterine device",
+      "evidence_role": "Direction-only copper-IUD ovulation and cycle-length check",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "malmqvist_1974_copper_bleeding",
+      "pmid": "4448089",
+      "doi": "10.1016/0010-7824(74)90048-1",
+      "title": "Menstrual bleeding with copper-covered intrauterine contraceptive devices",
+      "evidence_role": "Direction-only copper-IUD bleeding check",
+      "passed": true,
+      "problems": []
+    },
+    {
+      "key": "dawood_2006_dysmenorrhea",
+      "pmid": "16880317",
+      "doi": "10.1097/01.AOG.0000230214.26638.0c",
+      "title": "Primary dysmenorrhea: advances in pathogenesis and management",
+      "evidence_role": "Direction-only primary-dysmenorrhea phenotype check",
+      "passed": true,
+      "problems": []
+    }
+  ]
+}

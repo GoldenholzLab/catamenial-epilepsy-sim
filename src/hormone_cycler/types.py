@@ -43,6 +43,7 @@ class PatientProfile:
     age_years: float
     medical_factors: MedicalFactors
     stage: str
+    cycle_variability_component: str
     personal_cycle_mean_days: float
     personal_cycle_sigma_days: float
     ovulation_probability: float

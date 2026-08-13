@@ -54,11 +54,18 @@ class HormoneCycleAdapter:
         cohort: str,
         days: int,
         seed: int,
+        include_hormone_values: bool = True,
     ) -> HormoneSimulation:
         rng = np.random.default_rng(seed)
         age = self.sample_age(cohort, rng)
         factors = self.sample_medical_factors(cohort, age, rng)
         assumptions: list[str] = []
+        start_mode = str(self.config.get("hormone_cycle_start_mode", "random"))
+        assumptions.append(
+            "HORMONE-CYCLE selected diary day 1 uniformly from the first generated cycle."
+            if start_mode == "random"
+            else "HORMONE-CYCLE began each diary on cycle day 1 by explicit configuration."
+        )
         force_ovulatory = bool(self.config["cohorts"][cohort].get("force_ovulatory_cycles", False))
         if cohort == "population":
             assumptions.append(
@@ -66,8 +73,30 @@ class HormoneCycleAdapter:
                 "population medical factors were sampled from config.yaml rates."
             )
 
-        if force_ovulatory and all(hasattr(self.model, name) for name in ("build_patient_profile", "render_cycle")):
-            records, cycles, profile = self._simulate_force_ovulatory(days, age, factors, seed, participant_id)
+        compact_used = bool(not include_hormone_values and hasattr(self.model, "render_cycle_compact"))
+        if compact_used:
+            daily, cycles, profile = self._simulate_compact(
+                days,
+                age,
+                factors,
+                seed,
+                participant_id,
+                start_mode,
+                force_ovulatory=force_ovulatory,
+            )
+            assumptions.append(
+                "Large-run non-audit participants used the RNG-equivalent compact hormone path; "
+                "daily hormone concentrations were omitted, while cycle structure and ILP status were retained."
+            )
+        elif force_ovulatory and all(hasattr(self.model, name) for name in ("build_patient_profile", "render_cycle")):
+            records, cycles, profile = self._simulate_force_ovulatory(
+                days,
+                age,
+                factors,
+                seed,
+                participant_id,
+                start_mode,
+            )
             assumptions.append(
                 "Healthy ovulatory cohort used hormone_cycler build_patient_profile/render_cycle with "
                 "ovulation_probability set to 1.0 because simulate_diary does not expose a public force-ovulation knob."
@@ -79,14 +108,108 @@ class HormoneCycleAdapter:
                 medical_factors=factors,
                 seed=seed,
                 patient_id=participant_id,
+                start_mode=start_mode,
             )
             records = [row.to_dict() for row in result.diary]
             cycles = [cycle.to_dict() for cycle in result.cycles]
             profile = result.profile
 
-        daily = self._daily_frame(participant_id, records, cycles)
+        if not compact_used:
+            daily = self._daily_frame(participant_id, records, cycles)
         summary = self._participant_summary(participant_id, cohort, age, profile, cycles, daily)
+        summary["hormone_cycle_start_mode"] = start_mode
+        summary["diary_start_cycle_day"] = int(daily["cycle_day"].iloc[0])
+        summary["diary_start_cycle_length"] = int(daily["cycle_length"].iloc[0])
         return HormoneSimulation(daily=daily, participant_summary=summary, assumptions=assumptions)
+
+    def _simulate_compact(
+        self,
+        days: int,
+        age: float,
+        factors: Any,
+        seed: int,
+        participant_id: str,
+        start_mode: str,
+        force_ovulatory: bool,
+    ) -> tuple[pd.DataFrame, list[dict[str, Any]], Any]:
+        """Build the paper-analysis columns without materializing hormone rows."""
+
+        profile = self.model.build_patient_profile(
+            age_years=age,
+            medical_factors=factors,
+            seed=seed,
+            patient_id=participant_id,
+        )
+        if force_ovulatory:
+            profile = replace(profile, ovulation_probability=1.0)
+        rng_py = self.model.domain_separated_rng(
+            seed,
+            patient_id=participant_id,
+            stream="cycles",
+        )
+        threshold = float(self.config.get("ilp_progesterone_threshold_ng_ml", 5.0))
+        segments: list[dict[str, np.ndarray]] = []
+        cycles: list[dict[str, Any]] = []
+        observed = 0
+        cycle_index = 1
+        while observed < days:
+            summary, progesterone_values = self.model.render_cycle_compact(profile, cycle_index, rng_py)
+            cycle_payload = summary.to_dict()
+            cycles.append(cycle_payload)
+            start_offset = (
+                self.model.select_diary_start_offset(
+                    summary.cycle_length,
+                    start_mode=start_mode,
+                    seed=seed,
+                    patient_id=participant_id,
+                )
+                if cycle_index == 1
+                else 0
+            )
+            retained = min(days - observed, summary.cycle_length - start_offset)
+            cycle_days = np.arange(start_offset + 1, start_offset + retained + 1, dtype=np.int64)
+            retained_progesterone = np.asarray(
+                progesterone_values[start_offset : start_offset + retained],
+                dtype=float,
+            )
+            if not summary.ovulatory or summary.ovulation_day <= 0:
+                candidates = retained_progesterone
+            else:
+                candidates = retained_progesterone[
+                    (cycle_days >= summary.ovulation_day + 5)
+                    & (cycle_days <= summary.ovulation_day + 9)
+                ]
+                if candidates.size == 0:
+                    candidates = retained_progesterone[cycle_days > summary.ovulation_day]
+            midp4 = float(candidates.max()) if candidates.size else float("nan")
+            ilp = bool(not summary.ovulatory or summary.ovulation_day <= 0 or midp4 < threshold)
+            segments.append(
+                {
+                    "calendar_day_index": np.arange(observed + 1, observed + retained + 1, dtype=np.int32),
+                    "cycle_id": np.full(retained, cycle_index, dtype=np.int32),
+                    "cycle_day": cycle_days,
+                    "cycle_length": np.full(retained, summary.cycle_length, dtype=np.int16),
+                    "age": np.full(retained, age, dtype=float),
+                    "ovulation_flag": (cycle_days == summary.ovulation_day).astype(np.int64),
+                    "menses_onset_flag": (cycle_days == 1).astype(np.int8),
+                    "ovulatory_flag": np.full(retained, summary.ovulatory, dtype=bool),
+                    "ovulation_day": np.full(retained, summary.ovulation_day, dtype=np.int16),
+                    "ilp_flag": np.full(retained, ilp, dtype=bool),
+                    "midluteal_progesterone": np.full(retained, midp4, dtype=float),
+                }
+            )
+            observed += retained
+            cycle_index += 1
+
+        columns = {
+            name: np.concatenate([segment[name] for segment in segments])
+            for name in segments[0]
+        }
+        daily = pd.DataFrame(columns)
+        daily["participant_id"] = participant_id
+        stage_by_cycle = {int(cycle["cycle_index"]): str(cycle["stage"]) for cycle in cycles}
+        daily["cycle_stage"] = daily["cycle_id"].map(stage_by_cycle).astype(str)
+        return daily, cycles, profile
 
     def _simulate_force_ovulatory(
         self,
@@ -95,6 +218,7 @@ class HormoneCycleAdapter:
         factors: Any,
         seed: int,
         participant_id: str,
+        start_mode: str,
     ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], Any]:
         profile = self.model.build_patient_profile(
             age_years=age,
@@ -103,14 +227,28 @@ class HormoneCycleAdapter:
             patient_id=participant_id,
         )
         profile = replace(profile, ovulation_probability=1.0)
-        rng_py = random.Random(seed)
+        rng_py = self.model.domain_separated_rng(
+            seed,
+            patient_id=participant_id,
+            stream="cycles",
+        )
         records: list[dict[str, Any]] = []
         cycles: list[dict[str, Any]] = []
         cycle_index = 1
         while len(records) < days:
             cycle_records, cycle_summary = self.model.render_cycle(profile, cycle_index, rng_py)
             cycles.append(cycle_summary.to_dict())
-            for record in cycle_records:
+            start_offset = (
+                self.model.select_diary_start_offset(
+                    len(cycle_records),
+                    start_mode=start_mode,
+                    seed=seed,
+                    patient_id=participant_id,
+                )
+                if cycle_index == 1
+                else 0
+            )
+            for record in cycle_records[start_offset:]:
                 if len(records) >= days:
                     break
                 payload = record.to_dict()
@@ -204,6 +342,7 @@ class HormoneCycleAdapter:
             "ovulatory_fraction": float(complete["ovulatory"].mean()) if "ovulatory" in complete else np.nan,
             "personal_cycle_mean_days": float(getattr(profile, "personal_cycle_mean_days", np.nan)),
             "personal_cycle_sigma_days": float(getattr(profile, "personal_cycle_sigma_days", np.nan)),
+            "cycle_variability_component": str(getattr(profile, "cycle_variability_component", "unknown")),
             "latent_cycle_regularity_metric": float(getattr(profile, "personal_cycle_sigma_days", np.nan)),
             "pcos": bool(factors_dict.get("pcos", False)),
             "peri_menarche": bool(factors_dict.get("peri_menarche", False)),

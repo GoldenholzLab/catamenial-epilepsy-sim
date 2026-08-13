@@ -1,8 +1,8 @@
 Second-pass review checklist
 Title character count: 67 (Neurology checklist requires <=96).
-Abstract word count: 245 (Neurology checklist requires <=250).
-Body text word count: 1958 (kept concise for Article format).
-References: 14; Tables: 2; Figures: 3.
+Abstract word count: 235 (Neurology checklist requires <=250).
+Body text word count: 2040 (kept concise for Article format).
+References: 18; Tables: 4; Figures: 3.
 Formatting: 12-point Times New Roman, left-aligned body text, 1-inch margins, page header with lead author name and page number field, line numbering enabled in section properties.
 Methodology review: manuscript states independent CHOCOLATES and HORMONE-CYCLE simulation, circular shift before merge, strict Herzog phase labeling before subsetting, no true-coupling simulation, no wavelets, and no HMMs.
 Results review: headline values checked against outputs/summary_tables.csv and notebook-derived cohort summary.

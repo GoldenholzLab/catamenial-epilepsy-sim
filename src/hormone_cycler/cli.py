@@ -7,7 +7,13 @@ import json
 from pathlib import Path
 from typing import Sequence
 
-from .model import simulate_diary, write_diary_csv, write_result_json
+from .model import (
+    DIARY_START_CYCLE_DAY_1,
+    DIARY_START_RANDOM,
+    simulate_diary,
+    write_diary_csv,
+    write_result_json,
+)
 from .population import simulate_population, write_population_json
 from .types import MedicalFactors
 from .validation import run_population_validation, write_validation_report
@@ -50,6 +56,12 @@ def build_parser() -> argparse.ArgumentParser:
     simulate_parser.add_argument("--age", type=float, required=True)
     simulate_parser.add_argument("--seed", type=int, default=11)
     simulate_parser.add_argument("--patient-id", default="patient-0001")
+    simulate_parser.add_argument(
+        "--start-mode",
+        choices=[DIARY_START_RANDOM, DIARY_START_CYCLE_DAY_1],
+        default=DIARY_START_RANDOM,
+        help="Begin at a random first-cycle phase (default) or explicitly at cycle day 1.",
+    )
     simulate_parser.add_argument("--csv-output", type=Path, help="Write diary rows to CSV.")
     simulate_parser.add_argument("--json-output", type=Path, help="Write the full result to JSON.")
     add_factor_arguments(simulate_parser)
@@ -60,6 +72,12 @@ def build_parser() -> argparse.ArgumentParser:
     population_parser.add_argument("--seed", type=int, default=7)
     population_parser.add_argument("--json-output", type=Path, required=True)
     population_parser.add_argument("--include-diaries", action="store_true", help="Embed sample diaries in the JSON payload.")
+    population_parser.add_argument(
+        "--start-mode",
+        choices=[DIARY_START_RANDOM, DIARY_START_CYCLE_DAY_1],
+        default=DIARY_START_RANDOM,
+        help="First-cycle observation rule for each diary.",
+    )
     add_factor_arguments(population_parser)
 
     validate_parser = subparsers.add_parser("validate", help="Compare simulated cohorts with literature targets.")
@@ -68,6 +86,12 @@ def build_parser() -> argparse.ArgumentParser:
     validate_parser.add_argument("--seed", type=int, default=7)
     validate_parser.add_argument("--json-output", type=Path)
     validate_parser.add_argument("--skip-subgroups", action="store_true")
+    validate_parser.add_argument(
+        "--start-mode",
+        choices=[DIARY_START_RANDOM, DIARY_START_CYCLE_DAY_1],
+        default=DIARY_START_RANDOM,
+        help="First-cycle observation rule for all validation diaries.",
+    )
 
     return parser
 
@@ -92,6 +116,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             medical_factors=factors_from_args(args),
             seed=args.seed,
             patient_id=args.patient_id,
+            start_mode=args.start_mode,
         )
         if args.csv_output:
             write_diary_csv(result, args.csv_output)
@@ -108,6 +133,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             seed=args.seed,
             medical_factors=factors_from_args(args),
             include_diaries=args.include_diaries,
+            start_mode=args.start_mode,
         )
         write_population_json(payload, args.json_output)
         return 0
@@ -118,6 +144,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             days=args.days,
             seed=args.seed,
             include_subgroups=not args.skip_subgroups,
+            start_mode=args.start_mode,
         )
         if args.json_output:
             write_validation_report(report, args.json_output)

@@ -1,0 +1,19 @@
+{
+  "figure": "baseline_example_updated.svg",
+  "simulator_version": "0.2.0",
+  "days": 140,
+  "age_years": 29,
+  "seed": 101,
+  "patient_id": "baseline",
+  "start_mode": "cycle_day_1",
+  "medical_factors": {},
+  "command": ".venv/bin/python3 vis_cycles --output examples/reports/baseline_example_updated.svg --days 140 --age 29 --seed 101 --patient-id baseline --start-mode cycle_day_1 --title 'Baseline example — updated HORMONE-CYCLE v0.2.0'",
+  "original_figure_provenance": {
+    "repository_commit": "a4f72b7",
+    "notebook": "show_validation.ipynb",
+    "cell": 5,
+    "call": "simulate_diary(days=140, age_years=29, medical_factors=MedicalFactors(), seed=101, patient_id='baseline')",
+    "renderer": "hormone_cycler.visualization.render_svg",
+    "title": "baseline example"
+  }
+}

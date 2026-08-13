@@ -5,10 +5,11 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence
 
-from .model import simulate_diary
+from .model import DIARY_START_CYCLE_DAY_1, DIARY_START_RANDOM, simulate_diary
 from .types import DailyRecord, MedicalFactors
 
 
@@ -77,17 +78,27 @@ def render_svg(records: Sequence[DailyRecord], title: str = "Hormone Cycle") -> 
         raise ValueError("No records available to visualize.")
 
     width = 1200
-    height = 720
-    margin_left = 78
-    margin_right = 24
-    hormone_top = 70
-    hormone_height = 420
-    event_top = 540
-    event_height = 110
+    height = 860
+    margin_left = 96
+    margin_right = 30
+    estradiol_top = 104
+    estradiol_height = 245
+    progesterone_top = 408
+    progesterone_height = 245
+    event_top = 710
+    event_height = 82
     plot_width = width - margin_left - margin_right
 
-    estradiol_max = max(record.estradiol_pg_ml for record in records) * 1.1
-    progesterone_max = max(record.progesterone_ng_ml for record in records) * 1.1
+    estradiol_max = max(
+        50.0,
+        math.ceil(max(record.estradiol_pg_ml for record in records) * 1.08 / 50.0)
+        * 50.0,
+    )
+    progesterone_max = max(
+        2.0,
+        math.ceil(max(record.progesterone_ng_ml for record in records) * 1.08 / 2.0)
+        * 2.0,
+    )
     total_days = len(records)
 
     def x_pos(day_index: int) -> float:
@@ -96,56 +107,75 @@ def render_svg(records: Sequence[DailyRecord], title: str = "Hormone Cycle") -> 
         return margin_left + (day_index - 1) / (total_days - 1) * plot_width
 
     def e2_y(value: float) -> float:
-        return hormone_top + hormone_height - (value / estradiol_max) * hormone_height
+        return estradiol_top + estradiol_height - (value / estradiol_max) * estradiol_height
 
     def p4_y(value: float) -> float:
-        return hormone_top + hormone_height - (value / progesterone_max) * hormone_height
+        return progesterone_top + progesterone_height - (value / progesterone_max) * progesterone_height
 
     estradiol_points = [(x_pos(record.day_index), e2_y(record.estradiol_pg_ml)) for record in records]
     progesterone_points = [(x_pos(record.day_index), p4_y(record.progesterone_ng_ml)) for record in records]
 
-    grid_lines = []
-    for step in range(6):
-        y = hormone_top + hormone_height * step / 5
-        grid_lines.append(f'<line x1="{margin_left}" y1="{y:.1f}" x2="{width - margin_right}" y2="{y:.1f}" stroke="#d7dee6" stroke-width="1" />')
+    grid_lines: List[str] = []
+    for top, panel_height, axis_max in (
+        (estradiol_top, estradiol_height, estradiol_max),
+        (progesterone_top, progesterone_height, progesterone_max),
+    ):
+        for step in range(5):
+            fraction = step / 4
+            y = top + panel_height * (1.0 - fraction)
+            tick_value = axis_max * fraction
+            grid_lines.append(
+                f'<line x1="{margin_left}" y1="{y:.1f}" x2="{width - margin_right}" y2="{y:.1f}" stroke="#d7dee6" stroke-width="1" />'
+            )
+            grid_lines.append(
+                f'<text x="{margin_left - 12}" y="{y + 4:.1f}" text-anchor="end" font-size="12" font-family="Arial, sans-serif" fill="#4b5563">{tick_value:g}</text>'
+            )
 
     day_ticks = []
     for step in range(min(total_days, 12)):
         day = 1 + round(step * (total_days - 1) / max(1, min(total_days, 12) - 1))
         x = x_pos(day)
         day_ticks.append(f'<line x1="{x:.1f}" y1="{event_top + event_height}" x2="{x:.1f}" y2="{event_top + event_height + 8}" stroke="#1f2933" stroke-width="1" />')
-        day_ticks.append(f'<text x="{x:.1f}" y="{event_top + event_height + 24}" text-anchor="middle" font-size="12" fill="#1f2933">Day {day}</text>')
+        day_ticks.append(f'<text x="{x:.1f}" y="{event_top + event_height + 25}" text-anchor="middle" font-size="12" fill="#1f2933">Day {day}</text>')
 
     bleeding_rects = []
     ovulation_markers = []
+    cycle_boundaries = []
     for record in records:
         x = x_pos(record.day_index)
         if record.uterine_bleeding:
             bleeding_rects.append(
-                f'<rect x="{x - 3:.1f}" y="{event_top + 44}" width="6" height="34" rx="2" fill="#c03221" opacity="0.88" />'
+                f'<rect x="{x - 3:.1f}" y="{event_top + 43}" width="6" height="27" rx="2" fill="#c03221" opacity="0.88" />'
             )
         if record.ovulation:
             ovulation_markers.append(
-                f'<circle cx="{x:.1f}" cy="{event_top + 24}" r="7" fill="#2f855a" />'
+                f'<circle cx="{x:.1f}" cy="{event_top + 22}" r="7" fill="#2f855a" />'
+            )
+        if record.cycle_day == 1 and record.day_index != records[0].day_index:
+            cycle_boundaries.append(
+                f'<line x1="{x:.1f}" y1="{estradiol_top}" x2="{x:.1f}" y2="{progesterone_top + progesterone_height}" stroke="#9ca3af" stroke-width="1" stroke-dasharray="5 5" opacity="0.72" />'
             )
 
     return "\n".join(
         [
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
             '<rect width="100%" height="100%" fill="#f7f3ea" />',
-            '<rect x="24" y="24" width="1152" height="672" rx="22" fill="#fffdf8" stroke="#d6c7ae" stroke-width="2" />',
+            '<rect x="24" y="24" width="1152" height="812" rx="22" fill="#fffdf8" stroke="#d6c7ae" stroke-width="2" />',
             f'<text x="{margin_left}" y="44" font-size="24" font-family="Georgia, serif" fill="#2d3748">{title}</text>',
-            f'<text x="{margin_left}" y="64" font-size="13" font-family="Arial, sans-serif" fill="#4a5568">Estradiol and progesterone trajectories with bleeding and ovulation events</text>',
+            f'<text x="{margin_left}" y="66" font-size="13" font-family="Arial, sans-serif" fill="#4a5568">Separate physiological scales; dashed vertical lines mark menstrual-cycle boundaries</text>',
             *grid_lines,
-            f'<line x1="{margin_left}" y1="{hormone_top}" x2="{margin_left}" y2="{hormone_top + hormone_height}" stroke="#1f2933" stroke-width="1.5" />',
-            f'<line x1="{margin_left}" y1="{hormone_top + hormone_height}" x2="{width - margin_right}" y2="{hormone_top + hormone_height}" stroke="#1f2933" stroke-width="1.5" />',
+            *cycle_boundaries,
+            f'<line x1="{margin_left}" y1="{estradiol_top}" x2="{margin_left}" y2="{estradiol_top + estradiol_height}" stroke="#1f2933" stroke-width="1.5" />',
+            f'<line x1="{margin_left}" y1="{estradiol_top + estradiol_height}" x2="{width - margin_right}" y2="{estradiol_top + estradiol_height}" stroke="#1f2933" stroke-width="1.5" />',
+            f'<line x1="{margin_left}" y1="{progesterone_top}" x2="{margin_left}" y2="{progesterone_top + progesterone_height}" stroke="#1f2933" stroke-width="1.5" />',
+            f'<line x1="{margin_left}" y1="{progesterone_top + progesterone_height}" x2="{width - margin_right}" y2="{progesterone_top + progesterone_height}" stroke="#1f2933" stroke-width="1.5" />',
             f'<line x1="{margin_left}" y1="{event_top + event_height}" x2="{width - margin_right}" y2="{event_top + event_height}" stroke="#1f2933" stroke-width="1.5" />',
             _polyline(estradiol_points, "#d97706", 3.0),
             _polyline(progesterone_points, "#2563eb", 3.0),
-            f'<text x="{margin_left}" y="{hormone_top - 16}" font-size="14" fill="#d97706">Estradiol (pg/mL)</text>',
-            f'<text x="{margin_left + 180}" y="{hormone_top - 16}" font-size="14" fill="#2563eb">Progesterone (ng/mL)</text>',
+            f'<text x="{margin_left}" y="{estradiol_top - 14}" font-size="15" font-family="Arial, sans-serif" font-weight="bold" fill="#d97706">Estradiol (pg/mL)</text>',
+            f'<text x="{margin_left}" y="{progesterone_top - 14}" font-size="15" font-family="Arial, sans-serif" font-weight="bold" fill="#2563eb">Progesterone (ng/mL)</text>',
             f'<text x="{margin_left}" y="{event_top + 20}" font-size="14" fill="#2f855a">Ovulation</text>',
-            f'<text x="{margin_left}" y="{event_top + 92}" font-size="14" fill="#c03221">Bleeding</text>',
+            f'<text x="{margin_left}" y="{event_top + 66}" font-size="14" fill="#c03221">Bleeding</text>',
             *bleeding_rects,
             *ovulation_markers,
             *day_ticks,
@@ -171,6 +201,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--days", type=int, default=120, help="If no input is supplied, simulate this many days.")
     parser.add_argument("--age", type=float, default=30.0, help="Age for on-the-fly simulation.")
     parser.add_argument("--seed", type=int, default=11, help="Random seed for on-the-fly simulation.")
+    parser.add_argument(
+        "--patient-id",
+        default="patient-0001",
+        help="Patient identifier for on-the-fly simulation and domain-separated random streams.",
+    )
+    parser.add_argument(
+        "--start-mode",
+        choices=[DIARY_START_RANDOM, DIARY_START_CYCLE_DAY_1],
+        default=DIARY_START_RANDOM,
+        help="First-cycle observation rule for on-the-fly simulation.",
+    )
     parser.add_argument("--pcos", action="store_true")
     parser.add_argument("--hormonal-iud", action="store_true")
     parser.add_argument("--copper-iud", action="store_true")
@@ -206,7 +247,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             peri_menarche=args.peri_menarche,
             dysmenorrhea=args.dysmenorrhea,
         )
-        result = simulate_diary(args.days, args.age, medical_factors=factors, seed=args.seed)
+        result = simulate_diary(
+            args.days,
+            args.age,
+            medical_factors=factors,
+            seed=args.seed,
+            patient_id=args.patient_id,
+            start_mode=args.start_mode,
+        )
         records = result.diary
     write_svg(records, args.output, title=args.title)
     return 0

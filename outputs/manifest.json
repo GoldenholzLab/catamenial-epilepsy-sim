@@ -9,7 +9,7 @@
   "config": {
     "analysis_modes": {
       "coupled_full": {
-        "chunk_size": 500,
+        "chunk_size": 5000,
         "cohort_sizes": {
           "healthy_ovulatory": 50000,
           "population": 50000
@@ -38,7 +38,7 @@
         }
       },
       "full": {
-        "chunk_size": 500,
+        "chunk_size": 5000,
         "cohort_sizes": {
           "healthy_ovulatory": 50000,
           "population": 50000
@@ -95,6 +95,10 @@
     "n_jobs": -1,
     "output_dir": "outputs",
     "phase_mode": "strict_herzog",
+    "phase_modes": [
+      "strict_herzog",
+      "luteal_anchored_ovulatory"
+    ],
     "population_factor_rates": {
       "dysmenorrhea": 0.12,
       "pcos": 0.1,
@@ -109,6 +113,11 @@
     },
     "regression": {
       "enabled": true,
+      "evaluated_windows": [
+        {
+          "window_type": "full"
+        }
+      ],
       "fallback_alpha": 1.0,
       "window_alpha_sensitivity_windows": [
         {
@@ -126,6 +135,11 @@
         0.442
       ],
       "n_participants": 30,
+      "n_participants_values": [
+        30,
+        50,
+        100
+      ],
       "n_studies": 10000,
       "window_months": 3,
       "window_pool_per_participant": 5
@@ -147,7 +161,11 @@
         3,
         4,
         6,
-        12
+        9,
+        12,
+        18,
+        24,
+        36
       ],
       "cycle_counts": [
         3,
@@ -156,27 +174,47 @@
       ]
     }
   },
-  "created_unix_time": 1778166910.769012,
+  "created_unix_time": 1783124022.156322,
   "files": [
     {
       "bytes": 8196,
       "path": "outputs/.DS_Store",
-      "sha256": "0b9dfdc22018c24cde299aebd40caec9994ca85bc9bed69f60939bafd1b73787"
+      "sha256": "42fa62354cefaa232a882f2ee9997037ca534ffc9df17697bb2fe68e31c2f57f"
     },
     {
-      "bytes": 5108855,
+      "bytes": 7172399,
       "path": "outputs/audit_daily_sample.parquet",
-      "sha256": "2cdc0bf3628a065fc39b163fbb41c58431a15ded4576cc9bf8c66619ee81652f"
+      "sha256": "c7acbf17cf18c140cf075ccfe54547589f4ca82fecbbe44b00fd5f900ca57ec2"
     },
     {
-      "bytes": 18564,
+      "bytes": 19127,
       "path": "outputs/fig1_false_positive_by_window.pdf",
-      "sha256": "a5cbca56b2eb6f2a4883487fe99627eda09644e5339897a2f93a5c831c52c3c8"
+      "sha256": "f074e7f7f5e4d499ed0ff82ea9ea27ad2fa6250ab3a8a0161e4948d017e43f01"
     },
     {
-      "bytes": 108318,
+      "bytes": 113885,
       "path": "outputs/fig1_false_positive_by_window.png",
-      "sha256": "1bf4e10d767cc7c1940f7d26105863e8febb4523ccc4556e9b8f810ae703219a"
+      "sha256": "f5989119ecaa73a7f5ba160636756985144345d646f428159ef9b00511b9a55c"
+    },
+    {
+      "bytes": 77416,
+      "path": "outputs/fig1_false_positive_by_window.svg",
+      "sha256": "876db07f9e20d4f3a7199ca3b2b6ec27e3b2d801c8ec00091b737f29b8fb89be"
+    },
+    {
+      "bytes": 16805,
+      "path": "outputs/fig2_pattern_decomposition.pdf",
+      "sha256": "48211a3f5318bde4d8ee2ffec673f32163aa32b8985874845b6c1b7fc31f28c9"
+    },
+    {
+      "bytes": 76472,
+      "path": "outputs/fig2_pattern_decomposition.png",
+      "sha256": "9e66bed3b1669003571214a22f246f2bc064c0b213e609a80cd8e82f90fc606d"
+    },
+    {
+      "bytes": 56438,
+      "path": "outputs/fig2_pattern_decomposition.svg",
+      "sha256": "bda8f8a978c27d5c30c1f92509b2e41439aa140615c3ba36aa52064fe30cc8a3"
     },
     {
       "bytes": 17079,
@@ -199,14 +237,49 @@
       "sha256": "c0a28a1453bc217fb1cbbcb63aae498679bbc03e6a2c8795eb7c5029e86d7cb1"
     },
     {
-      "bytes": 17807,
-      "path": "outputs/fig4_historical_vs_core_definitions.pdf",
-      "sha256": "49206c2dc2206c4b2ba68700d651815bf9b6c5dc46b76cf3c665bc2d8ee7321b"
+      "bytes": 18092,
+      "path": "outputs/fig3_study_prevalence_distribution_3month.pdf",
+      "sha256": "a9380fd622c7051c1d1533cb366fdae32396253d7279c4c442839bee9dc7ce46"
     },
     {
-      "bytes": 67731,
+      "bytes": 95439,
+      "path": "outputs/fig3_study_prevalence_distribution_3month.png",
+      "sha256": "ecaa439be983b7722266b8afa3a33099eba54545b411f6b55628450d3c11adec"
+    },
+    {
+      "bytes": 66059,
+      "path": "outputs/fig3_study_prevalence_distribution_3month.svg",
+      "sha256": "e37317bea26f3f7d410b8cd562c8c84077a33093553de59c4491456fc17b997c"
+    },
+    {
+      "bytes": 17711,
+      "path": "outputs/fig4_historical_vs_core_definitions.pdf",
+      "sha256": "bb77c02a2a1f3d169f3fa00721730499b92928198ced6bd8797abfe5d563697f"
+    },
+    {
+      "bytes": 78202,
       "path": "outputs/fig4_historical_vs_core_definitions.png",
-      "sha256": "971b30c95b0d194991c3e25b17daaa0c848f7758ba71e6ada3b858be88893786"
+      "sha256": "abfc9f68de14f66a11235230fba6079cb98853c1c193363fd1cee9e30588dd34"
+    },
+    {
+      "bytes": 51000,
+      "path": "outputs/fig4_historical_vs_core_definitions.svg",
+      "sha256": "afebc9ab75e4a8793d1bffe7a9bde4634452df99db85919ec56d02ba6f396ca9"
+    },
+    {
+      "bytes": 25291,
+      "path": "outputs/fig4_indeterminate_vs_fpr_frontier.pdf",
+      "sha256": "d1966f5bf22e9636b62442004ef3a76aaddd5318789a9c7bd74359ec8a221a1a"
+    },
+    {
+      "bytes": 150716,
+      "path": "outputs/fig4_indeterminate_vs_fpr_frontier.png",
+      "sha256": "b83cd03fae8a4a9fd7c62c0e14cc9661750190103ee41dacea130b4ee289e0c3"
+    },
+    {
+      "bytes": 98913,
+      "path": "outputs/fig4_indeterminate_vs_fpr_frontier.svg",
+      "sha256": "56a2d2690219166504592fb432af8df64b4840114b25ade7687256547fe95f9e"
     },
     {
       "bytes": 16992,
@@ -219,64 +292,89 @@
       "sha256": "020ae0b61c10d8e73f6597a8879bc779b563baffe3644cae01a5f26c4b95611b"
     },
     {
-      "bytes": 18573,
+      "bytes": 19236,
+      "path": "outputs/fig5_qc_null_cycle_day_profile.pdf",
+      "sha256": "61578e32babb201877c7f7ce150877972e98021904c48ab1f658ebaec07dfab2"
+    },
+    {
+      "bytes": 117402,
+      "path": "outputs/fig5_qc_null_cycle_day_profile.png",
+      "sha256": "36febc52360411fc6e9937ebac3bcbcd0f004b33adfee48750a7b475a354bd43"
+    },
+    {
+      "bytes": 74899,
+      "path": "outputs/fig5_qc_null_cycle_day_profile.svg",
+      "sha256": "f4504f62c60a669efcd0eae80cfd467d42f85a574c696d011ca5c33d210cbba1"
+    },
+    {
+      "bytes": 18564,
       "path": "outputs/neurology_submission/fig1_false_positive_by_window.pdf",
-      "sha256": "8fa931203262567c3dd46c47e2642d152928f48765b478e6a6b8a788e8001d95"
+      "sha256": "a5cbca56b2eb6f2a4883487fe99627eda09644e5339897a2f93a5c831c52c3c8"
     },
     {
-      "bytes": 105449,
+      "bytes": 108318,
       "path": "outputs/neurology_submission/fig1_false_positive_by_window.png",
-      "sha256": "f6c288375b203f65595681a9ad2b44af517ee5cf3408b3bd3a06a1ec16f56b39"
+      "sha256": "1bf4e10d767cc7c1940f7d26105863e8febb4523ccc4556e9b8f810ae703219a"
     },
     {
-      "bytes": 17060,
+      "bytes": 17079,
       "path": "outputs/neurology_submission/fig2_study_prevalence_distribution_3month_n30.pdf",
-      "sha256": "ef69b89acdb57703077f2411a39a42ab24ff885928c8bed9010529eefd5e5ef8"
+      "sha256": "09c45d92c43c3671e5fe6ca6b3f4fb2c55e164fcdc3c71d30bca3886c831c8bf"
     },
     {
-      "bytes": 77716,
+      "bytes": 76785,
       "path": "outputs/neurology_submission/fig2_study_prevalence_distribution_3month_n30.png",
-      "sha256": "89c0e9fc207e744bf485f7754a1af72b18b8d326847ad10a520c183ef4147245"
+      "sha256": "951ff628fd053882305945a1ae3277d6f6d31a804b3573f36ed4965552a81c4a"
     },
     {
-      "bytes": 23476,
+      "bytes": 23477,
       "path": "outputs/neurology_submission/fig3_indeterminate_vs_fpr_frontier.pdf",
-      "sha256": "09f4d2c321c179d52528ddb2cf86608ba264f71c46fc67075bbcb15ae109103a"
+      "sha256": "5feab4a65d2abc8958332e4c27bda6c08cd6ddd89f7d71bf70b202da2541be26"
     },
     {
-      "bytes": 137127,
+      "bytes": 137144,
       "path": "outputs/neurology_submission/fig3_indeterminate_vs_fpr_frontier.png",
-      "sha256": "207f9bac3ccd947a96644c53437b3c2b7466f9d34151fffb70ce222aa9610422"
+      "sha256": "c0a28a1453bc217fb1cbbcb63aae498679bbc03e6a2c8795eb7c5029e86d7cb1"
     },
     {
-      "bytes": 17799,
+      "bytes": 17807,
       "path": "outputs/neurology_submission/fig4_historical_vs_core_definitions.pdf",
-      "sha256": "d048c7fa80c7ecfaa26542ffac3e90c107cf46b3db6b959cb9100ece12205219"
+      "sha256": "49206c2dc2206c4b2ba68700d651815bf9b6c5dc46b76cf3c665bc2d8ee7321b"
     },
     {
-      "bytes": 66740,
+      "bytes": 67731,
       "path": "outputs/neurology_submission/fig4_historical_vs_core_definitions.png",
-      "sha256": "fe6b3ace3ed5983fbf3289b8dfb287d3d0afcb90a1ba8d1710bab91bf48029b4"
+      "sha256": "971b30c95b0d194991c3e25b17daaa0c848f7758ba71e6ada3b858be88893786"
     },
     {
-      "bytes": 17004,
+      "bytes": 16992,
       "path": "outputs/neurology_submission/fig5_null_cycle_day_profile.pdf",
-      "sha256": "edbe3876eafe8ce2def0d207cdad51a3e3c3e91b69a50764f816f1e48d479857"
+      "sha256": "3e9d4c45363d523007fde01754741bcd5cad3ae38be6be412db11530089e639a"
     },
     {
-      "bytes": 143082,
+      "bytes": 144211,
       "path": "outputs/neurology_submission/fig5_null_cycle_day_profile.png",
-      "sha256": "514e9bb0351f8aeebd099c3c1cfd9c2dd1a165feb1f4f195dc04ab1e5db3b1a0"
+      "sha256": "020ae0b61c10d8e73f6597a8879bc779b563baffe3644cae01a5f26c4b95611b"
     },
     {
-      "bytes": 369401,
+      "bytes": 374242,
+      "path": "outputs/neurology_submission/paper1_draft_v2.docx",
+      "sha256": "57db61cd6aaf99196c8c4aa3c07379821ed22d49f529f1552f7c50a1b6187b6b"
+    },
+    {
+      "bytes": 407921,
+      "path": "outputs/neurology_submission/paper1_draft_v2_RS_WK.docx",
+      "sha256": "de8c2bc6e91a1e167b0790a7f9923f91f14c8e36cf6a56d9da13bf62b2ee90d6"
+    },
+    {
+      "bytes": 375022,
       "path": "outputs/neurology_submission/paper1_null_ce_appendix_draft.docx",
-      "sha256": "11a7615469e8ad886a7c920a8e3bf5a73c1d12b80480219bef8dffb2dc3a33ac"
+      "sha256": "f17512b096b7c89335cc2f9217e3ba012b731cf1ad287d670b2ee0467da64460"
     },
     {
-      "bytes": 369304,
+      "bytes": 373319,
       "path": "outputs/neurology_submission/paper1_null_ce_neurology_original_article_draft.docx",
-      "sha256": "ae6b63f65a801cedb5e0526c59b1531b8a3c7966a899b0e2582e474a5c452c70"
+      "sha256": "014a3ae35b90188a30cf9ea2c5f60fcb9f917a1695308bd835c8240ce28b7194"
     },
     {
       "bytes": 160454,
@@ -364,6 +462,111 @@
       "sha256": "78f6eb65a69f05d7a0c313a400dede3583356099d9803686f02a89a2caf214ca"
     },
     {
+      "bytes": 161053,
+      "path": "outputs/neurology_submission/render_appendix_new/page-1.png",
+      "sha256": "c157401fd5b8003eafed44d1a604f4f96a2759500027c0c47cf476c801420a62"
+    },
+    {
+      "bytes": 198158,
+      "path": "outputs/neurology_submission/render_appendix_new/page-10.png",
+      "sha256": "4e461b20670e49f1f685104af8c30f7211e46f5dbc68098d0611a2f757351cc5"
+    },
+    {
+      "bytes": 199225,
+      "path": "outputs/neurology_submission/render_appendix_new/page-11.png",
+      "sha256": "eee827433a6bac28ed7f83e49cfebe7848d821fa10de5e36736d8d7f2eca772f"
+    },
+    {
+      "bytes": 193802,
+      "path": "outputs/neurology_submission/render_appendix_new/page-12.png",
+      "sha256": "966e4c28baa6d37cec5d6f69ed3f2c4d4d7b45d476dfc9ad7a5b4e21ff98bfab"
+    },
+    {
+      "bytes": 199716,
+      "path": "outputs/neurology_submission/render_appendix_new/page-13.png",
+      "sha256": "e9602540455e93faefc7cf759bd4ac62af951eaf79bfa027d5106b4bf780e5ae"
+    },
+    {
+      "bytes": 197369,
+      "path": "outputs/neurology_submission/render_appendix_new/page-14.png",
+      "sha256": "28d8945e2a4f44a27a2438337b2d97dda1feab2e49bde9cc08ce7db6e34e9187"
+    },
+    {
+      "bytes": 213881,
+      "path": "outputs/neurology_submission/render_appendix_new/page-15.png",
+      "sha256": "bdb4b1b9b637b9b99b1ad1138bd7194d0c41f99d5a13fd1c293291f970415b23"
+    },
+    {
+      "bytes": 112153,
+      "path": "outputs/neurology_submission/render_appendix_new/page-16.png",
+      "sha256": "3227cfbf65b0d9b0693ccadbd8ab97d38e4f7f66feeebfc14bdf234e1cecb746"
+    },
+    {
+      "bytes": 215646,
+      "path": "outputs/neurology_submission/render_appendix_new/page-17.png",
+      "sha256": "8eee2a187f6c5036533f15c18d28374dfd56a406537ce49d6693ab9007a9b4b8"
+    },
+    {
+      "bytes": 72399,
+      "path": "outputs/neurology_submission/render_appendix_new/page-18.png",
+      "sha256": "50e753fd3808ea455e45467572a41724df620f2d5d6439bc51a966469d38cfcf"
+    },
+    {
+      "bytes": 284372,
+      "path": "outputs/neurology_submission/render_appendix_new/page-19.png",
+      "sha256": "1e7fbcc8ae17775757056c9e3fb31644005ee2f2ff1acd6074fa1cbbfae6a672"
+    },
+    {
+      "bytes": 216598,
+      "path": "outputs/neurology_submission/render_appendix_new/page-2.png",
+      "sha256": "89fa4655d9e84f04d766eabb6408c96f68b9354431300eaac9550c282d5a1882"
+    },
+    {
+      "bytes": 115559,
+      "path": "outputs/neurology_submission/render_appendix_new/page-20.png",
+      "sha256": "017e0d1f790497d816d3156cc324b6879a29970cbaeb8d947dba51c7dd7f61d5"
+    },
+    {
+      "bytes": 214639,
+      "path": "outputs/neurology_submission/render_appendix_new/page-3.png",
+      "sha256": "c57d5525e9f532ea8b5d2eeb5184c1f2f74762df6fc06a7a3b3578afa4395b45"
+    },
+    {
+      "bytes": 203691,
+      "path": "outputs/neurology_submission/render_appendix_new/page-4.png",
+      "sha256": "7762165e15c37ff6bb9a02d9682c4b5682475dfcc4e45dcae6f2c342cb2f74bf"
+    },
+    {
+      "bytes": 212809,
+      "path": "outputs/neurology_submission/render_appendix_new/page-5.png",
+      "sha256": "8efa4b7ce81baa41e102a5073ba8ec27f24a1a83661e396d5b5e08ac3192aa09"
+    },
+    {
+      "bytes": 203125,
+      "path": "outputs/neurology_submission/render_appendix_new/page-6.png",
+      "sha256": "de2b56b7f0c0ea0a64b5b7f3a3b2a9325f98723543ca38ceb164143177a5934d"
+    },
+    {
+      "bytes": 185642,
+      "path": "outputs/neurology_submission/render_appendix_new/page-7.png",
+      "sha256": "44fb91b6a82913af12f32b4459039b6a45386e42c12d89f8abbcde0bfb1a120f"
+    },
+    {
+      "bytes": 189305,
+      "path": "outputs/neurology_submission/render_appendix_new/page-8.png",
+      "sha256": "c67d22f0105357de69fcb0b89a313eb5aa906122a2cf5e339f3498faf3757b96"
+    },
+    {
+      "bytes": 194176,
+      "path": "outputs/neurology_submission/render_appendix_new/page-9.png",
+      "sha256": "f3dc453e2b825fdc60a24c0a7534cab3134598a93e0973a420207c5688055f96"
+    },
+    {
+      "bytes": 850844,
+      "path": "outputs/neurology_submission/render_appendix_new/paper1_null_ce_appendix_draft.pdf",
+      "sha256": "9adb7731585ea201aa43ec5749d72e1b485c1d73c9c34f2c2374884ca9c95d49"
+    },
+    {
       "bytes": 122864,
       "path": "outputs/neurology_submission/render_main/page-1.png",
       "sha256": "d356b2ac6959ab04ba9e2290c733481f0b9ce2e2fea9e65ca8970af42799bd3b"
@@ -449,39 +652,244 @@
       "sha256": "f894652d6185645515b1d6aa7bddec104d7d270529b530a510ca654d1019d7f2"
     },
     {
-      "bytes": 890,
+      "bytes": 255822,
+      "path": "outputs/neurology_submission/render_main_new/page-1.png",
+      "sha256": "8f0b27b57e2883c7ed58f0fb9be95be339b501433f78e0dc8b8a61c92cc1aa5e"
+    },
+    {
+      "bytes": 318743,
+      "path": "outputs/neurology_submission/render_main_new/page-10.png",
+      "sha256": "2bb6d1f851eb1ed72a7fd3a174c4449f33f056bb669f8422d07b1680643d5580"
+    },
+    {
+      "bytes": 363881,
+      "path": "outputs/neurology_submission/render_main_new/page-11.png",
+      "sha256": "1b4e82022d245999705cf27db0c798317c2f5507daf4cf399a8aeb78ac07b733"
+    },
+    {
+      "bytes": 296861,
+      "path": "outputs/neurology_submission/render_main_new/page-12.png",
+      "sha256": "2888246365491e832c172b80bc02327ebffce3cba31bb823dd2c853cb5ded212"
+    },
+    {
+      "bytes": 90669,
+      "path": "outputs/neurology_submission/render_main_new/page-13.png",
+      "sha256": "eeaa8ccb7a1f7ddc892a81948e49c4782d2d184069a87b5fc4b131939cdfc60d"
+    },
+    {
+      "bytes": 344537,
+      "path": "outputs/neurology_submission/render_main_new/page-14.png",
+      "sha256": "01a2e2c71ab3a3df9be4551e4d925d74f41bd7c8ed0c5a73b508c90487a1f353"
+    },
+    {
+      "bytes": 141116,
+      "path": "outputs/neurology_submission/render_main_new/page-15.png",
+      "sha256": "ea195a1ec3cf8afc488b4341a03e03d23bc5e7a34b1ce3fa03a273d49831ac4b"
+    },
+    {
+      "bytes": 300903,
+      "path": "outputs/neurology_submission/render_main_new/page-16.png",
+      "sha256": "f62a904269af251a03232b8b1ab085c6c4bdc3be62ef33579f4c292e93b02868"
+    },
+    {
+      "bytes": 160330,
+      "path": "outputs/neurology_submission/render_main_new/page-17.png",
+      "sha256": "bc3816aa841a6938786ee077646bb2c5b91195ce2fd9c4ad7c9002f9ebce10a7"
+    },
+    {
+      "bytes": 253829,
+      "path": "outputs/neurology_submission/render_main_new/page-18.png",
+      "sha256": "4dbed27cc5e2f558a2f871825105d35e5d41227d2e52fbf3cfbf4e9aa2fbe38a"
+    },
+    {
+      "bytes": 348058,
+      "path": "outputs/neurology_submission/render_main_new/page-19.png",
+      "sha256": "9a3f216d3bb776406386bb45a02005677741f0d5a67b6d0dd9b1872c14785953"
+    },
+    {
+      "bytes": 18910,
+      "path": "outputs/neurology_submission/render_main_new/page-2.png",
+      "sha256": "96972ea158b4522eb6f5db0f43ad6916f5d0ca99c09df42edbea36d5bcfc2684"
+    },
+    {
+      "bytes": 342650,
+      "path": "outputs/neurology_submission/render_main_new/page-3.png",
+      "sha256": "cdba99b787422afe99ab56605a06bb2a375c3a701abf63ef10fb12163d83391a"
+    },
+    {
+      "bytes": 71776,
+      "path": "outputs/neurology_submission/render_main_new/page-4.png",
+      "sha256": "7e930bf6f45f388a5e9628b97aa2cc54d0c0deae37354c983432309400e8f28e"
+    },
+    {
+      "bytes": 295647,
+      "path": "outputs/neurology_submission/render_main_new/page-5.png",
+      "sha256": "415b9789521d07cedeaec2e5e1269899ea73e1df2f26496740f17db68ba109b5"
+    },
+    {
+      "bytes": 337779,
+      "path": "outputs/neurology_submission/render_main_new/page-6.png",
+      "sha256": "a54b73500b730841700f671ec1677e9d2f59b31679182133cf381d84a85b1ec0"
+    },
+    {
+      "bytes": 365852,
+      "path": "outputs/neurology_submission/render_main_new/page-7.png",
+      "sha256": "a91f30bba9af9e9cb945aede15699c49764fc43870a1a048879c81d295530542"
+    },
+    {
+      "bytes": 326194,
+      "path": "outputs/neurology_submission/render_main_new/page-8.png",
+      "sha256": "13a18b711e72adb0307ad4758171cbddd2f0f9c778fde791a015c63a48f35717"
+    },
+    {
+      "bytes": 355616,
+      "path": "outputs/neurology_submission/render_main_new/page-9.png",
+      "sha256": "20cd9648e8bb95440b354a015296e2026eb33bddc51a920920b0185b63e05611"
+    },
+    {
+      "bytes": 507928,
+      "path": "outputs/neurology_submission/render_main_new/paper1_null_ce_neurology_original_article_draft.pdf",
+      "sha256": "0543f1e076de36f29d900269187e9b719fbbf3a0023cd91876a41b1b12c401c2"
+    },
+    {
+      "bytes": 272677,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-1.png",
+      "sha256": "2385c1e2944acf01f2ebf5ab97a31495514d19105534eb0f3cf3ddbeb441239a"
+    },
+    {
+      "bytes": 343889,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-10.png",
+      "sha256": "f2b211391c64972613f5b615b57463f0d53187d05173ac031ec122abff69391e"
+    },
+    {
+      "bytes": 363995,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-11.png",
+      "sha256": "c3eaca7e379df70ee66bee1745f6b0a6aeaaaaebd8dd91b1fec59bcca863c353"
+    },
+    {
+      "bytes": 317766,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-12.png",
+      "sha256": "e3b7b3adbba3fab5ae425a0d9a7a0f6b64bd5067be434d9ed48b6494cda604f6"
+    },
+    {
+      "bytes": 140554,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-13.png",
+      "sha256": "7a79d11e3a013d59d95a8a5c7163fff97d0bfa24988c1b145652a3c8c03b3d5c"
+    },
+    {
+      "bytes": 345962,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-14.png",
+      "sha256": "e09815d41734dde456d4983f2211fba440d5fd4bc8c9426ae5d7293b9452141d"
+    },
+    {
+      "bytes": 318876,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-15.png",
+      "sha256": "bbac08568fc2d9e2615e5583cca1863298941a8146547700aee3e5c799d97162"
+    },
+    {
+      "bytes": 305633,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-16.png",
+      "sha256": "dbf22d658c93852fefa17a839a16cee57a11148b305140e1954f226d044e9ce3"
+    },
+    {
+      "bytes": 165076,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-17.png",
+      "sha256": "41a44d4197e074a4ccc6338e2cec0e875ee64b913b1216e24c40bfcf6dec4088"
+    },
+    {
+      "bytes": 253972,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-18.png",
+      "sha256": "8f151f6cb34eca28c01b55fb3901583aa7de44976d58fa4166d32ea8856e2419"
+    },
+    {
+      "bytes": 347576,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-19.png",
+      "sha256": "052bcb5c25bc2b9d82c69bea72e584867ce124e6d6c8ec78287dce1aa5f31c5e"
+    },
+    {
+      "bytes": 341977,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-2.png",
+      "sha256": "d38410e01baafb6d65f1963a8a1a7bf948b9b786b6f79a9bb3206881dc389747"
+    },
+    {
+      "bytes": 72599,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-3.png",
+      "sha256": "1851d4e435d9bc5724f2168d4d17a1d04dae1c12490aa90dfe1927d04d90135b"
+    },
+    {
+      "bytes": 305576,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-4.png",
+      "sha256": "0cef919cef31ad01b7e247a15aabffc42fe1fbdd62536200cc61653211bad99a"
+    },
+    {
+      "bytes": 329650,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-5.png",
+      "sha256": "26f02fefd3bd3ff5203169a0be49f3e69406c49a53b4ba8d1f4fde378f2ee965"
+    },
+    {
+      "bytes": 335018,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-6.png",
+      "sha256": "046f4976a8c7fc1d1f7fd6f8e5dbea1233a88db34cdf9841a2959e7aec8c3627"
+    },
+    {
+      "bytes": 358512,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-7.png",
+      "sha256": "a85b1f661360549c458e37070d319ded75780970f071dc7036fd5ced553519a9"
+    },
+    {
+      "bytes": 299480,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-8.png",
+      "sha256": "7445f7ffe25db4dea412659e13d72f45f385c7f3ec4ad233059d512d1825b614"
+    },
+    {
+      "bytes": 336823,
+      "path": "outputs/neurology_submission/render_paper1_v2/page-9.png",
+      "sha256": "476eb59b26f41dc87bc2f45cc241e39504619baf92a007518bd77bce8f40aeff"
+    },
+    {
+      "bytes": 534716,
+      "path": "outputs/neurology_submission/render_paper1_v2/paper1_draft_v2.pdf",
+      "sha256": "09cd298a32956fe46cfdc2e2372d1b9f591c5305924255d71b6cb30994a3ca4b"
+    },
+    {
+      "bytes": 883,
       "path": "outputs/neurology_submission/second_pass_review_note.txt",
-      "sha256": "5b433cef20e30c0ed09ec57fe2b7eba3c55f3620ba58e536023fdb015daddce4"
+      "sha256": "2eec88c78c90e6adada2540387eb0af43cb933aba784824b0fecf12e4f68bdd8"
     },
     {
-      "bytes": 162,
-      "path": "outputs/neurology_submission/~$per1_null_ce_neurology_original_article_draft.docx",
-      "sha256": "2e65f4ee45070a62cf6ca8addc9d6ecd352b1c959c048a332fea106ff30a5174"
-    },
-    {
-      "bytes": 7031256,
+      "bytes": 7116408,
       "path": "outputs/participant_summary.parquet",
-      "sha256": "4c8b6c96ee70ddf16cc84aa451a6a882932869264d1873b16a04a74ed12f8f0c"
+      "sha256": "80d1425c611d6dc89be9b37e2b8f537968db4058925927ecf4195a963b8ae795"
     },
     {
-      "bytes": 383,
+      "bytes": 387,
       "path": "outputs/progress.json",
-      "sha256": "212e112e5f238789add649f444deb3e1cd8183858b5e0c8c24cae11db14ead98"
+      "sha256": "d764462c1ea45ded33ae43329d34220c9b49ba66b02a54e49bc616fd5982f76b"
     },
     {
-      "bytes": 793883,
+      "bytes": 3008829,
+      "path": "outputs/study_level_3month.parquet",
+      "sha256": "c395de755c4f7d2df80e158355a392cf0db9334c6d53a1d039809b244702a98d"
+    },
+    {
+      "bytes": 3008829,
       "path": "outputs/study_level_3month_n30.parquet",
-      "sha256": "8474520b10a9dc07f662a0f54b6c65d6ed4e392a34d60bdd204cc4c345abebf9"
+      "sha256": "c395de755c4f7d2df80e158355a392cf0db9334c6d53a1d039809b244702a98d"
     },
     {
-      "bytes": 656805,
+      "bytes": 4117821,
       "path": "outputs/summary_tables.csv",
-      "sha256": "204d8472c01e9acb4b357300e51ccb6e571103b66a85ff8a961ac9058a1b9b6f"
+      "sha256": "70659a232855b8e33de204c7674f0e147979fa1877499ea65fe1de8ca46a082b"
     },
     {
-      "bytes": 68397273,
+      "bytes": 114664853,
       "path": "outputs/window_results.parquet",
-      "sha256": "fec1d7e03e7ce616d35b6cc3fa46586eb4f7d2e6dcf30174d197071785b53428"
+      "sha256": "49fd63228b4bb4ebcf2376aa9412c99a3349f530fc887680d5d3b051729c3228"
+    },
+    {
+      "bytes": 3774,
+      "path": "outputs/zotero_references.json",
+      "sha256": "a565cbe5d1d142b5309a040531a05e18bf53099a78da4f81518910ee0de3e4d9"
     }
   ],
   "output_dir": "outputs"

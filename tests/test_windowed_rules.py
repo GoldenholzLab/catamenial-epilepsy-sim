@@ -9,7 +9,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from paper1_null_ce.core.classifiers_windowed import classify_a_windowed
+from paper1_null_ce.core.classifiers_windowed import classify_a_windowed, pattern_category
 from paper1_null_ce.core.phase_labeling import add_phase_labels
 from paper1_null_ce.core.utils import adsf_ratio
 
@@ -46,4 +46,16 @@ def test_windowed_rule_preserves_infinite_ratio_positive() -> None:
     df = add_phase_labels(pd.DataFrame(rows))
     result = classify_a_windowed(df, "healthy_ovulatory")
     assert result["label_A_windowed_C1"] is True
+    assert result["label_A_windowed_C1_or_C2"] is True
+    assert result["label_A_windowed_pattern_category"] == "C1 only"
     assert result["label_A_windowed_any"] is True
+
+
+def test_pattern_category_is_mutually_exclusive() -> None:
+    assert pattern_category(True, False, False) == "C1 only"
+    assert pattern_category(False, True, False) == "C2 only"
+    assert pattern_category(True, True, False) == "C1+C2"
+    assert pattern_category(False, False, True) == "C3 only"
+    assert pattern_category(True, False, True) == "C3 plus C1/C2"
+    assert pattern_category(False, False, False) == "none"
+    assert pattern_category(None, None, None) is None

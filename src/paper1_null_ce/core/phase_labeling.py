@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from typing import Literal
+import weakref
 
 import numpy as np
 import pandas as pd
 
-PhaseMode = Literal["strict_herzog", "modified_short_cycle"]
+PhaseMode = Literal["strict_herzog", "modified_short_cycle", "luteal_anchored_ovulatory"]
 
 
 def backward_day(forward_day: int, cycle_length: int) -> int:
@@ -58,6 +59,28 @@ def modified_short_cycle_phase_for_day(forward_day: int, cycle_length: int) -> s
     return "F"
 
 
+def luteal_anchored_ovulatory_phase_for_day(forward_day: int, cycle_length: int) -> str | None:
+    """Biology-oriented sensitivity labels with a fixed pre-luteal ovulatory window.
+
+    This keeps the Herzog perimenstrual and luteal windows but fixes the
+    periovulatory window at backward days -16 to -13, immediately before the
+    luteal phase. The follicular phase absorbs cycle-length variability.
+    """
+
+    d = int(forward_day)
+    length = int(cycle_length)
+    if d < 1 or d > length:
+        return None
+    b = backward_day(d, length)
+    if d in {1, 2, 3} or b in {-3, -2, -1}:
+        return "M"
+    if -12 <= b <= -4:
+        return "L"
+    if -16 <= b <= -13:
+        return "O"
+    return "F"
+
+
 def reddy_phase_for_day(forward_day: int, cycle_length: int) -> str | None:
     """Reddy 2007 exploratory four-phase table."""
 
@@ -81,7 +104,14 @@ def add_phase_labels(df: pd.DataFrame, mode: PhaseMode = "strict_herzog") -> pd.
     """Assign phase labels on the full diary before window subsetting."""
 
     out = df.copy()
-    phase_func = herzog_phase_for_day if mode == "strict_herzog" else modified_short_cycle_phase_for_day
+    if mode == "strict_herzog":
+        phase_func = herzog_phase_for_day
+    elif mode == "modified_short_cycle":
+        phase_func = modified_short_cycle_phase_for_day
+    elif mode == "luteal_anchored_ovulatory":
+        phase_func = luteal_anchored_ovulatory_phase_for_day
+    else:
+        raise ValueError(f"Unknown phase labeling mode: {mode}")
     out["backward_day"] = [
         backward_day(day, length) for day, length in zip(out["cycle_day"], out["cycle_length"])
     ]
@@ -95,51 +125,163 @@ def add_phase_labels(df: pd.DataFrame, mode: PhaseMode = "strict_herzog") -> pd.
         (out["cycle_length"] >= 23) & (out["cycle_length"] <= 35)
     ).astype(bool)
     out["short_cycle_modified_flag"] = bool(mode == "modified_short_cycle")
+    out["luteal_anchored_ovulatory_flag"] = bool(mode == "luteal_anchored_ovulatory")
     out = mark_complete_cycles(out)
     return out
 
 
 def mark_complete_cycles(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
-    complete_by_cycle: dict[int, bool] = {}
-    for cycle_id, g in out.groupby("cycle_id", sort=False):
-        length = int(g["cycle_length"].iloc[0])
-        complete = len(g) == length and int(g["cycle_day"].min()) == 1 and int(g["cycle_day"].max()) == length
-        complete_by_cycle[int(cycle_id)] = complete
-    out["cycle_complete_flag"] = out["cycle_id"].map(complete_by_cycle).astype(bool)
+    cycle_ids, complete, _ = _cycle_completion_arrays(out)
+    complete_ids = cycle_ids[complete]
+    out["cycle_complete_flag"] = np.isin(
+        out["cycle_id"].to_numpy(copy=False),
+        complete_ids,
+    )
     return out
 
 
+_DERIVED_FRAME_CACHES: dict[
+    int,
+    tuple[weakref.ReferenceType[pd.DataFrame], dict[object, object]],
+] = {}
+
+
+def derived_frame_cache(df: pd.DataFrame) -> dict[object, object]:
+    """Return a cache that is valid only for this concrete DataFrame object.
+
+    The cache is kept outside ``DataFrame.attrs`` because pandas deep-copies
+    attributes during many selections; putting derived tables there makes the
+    intended optimization slower. Weak references clear each entry as soon as
+    its short-lived window frame is released.
+    """
+
+    key = id(df)
+    existing = _DERIVED_FRAME_CACHES.get(key)
+    if existing is not None and existing[0]() is df:
+        return existing[1]
+
+    cache: dict[object, object] = {}
+
+    def discard(reference: weakref.ReferenceType[pd.DataFrame], *, frame_key: int = key) -> None:
+        current = _DERIVED_FRAME_CACHES.get(frame_key)
+        if current is not None and current[0] is reference:
+            _DERIVED_FRAME_CACHES.pop(frame_key, None)
+
+    reference = weakref.ref(df, discard)
+    _DERIVED_FRAME_CACHES[key] = (reference, cache)
+    return cache
+
+
 def count_complete_cycles(window_df: pd.DataFrame) -> int:
-    count = 0
-    for _, g in window_df.groupby("cycle_id", sort=False):
-        length = int(g["cycle_length"].iloc[0])
-        if len(g) == length and int(g["cycle_day"].min()) == 1 and int(g["cycle_day"].max()) == length:
-            count += 1
-    return count
+    if window_df.empty:
+        return 0
+    return int(np.count_nonzero(_cycle_completion_arrays(window_df)[1]))
 
 
 def complete_cycle_ids(df: pd.DataFrame, strict_only: bool = False) -> list[int]:
-    ids: list[int] = []
-    for cycle_id, g in df.groupby("cycle_id", sort=False):
-        length = int(g["cycle_length"].iloc[0])
-        complete = len(g) == length and int(g["cycle_day"].min()) == 1 and int(g["cycle_day"].max()) == length
-        strict = bool(g["strict_herzog_cycle_eligible"].all())
-        if complete and (strict or not strict_only):
-            ids.append(int(cycle_id))
-    return ids
+    if df.empty:
+        return []
+    cycle_ids, complete, strict = _cycle_completion_arrays(df)
+    mask = complete
+    if strict_only:
+        mask = mask & strict
+    return [int(cycle_id) for cycle_id in cycle_ids[mask]]
+
+
+def _cycle_completion_arrays(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    cache = derived_frame_cache(df)
+    cached = cache.get("cycle_completion_arrays")
+    if cached is not None:
+        return cached
+    if df.empty:
+        result = (
+            np.empty(0, dtype=np.int64),
+            np.empty(0, dtype=bool),
+            np.empty(0, dtype=bool),
+        )
+        cache["cycle_completion_arrays"] = result
+        return result
+
+    row_cycle_ids = df["cycle_id"].to_numpy()
+    starts = np.flatnonzero(np.r_[True, row_cycle_ids[1:] != row_cycle_ids[:-1]])
+    ends = np.r_[starts[1:], len(row_cycle_ids)]
+    cycle_days = df["cycle_day"].to_numpy(dtype=np.int64, copy=False)
+    cycle_lengths = df["cycle_length"].to_numpy(dtype=np.int64, copy=False)
+    strict_rows = df["strict_herzog_cycle_eligible"].to_numpy(dtype=bool, copy=False)
+    cycle_ids = row_cycle_ids[starts]
+    lengths = cycle_lengths[starts]
+    complete = (
+        ((ends - starts) == lengths)
+        & (np.minimum.reduceat(cycle_days, starts) == 1)
+        & (np.maximum.reduceat(cycle_days, starts) == lengths)
+    )
+    strict = np.logical_and.reduceat(strict_rows, starts)
+    result = (cycle_ids, complete, strict)
+    cache["cycle_completion_arrays"] = result
+    return result
+
+
+def _cycle_completion_stats(df: pd.DataFrame) -> pd.DataFrame:
+    # A window is classified by several definitions in succession.  Repeating
+    # the same small pandas groupby for every definition dominated the full
+    # Monte-Carlo runtime, so retain immutable derived summaries on the
+    # short-lived window frame.
+    cache = derived_frame_cache(df)
+    cached = cache.get("cycle_completion_stats")
+    if cached is not None:
+        return cached
+    if df.empty:
+        stats = pd.DataFrame(
+            columns=["n_days", "cycle_length", "min_day", "max_day", "strict", "complete"],
+            index=pd.Index([], name="cycle_id"),
+        )
+        cache["cycle_completion_stats"] = stats
+        return stats
+
+    row_cycle_ids = df["cycle_id"].to_numpy()
+    starts = np.flatnonzero(np.r_[True, row_cycle_ids[1:] != row_cycle_ids[:-1]])
+    ends = np.r_[starts[1:], len(row_cycle_ids)]
+    cycle_days = df["cycle_day"].to_numpy(dtype=np.int64, copy=False)
+    cycle_lengths = df["cycle_length"].to_numpy(dtype=np.int64, copy=False)
+    strict = df["strict_herzog_cycle_eligible"].to_numpy(dtype=bool, copy=False)
+    stats = pd.DataFrame(
+        {
+            "n_days": ends - starts,
+            "cycle_length": cycle_lengths[starts],
+            "min_day": np.minimum.reduceat(cycle_days, starts),
+            "max_day": np.maximum.reduceat(cycle_days, starts),
+            "strict": np.logical_and.reduceat(strict, starts),
+        },
+        index=pd.Index(row_cycle_ids[starts], name="cycle_id"),
+    )
+    stats["complete"] = (
+        (stats["n_days"].astype(int) == stats["cycle_length"].astype(int))
+        & (stats["min_day"].astype(int) == 1)
+        & (stats["max_day"].astype(int) == stats["cycle_length"].astype(int))
+    )
+    cache["cycle_completion_stats"] = stats
+    return stats
 
 
 def phase_counts(window_df: pd.DataFrame, phase_col: str = "phase") -> dict[str, dict[str, float]]:
     """Return observed days and seizure counts by phase."""
 
+    cache = derived_frame_cache(window_df)
+    cache_key = f"phase_counts:{phase_col}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+    phase_values = window_df[phase_col].to_numpy(copy=False)
+    seizure_values = window_df["seizure_count"].to_numpy(dtype=float, copy=False)
     result: dict[str, dict[str, float]] = {}
     for phase in ["M", "O", "F", "L"]:
-        mask = window_df[phase_col] == phase
+        mask = phase_values == phase
         result[phase] = {
-            "days": int(mask.sum()),
-            "seizures": float(window_df.loc[mask, "seizure_count"].sum()),
+            "days": int(np.count_nonzero(mask)),
+            "seizures": float(seizure_values[mask].sum()),
         }
+    cache[cache_key] = result
     return result
 
 

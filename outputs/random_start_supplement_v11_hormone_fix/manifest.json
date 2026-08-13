@@ -1,0 +1,148 @@
+{
+  "c3_nb_source": "deterministic 1% saved daily audit sample",
+  "cumulative_ratio_window": {
+    "phase_mode": "strict_herzog",
+    "window_type": "cycle",
+    "window_value": 3
+  },
+  "figures": [
+    "outputs/random_start_supplement_v11_hormone_fix/figS1_seizure_process_distributions.png",
+    "outputs/random_start_supplement_v11_hormone_fix/figS1_seizure_process_distributions.pdf",
+    "outputs/random_start_supplement_v11_hormone_fix/figS1_seizure_process_distributions.svg",
+    "outputs/random_start_supplement_v11_hormone_fix/figS2_seizure_rhythm_distributions.png",
+    "outputs/random_start_supplement_v11_hormone_fix/figS2_seizure_rhythm_distributions.pdf",
+    "outputs/random_start_supplement_v11_hormone_fix/figS2_seizure_rhythm_distributions.svg",
+    "outputs/random_start_supplement_v11_hormone_fix/figS3_menstrual_cycle_distributions.png",
+    "outputs/random_start_supplement_v11_hormone_fix/figS3_menstrual_cycle_distributions.pdf",
+    "outputs/random_start_supplement_v11_hormone_fix/figS3_menstrual_cycle_distributions.svg",
+    "outputs/random_start_supplement_v11_hormone_fix/figS4_age_and_modifier_distributions.png",
+    "outputs/random_start_supplement_v11_hormone_fix/figS4_age_and_modifier_distributions.pdf",
+    "outputs/random_start_supplement_v11_hormone_fix/figS4_age_and_modifier_distributions.svg",
+    "outputs/random_start_supplement_v11_hormone_fix/figS5_simulated_classification_associations.png",
+    "outputs/random_start_supplement_v11_hormone_fix/figS5_simulated_classification_associations.pdf",
+    "outputs/random_start_supplement_v11_hormone_fix/figS5_simulated_classification_associations.svg"
+  ],
+  "files": [
+    {
+      "bytes": 170644,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/audit_realized_features.csv",
+      "sha256": "99000bce4f781d7335230aaf49653c4c6d44b268fad81063db1ac6dc24915fca"
+    },
+    {
+      "bytes": 24549,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS1_seizure_process_distributions.pdf",
+      "sha256": "5d2b47d131fae39bd762ebf765b8b8abc08461be7d45dad8e9c8daaa27d6b30a"
+    },
+    {
+      "bytes": 171402,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS1_seizure_process_distributions.png",
+      "sha256": "bc4f21202523527adf133c49c8541baa26e25caf483040706866602740dc3351"
+    },
+    {
+      "bytes": 113685,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS1_seizure_process_distributions.svg",
+      "sha256": "4ffeaf7c0827f6c780e3b11f6357cf275fdeeb6b9526077b61d7e37e090c107b"
+    },
+    {
+      "bytes": 24085,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS2_seizure_rhythm_distributions.pdf",
+      "sha256": "7e7ee973668957ed6386d93a482b23e167f3738eccedb0e84a77441769501780"
+    },
+    {
+      "bytes": 166407,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS2_seizure_rhythm_distributions.png",
+      "sha256": "473d6bbdfc5e52638de015a4c0fbb80d1377cca987e64a5076d67417d835547f"
+    },
+    {
+      "bytes": 118338,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS2_seizure_rhythm_distributions.svg",
+      "sha256": "8bc269160601ee6333d752e88611f827deeb0f5f1d1700a6ab10a3a576419e85"
+    },
+    {
+      "bytes": 24278,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS3_menstrual_cycle_distributions.pdf",
+      "sha256": "20a44b737cb5bf5fd77de207a450b562e9f2e5a554c4143546193124d63db953"
+    },
+    {
+      "bytes": 156421,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS3_menstrual_cycle_distributions.png",
+      "sha256": "6fd99ad946d7a9a943e293572ca63cb8937b2a84ee9f7b0b348d9f688b2ce6aa"
+    },
+    {
+      "bytes": 107388,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS3_menstrual_cycle_distributions.svg",
+      "sha256": "161ce230fdb05704a37d20c6a91c9725ada0036e1de9d309182e83b305fc5ac7"
+    },
+    {
+      "bytes": 19811,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS4_age_and_modifier_distributions.pdf",
+      "sha256": "49c5f38db51839015a692166617cdb75f2e60017dc048778ac0b4b5baf61a76c"
+    },
+    {
+      "bytes": 111138,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS4_age_and_modifier_distributions.png",
+      "sha256": "63bd776fb4f6649805c77a4eaff61ccbb1cc9913ad5ef19a50b71223d31b8387"
+    },
+    {
+      "bytes": 67308,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS4_age_and_modifier_distributions.svg",
+      "sha256": "9273f553f6c39af788f667ba712516baeb9767916cc9dd0dd7552688049f4820"
+    },
+    {
+      "bytes": 22223,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS5_simulated_classification_associations.pdf",
+      "sha256": "105e83cadfe20aca21483bb5dc376175c9d1c83aa9a01b783dc32650ee686deb"
+    },
+    {
+      "bytes": 164887,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS5_simulated_classification_associations.png",
+      "sha256": "c39fcb135688176515f215c89272065f50e43c9b37cbd4c611a50477c2fa2a7c"
+    },
+    {
+      "bytes": 74082,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/figS5_simulated_classification_associations.svg",
+      "sha256": "ba694c52fdb8a7c40fe9b6e79ca4706dc96539770cc6d5749e55547d8f8d5cd8"
+    },
+    {
+      "bytes": 5585,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/tableS1_cumulative_herzog_ratios.csv",
+      "sha256": "87b37e795c7ba71475909016b10c87cbca64bf4a862a232b8209bdee2564738b"
+    },
+    {
+      "bytes": 2560,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/tableS2_c3_window_sensitivity.csv",
+      "sha256": "fd3ad94f252f141285ed421bfe20acba472f4b36d1dfaadcae6ee521fa2a29cf"
+    },
+    {
+      "bytes": 10743,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/tableS3_minimum_data_sensitivity.csv",
+      "sha256": "a51a6f0461c276e29f5475b71fc99fbbfb2e4d955909e071cbdc39363228792c"
+    },
+    {
+      "bytes": 38434,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/tableS4_simulated_classification_associations.csv",
+      "sha256": "115756186444f55045f596a9c73560c652060d209704ef6e524f8468a62570f0"
+    },
+    {
+      "bytes": 7744,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/tableS5_simulator_parameters_and_assumptions.csv",
+      "sha256": "65bfdadbec3bc9bcfc3039a5c836acc52f0f9eabbceb1144c461f37fedb1b90e"
+    },
+    {
+      "bytes": 47969,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/tableS6_c3_nb_exploratory_participants.csv",
+      "sha256": "c355a969970fc597c6f81695eafbad2713f887caf73a5a930d50276268e0d1c5"
+    },
+    {
+      "bytes": 544,
+      "path": "outputs/random_start_supplement_v11_hormone_fix/tableS6_c3_nb_exploratory_summary.csv",
+      "sha256": "06b1119c92e35640e1a3c01390a0f09e42a53ffe80a6b27e11fd4d521e2d561d"
+    }
+  ],
+  "finalized_unix_time": 1786526894.886865,
+  "primary_analysis_code_sha256": "790990c743eba8c906a4a3f7308269c7f8e33045a33af8dccbf31ae9596d6512",
+  "primary_analysis_config_sha256": "a74b5e244b27d698e749754ba114b58d543bf36bcf6002ed9faf449cb17e688c",
+  "primary_outputs_modified": false,
+  "source_outputs": "outputs/random_start_full_v11_hormone_fix",
+  "supplement_builder_sha256": "691bbd870680ba1c741e000b25711de163efc59579f3eafcc68edf874bc0b2d9"
+}

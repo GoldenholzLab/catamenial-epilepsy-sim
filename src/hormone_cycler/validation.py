@@ -9,9 +9,15 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from .hormone_constants import (
+    ANCKAERT_ESTRADIOL_RATIO_BOUNDS,
+    ANCKAERT_LOW_PROGESTERONE_BOUNDS_NG_ML,
+    ANCKAERT_OVULATION_PROGESTERONE_BOUNDS_NG_ML,
+    ANCKAERT_PROGESTERONE_RATIO_BOUNDS,
+    BULL_BLEEDING_SD_VALIDATION_BOUNDS,
     BULL_BLEEDING_VALIDATION_BOUNDS,
     BULL_FOLLICULAR_VALIDATION_BOUNDS,
     BULL_LUTEAL_VALIDATION_BOUNDS,
+    BULL_LUTEAL_SD_VALIDATION_BOUNDS,
     COPPER_IUD_VALIDATION_BLEEDING_DELTA_BOUNDS,
     COPPER_IUD_VALIDATION_MAX_OVULATION_DELTA,
     CONTINUOUS_OCP_VALIDATION_MAX_BLEEDING_DAYS,
@@ -24,6 +30,10 @@ from .hormone_constants import (
     CYCLIC_OCP_VALIDATION_MAX_OVULATION_RATE,
     DYSMENORRHEA_VALIDATION_BLEEDING_DELTA_BOUNDS,
     DYSMENORRHEA_VALIDATION_MAX_OVULATION_DELTA,
+    EXTERNAL_MEAN_CYCLE_MARGIN_DAYS,
+    EXTERNAL_MEAN_CYCLE_MARGIN_51_PLUS_DAYS,
+    EXTERNAL_MEAN_PERSONAL_SD_MARGIN_51_PLUS_DAYS,
+    EXTERNAL_MEAN_PERSONAL_SD_MARGIN_DAYS,
     HORMONAL_IUD_VALIDATION_AMENORRHEA_BOUNDS,
     HORMONAL_IUD_VALIDATION_EXPECTED_AMENORRHEA_RATE,
     HORMONAL_IUD_VALIDATION_EXPECTED_OVULATION_RATE,
@@ -44,12 +54,15 @@ from .hormone_constants import (
     PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS,
     SUBGROUP_BASELINE_REFERENCE_PATIENTS,
     SUBGROUP_REFERENCE_PATIENTS,
-    VALIDATION_CYCLE_MARGIN_BUFFER_DAYS,
     VALIDATION_CYCLE_MARGIN_MIN_DAYS,
+    VALIDATION_CYCLE_TAIL_MARGIN,
+    VALIDATION_CYCLE_TAIL_MARGIN_50_PLUS,
+    VALIDATION_CYCLES_PER_PARTICIPANT,
     VALIDATION_EARLY_FOLLICULAR_FRACTION,
-    VALIDATION_ESTRADIOL_RATIO_BOUNDS,
-    VALIDATION_IRREGULARITY_MARGIN_BUFFER,
-    VALIDATION_IRREGULARITY_MARGIN_MIN,
+    VALIDATION_ESTRADIOL_PEAK_WIDTH_DAYS_BOUNDS,
+    VALIDATION_ESTRADIOL_PEAK_WIDTH_FRACTION,
+    VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_BOUNDS,
+    VALIDATION_IRREGULARITY_MARGIN,
     VALIDATION_MID_FOLLICULAR_FRACTION,
     VALIDATION_MID_LUTEAL_END_FRACTION,
     VALIDATION_MID_LUTEAL_START_FRACTION,
@@ -59,12 +72,34 @@ from .hormone_constants import (
     VALIDATION_MIN_MID_LUTEAL_START_DAYS,
     VALIDATION_MIN_MID_LUTEAL_END_DAYS,
     VALIDATION_MIN_PROGESTERONE_BOUND,
-    VALIDATION_PROGESTERONE_RATIO_BOUNDS,
+    VALIDATION_PROGESTERONE_PEAK_OFFSET_BOUNDS,
+    VALIDATION_PROGESTERONE_PLATEAU_DAYS_BOUNDS,
+    VALIDATION_PROGESTERONE_PLATEAU_FRACTION,
+    VALIDATION_PROGESTERONE_RISE_OFFSET_BOUNDS,
+    VALIDATION_PROGESTERONE_TERMINAL_TO_PEAK_MAX,
+    VALIDATION_PROGESTERONE_WITHDRAWAL_MIN_DAYS,
+    VALIDATION_CROSS_CYCLE_PROGESTERONE_JUMP_MAX_NG_ML,
     VALIDATION_EARLY_LUTEAL_FRACTION,
+    VALIDATION_WITHIN_PERSON_SD_MARGIN_50_PLUS_DAYS,
+    VALIDATION_WITHIN_PERSON_SD_MARGIN_DAYS,
 )
-from .literature import AGE_BAND_TARGETS, BULL_PHASE_TARGETS, CITATIONS, HORMONE_ANCHORS, age_band_for
+from .literature import (
+    AGE_BAND_TARGETS,
+    ANCKAERT_HORMONE_SUBPHASE_TARGETS,
+    BULL_PHASE_TARGETS,
+    CITATIONS,
+    CUNNINGHAM_AGE_TARGETS,
+    age_band_for,
+)
+from .model import DIARY_START_RANDOM
 from .population import simulate_population
 from .types import MedicalFactors
+
+
+# AWHS eligibility began at age 18 (with higher local minima in Alabama, Nebraska, and
+# Puerto Rico). Restricting the baseline calibration to adults prevents the source study's
+# "under 20" stratum from being represented by 13--17-year-old synthetic participants.
+BASELINE_VALIDATION_AGE_RANGE = (18.0, 55.0)
 
 
 @dataclass
@@ -106,6 +141,15 @@ def median(values: Sequence[float]) -> float:
     return 0.5 * (ordered[mid - 1] + ordered[mid])
 
 
+def sample_sd(values: Sequence[float]) -> float:
+    """Return the sample standard deviation or NaN when fewer than two values exist."""
+
+    if len(values) < 2:
+        return float("nan")
+    center = mean(values)
+    return math.sqrt(sum((value - center) ** 2 for value in values) / (len(values) - 1))
+
+
 def proportion(values: Iterable[bool]) -> float:
     """Return the fraction of truthy values in an iterable."""
 
@@ -116,26 +160,28 @@ def proportion(values: Iterable[bool]) -> float:
 
 
 def cycle_irregularity(cycle_lengths: Sequence[int]) -> float:
-    """Compute the adjacent-cycle irregularity rate for one patient.
+    """Compute one participant's mean absolute adjacent-cycle difference.
 
     Purpose:
-        Li et al. 2024 define irregularity using adjacent-cycle differences of at least seven
-        days. This function applies the same rule to a patient's simulated cycle-length series.
+        Li et al. 2023 define irregularity using a participant's mean adjacent-cycle difference
+        and a seven-day threshold. Their table footnote omits "absolute," but their methods define
+        adjacent-cycle differences as absolute values; this function follows that convention.
 
     Args:
         cycle_lengths: Ordered sequence of cycle lengths for one patient.
 
     Returns:
-        Fraction of adjacent cycle pairs whose absolute difference is at least seven days.
+        Mean absolute adjacent-cycle difference in days.  Li et al. classify the
+        participant as irregular when this value is at least seven days.
     """
 
     if len(cycle_lengths) < 2:
         return float("nan")
     diffs = [
-        abs(right - left) >= IRREGULARITY_THRESHOLD_DAYS
+        abs(right - left)
         for left, right in zip(cycle_lengths[:-1], cycle_lengths[1:])
     ]
-    return proportion(diffs)
+    return mean(diffs)
 
 
 def phase_name(cycle_day: int, cycle: Dict[str, object]) -> Optional[str]:
@@ -181,7 +227,7 @@ def phase_name(cycle_day: int, cycle: Dict[str, object]) -> Optional[str]:
 
 
 def _age_band_metrics(cycles: Sequence[Dict[str, object]]) -> List[ValidationMetric]:
-    """Compare age-stratified cycle statistics with Li et al. 2024 targets."""
+    """Compare age-stratified healthy-cycle outcomes with Li et al. 2023."""
 
     by_band: Dict[str, List[Dict[str, object]]] = {target.label: [] for target in AGE_BAND_TARGETS}
     for cycle in cycles:
@@ -193,12 +239,18 @@ def _age_band_metrics(cycles: Sequence[Dict[str, object]]) -> List[ValidationMet
         band_cycles = by_band[target.label]
         if not band_cycles:
             continue
-        cycle_lengths = [int(cycle["cycle_length"]) for cycle in band_cycles]
-        mean_cycle = mean(cycle_lengths)
-        cycle_margin = max(
-            VALIDATION_CYCLE_MARGIN_MIN_DAYS,
-            (target.cycle_length_ci[1] - target.cycle_length_ci[0]) / 2.0 + VALIDATION_CYCLE_MARGIN_BUFFER_DAYS,
-        )
+        patient_cycles: Dict[str, List[Tuple[int, int]]] = {}
+        for cycle in band_cycles:
+            patient_cycles.setdefault(str(cycle["patient_id"]), []).append(
+                (int(cycle["cycle_index"]), int(cycle["cycle_length"]))
+            )
+        patient_lengths = [
+            [length for _, length in sorted(items)[:VALIDATION_CYCLES_PER_PARTICIPANT]]
+            for items in patient_cycles.values()
+            if len(items) >= 3
+        ]
+        mean_cycle = mean([mean(lengths) for lengths in patient_lengths])
+        cycle_margin = VALIDATION_CYCLE_MARGIN_MIN_DAYS
         cycle_lower = target.mean_cycle_days - cycle_margin
         cycle_upper = target.mean_cycle_days + cycle_margin
         metrics.append(
@@ -209,38 +261,128 @@ def _age_band_metrics(cycles: Sequence[Dict[str, object]]) -> List[ValidationMet
                 lower_bound=round(cycle_lower, 3),
                 upper_bound=round(cycle_upper, 3),
                 passed=cycle_lower <= mean_cycle <= cycle_upper,
-                citation_key="li_2024_awhs",
-                notes="Age-stratified mean cycle length compared with AWHS / NHS3 targets using an equivalence margin around the published estimate.",
+                citation_key="li_2023_awhs",
+                notes="Equal-participant age-stratified mean; absolute targets were derived from the published adjusted age contrasts anchored to the AWHS overall mean of 28.7 days.",
             )
         )
 
-        patient_lengths: Dict[str, List[int]] = {}
-        for cycle in band_cycles:
-            patient_lengths.setdefault(str(cycle["patient_id"]), []).append(int(cycle["cycle_length"]))
-        irregularity_values = [
-            cycle_irregularity(lengths)
-            for lengths in patient_lengths.values()
-            if len(lengths) >= 2 and not math.isnan(cycle_irregularity(lengths))
-        ]
-        irregularity = mean(irregularity_values)
-        irregularity_margin = max(
-            VALIDATION_IRREGULARITY_MARGIN_MIN,
-            (target.irregularity_ci[1] - target.irregularity_ci[0]) / 2.0 + VALIDATION_IRREGULARITY_MARGIN_BUFFER,
+        residual_ss = 0.0
+        residual_df = 0
+        for lengths in patient_lengths:
+            patient_mean = mean(lengths)
+            residual_ss += sum((length - patient_mean) ** 2 for length in lengths)
+            residual_df += len(lengths) - 1
+        within_sd = math.sqrt(residual_ss / residual_df)
+        within_margin = (
+            VALIDATION_WITHIN_PERSON_SD_MARGIN_50_PLUS_DAYS
+            if target.label == "50+"
+            else VALIDATION_WITHIN_PERSON_SD_MARGIN_DAYS
         )
-        irregularity_lower = max(0.0, target.irregularity_probability - irregularity_margin)
-        irregularity_upper = min(1.0, target.irregularity_probability + irregularity_margin)
+        metrics.append(
+            ValidationMetric(
+                name=f"cycle_within_person_sd_{target.label}",
+                observed=round(within_sd, 3),
+                expected=target.within_person_sd_days,
+                lower_bound=round(target.within_person_sd_days - within_margin, 3),
+                upper_bound=round(target.within_person_sd_days + within_margin, 3),
+                passed=abs(within_sd - target.within_person_sd_days) <= within_margin,
+                citation_key="li_2023_awhs",
+                notes="Pooled within-participant SD after subtracting each participant's mean, using up to the first 11 cycles per participant.",
+            )
+        )
+
+        irregularity = proportion(
+            cycle_irregularity(lengths) >= IRREGULARITY_THRESHOLD_DAYS
+            for lengths in patient_lengths
+        )
+        irregularity_lower = max(0.0, target.irregular_participant_probability - VALIDATION_IRREGULARITY_MARGIN)
+        irregularity_upper = min(1.0, target.irregular_participant_probability + VALIDATION_IRREGULARITY_MARGIN)
         metrics.append(
             ValidationMetric(
                 name=f"cycle_irregularity_{target.label}",
                 observed=round(irregularity, 4),
-                expected=target.irregularity_probability,
+                expected=target.irregular_participant_probability,
                 lower_bound=round(irregularity_lower, 4),
                 upper_bound=round(irregularity_upper, 4),
                 passed=irregularity_lower <= irregularity <= irregularity_upper,
-                citation_key="li_2024_awhs",
-                notes="Age-stratified probability that adjacent cycles differ by at least 7 days, assessed with a prespecified equivalence margin.",
+                citation_key="li_2023_awhs",
+                notes="Participant prevalence with mean absolute adjacent-cycle difference >=7 days, matching the AWHS estimand.",
             )
         )
+
+        tail_margin = (
+            VALIDATION_CYCLE_TAIL_MARGIN_50_PLUS
+            if target.label == "50+"
+            else VALIDATION_CYCLE_TAIL_MARGIN
+        )
+        for tail_name, observed, expected in (
+            ("short_lt24", mean([proportion(length < 24 for length in lengths) for lengths in patient_lengths]), target.short_cycle_probability),
+            ("long_gt38", mean([proportion(length > 38 for length in lengths) for lengths in patient_lengths]), target.long_cycle_probability),
+        ):
+            lower = max(0.0, expected - tail_margin)
+            upper = min(1.0, expected + tail_margin)
+            metrics.append(
+                ValidationMetric(
+                    name=f"cycle_{tail_name}_{target.label}",
+                    observed=round(observed, 4),
+                    expected=expected,
+                    lower_bound=round(lower, 4),
+                    upper_bound=round(upper, 4),
+                    passed=lower <= observed <= upper,
+                    citation_key="li_2023_awhs",
+                    notes="Equal-participant cycle-tail prevalence compared with AWHS Supplementary Table 2.",
+                )
+            )
+    return metrics
+
+
+def _external_cycle_metrics(cycles: Sequence[Dict[str, object]]) -> List[ValidationMetric]:
+    """Cross-check 12-month participant summaries against Cunningham et al. 2024."""
+
+    metrics: List[ValidationMetric] = []
+    for target in CUNNINGHAM_AGE_TARGETS:
+        patient_cycles: Dict[str, List[Tuple[int, int]]] = {}
+        for cycle in cycles:
+            age = float(cycle["age_years"])
+            if target.age_min <= age < target.age_max:
+                patient_cycles.setdefault(str(cycle["patient_id"]), []).append(
+                    (int(cycle["cycle_index"]), int(cycle["cycle_length"]))
+                )
+        series = [
+            [length for _, length in sorted(items)[:VALIDATION_CYCLES_PER_PARTICIPANT]]
+            for items in patient_cycles.values()
+            if len(items) >= 3
+        ]
+        if not series:
+            continue
+        observed_mean = mean([mean(lengths) for lengths in series])
+        observed_sd = mean([sample_sd(lengths) for lengths in series])
+        sd_margin = (
+            EXTERNAL_MEAN_PERSONAL_SD_MARGIN_51_PLUS_DAYS
+            if target.label == "51-55"
+            else EXTERNAL_MEAN_PERSONAL_SD_MARGIN_DAYS
+        )
+        mean_margin = (
+            EXTERNAL_MEAN_CYCLE_MARGIN_51_PLUS_DAYS
+            if target.label == "51-55"
+            else EXTERNAL_MEAN_CYCLE_MARGIN_DAYS
+        )
+        for suffix, observed, expected, margin, note in (
+            ("mean", observed_mean, target.mean_cycle_days, mean_margin, "Mean participant cycle length over a 12-month-equivalent window."),
+            ("mean_personal_sd", observed_sd, target.mean_personal_sd_days, sd_margin, "Mean participant-specific sample SD over a 12-month-equivalent window."),
+        ):
+            metrics.append(
+                ValidationMetric(
+                    name=f"external_cunningham_{suffix}_{target.label}",
+                    observed=round(observed, 3),
+                    expected=expected,
+                    lower_bound=round(expected - margin, 3),
+                    upper_bound=round(expected + margin, 3),
+                    passed=abs(observed - expected) <= margin,
+                    citation_key="cunningham_2024_flo",
+                    notes=note + " Held out from model calibration; wider margins reflect different cohort filters and aggregation.",
+                )
+            )
     return metrics
 
 
@@ -251,6 +393,8 @@ def _overall_cycle_metrics(cycles: Sequence[Dict[str, object]]) -> List[Validati
     follicular_mean = mean([float(cycle["follicular_length"]) for cycle in ovulatory_cycles])
     luteal_mean = mean([float(cycle["luteal_length"]) for cycle in ovulatory_cycles])
     bleeding_mean = mean([float(cycle["bleeding_days"]) for cycle in cycles])
+    luteal_sd = sample_sd([float(cycle["luteal_length"]) for cycle in ovulatory_cycles])
+    bleeding_sd = sample_sd([float(cycle["bleeding_days"]) for cycle in cycles])
     return [
         ValidationMetric(
             name="follicular_mean_days",
@@ -282,54 +426,329 @@ def _overall_cycle_metrics(cycles: Sequence[Dict[str, object]]) -> List[Validati
             citation_key="bull_2019_natural_cycles",
             notes="Mean days with bleeding per cycle.",
         ),
+        ValidationMetric(
+            name="luteal_sd_days",
+            observed=round(luteal_sd, 3),
+            expected=BULL_PHASE_TARGETS["luteal_sd_days"],
+            lower_bound=BULL_LUTEAL_SD_VALIDATION_BOUNDS[0],
+            upper_bound=BULL_LUTEAL_SD_VALIDATION_BOUNDS[1],
+            passed=BULL_LUTEAL_SD_VALIDATION_BOUNDS[0] <= luteal_sd <= BULL_LUTEAL_SD_VALIDATION_BOUNDS[1],
+            citation_key="bull_2019_natural_cycles",
+            notes="SD of luteal length in ovulatory cycles.",
+        ),
+        ValidationMetric(
+            name="bleeding_sd_days",
+            observed=round(bleeding_sd, 3),
+            expected=BULL_PHASE_TARGETS["bleeding_sd_days"],
+            lower_bound=BULL_BLEEDING_SD_VALIDATION_BOUNDS[0],
+            upper_bound=BULL_BLEEDING_SD_VALIDATION_BOUNDS[1],
+            passed=BULL_BLEEDING_SD_VALIDATION_BOUNDS[0] <= bleeding_sd <= BULL_BLEEDING_SD_VALIDATION_BOUNDS[1],
+            citation_key="bull_2019_natural_cycles",
+            notes="SD of bleeding duration across natural cycles.",
+        ),
     ]
 
 
 def _hormone_metrics(sample_diaries: Sequence[Dict[str, object]]) -> List[ValidationMetric]:
-    """Compare simulated sub-phase hormone medians with Stricker et al. 2006."""
+    """Compare subphase amplitudes and daily morphology in retained healthy diaries.
+
+    Stricker daily medians supply the model envelope. Anckaert et al.'s larger, separate cohort
+    supplies the independent subphase comparison; wide equivalence windows acknowledge assay and
+    population differences. Explicit daily-shape metrics guard against narrow P4 peaks, misplaced
+    rise/withdrawal transitions, loss of the luteal E2 rebound, and cross-cycle discontinuities.
+    """
 
     phase_values: Dict[str, Dict[str, List[float]]] = {
-        anchor.name: {"estradiol": [], "progesterone": []} for anchor in HORMONE_ANCHORS
+        target.name: {"estradiol": [], "progesterone": []}
+        for target in ANCKAERT_HORMONE_SUBPHASE_TARGETS
     }
+    estradiol_peak_widths: List[float] = []
+    estradiol_secondary_peak_ratios: List[float] = []
+    progesterone_plateau_days: List[float] = []
+    progesterone_peak_offsets: List[float] = []
+    progesterone_rise_offsets: List[float] = []
+    progesterone_withdrawal_days: List[float] = []
+    progesterone_terminal_ratios: List[float] = []
+    cross_cycle_progesterone_jumps: List[float] = []
 
     for diary_payload in sample_diaries:
-        cycle_map = {cycle["cycle_index"]: cycle for cycle in diary_payload["cycles"]}
+        cycle_map = {int(cycle["cycle_index"]): cycle for cycle in diary_payload["cycles"]}
+        rows_by_cycle: Dict[int, List[Dict[str, object]]] = {}
         for row in diary_payload["diary"]:
-            cycle = cycle_map[row["cycle_index"]]
-            name = phase_name(int(row["cycle_day"]), cycle)
-            if not name:
+            rows_by_cycle.setdefault(int(row["cycle_index"]), []).append(row)
+
+        complete_ovulatory: Dict[int, List[Dict[str, object]]] = {}
+        for cycle_index, rows in rows_by_cycle.items():
+            cycle = cycle_map[cycle_index]
+            cycle_length = int(cycle["cycle_length"])
+            ordered = sorted(rows, key=lambda row: int(row["cycle_day"]))
+            if (
+                not bool(cycle["ovulatory"])
+                or len(ordered) != cycle_length
+                or int(ordered[0]["cycle_day"]) != 1
+                or int(ordered[-1]["cycle_day"]) != cycle_length
+            ):
                 continue
-            phase_values[name]["estradiol"].append(float(row["estradiol_pg_ml"]))
-            phase_values[name]["progesterone"].append(float(row["progesterone_ng_ml"]))
+            complete_ovulatory[cycle_index] = ordered
+            for row in ordered:
+                name = phase_name(int(row["cycle_day"]), cycle)
+                if name is None:
+                    continue
+                phase_values[name]["estradiol"].append(float(row["estradiol_pg_ml"]))
+                phase_values[name]["progesterone"].append(float(row["progesterone_ng_ml"]))
+
+            ovulation_day = int(cycle["ovulation_day"])
+            follicular_e2 = [
+                float(row["estradiol_pg_ml"])
+                for row in ordered
+                if int(row["cycle_day"]) <= ovulation_day
+            ]
+            follicular_peak = max(follicular_e2)
+            estradiol_peak_widths.append(
+                float(
+                    sum(
+                        value
+                        >= follicular_peak * VALIDATION_ESTRADIOL_PEAK_WIDTH_FRACTION
+                        for value in follicular_e2
+                    )
+                )
+            )
+
+            luteal_e2 = [
+                float(row["estradiol_pg_ml"])
+                for row in ordered
+                if int(row["cycle_day"]) > ovulation_day
+            ]
+            if luteal_e2 and follicular_peak > 0.0:
+                estradiol_secondary_peak_ratios.append(max(luteal_e2) / follicular_peak)
+
+            progesterone_values = [float(row["progesterone_ng_ml"]) for row in ordered]
+            progesterone_peak = max(progesterone_values)
+            progesterone_peak_day = progesterone_values.index(progesterone_peak) + 1
+            progesterone_peak_offsets.append(float(progesterone_peak_day - ovulation_day))
+            progesterone_plateau_days.append(
+                float(
+                    sum(
+                        value
+                        >= progesterone_peak * VALIDATION_PROGESTERONE_PLATEAU_FRACTION
+                        for value in progesterone_values
+                    )
+                )
+            )
+            rise_day = next(
+                (
+                    day
+                    for day, value in enumerate(progesterone_values, start=1)
+                    if day >= ovulation_day and value >= 5.0
+                ),
+                None,
+            )
+            if rise_day is not None:
+                progesterone_rise_offsets.append(float(rise_day - ovulation_day))
+            progesterone_terminal_ratios.append(
+                progesterone_values[-1] / progesterone_peak
+                if progesterone_peak > 0.0
+                else float("nan")
+            )
+            withdrawal_transitions = 0
+            for earlier, later in zip(
+                reversed(progesterone_values[:-1]),
+                reversed(progesterone_values[1:]),
+            ):
+                if later < earlier:
+                    withdrawal_transitions += 1
+                else:
+                    break
+            progesterone_withdrawal_days.append(float(withdrawal_transitions))
+
+        for cycle_index in sorted(complete_ovulatory):
+            next_index = cycle_index + 1
+            if next_index not in complete_ovulatory:
+                continue
+            current = complete_ovulatory[cycle_index]
+            following = complete_ovulatory[next_index]
+            cross_cycle_progesterone_jumps.append(
+                abs(
+                    float(following[0]["progesterone_ng_ml"])
+                    - float(current[-1]["progesterone_ng_ml"])
+                )
+            )
 
     metrics: List[ValidationMetric] = []
-    for anchor in HORMONE_ANCHORS:
-        estradiol_obs = median(phase_values[anchor.name]["estradiol"])
-        progesterone_obs = median(phase_values[anchor.name]["progesterone"])
+    for target in ANCKAERT_HORMONE_SUBPHASE_TARGETS:
+        estradiol_obs = median(phase_values[target.name]["estradiol"])
+        progesterone_obs = median(phase_values[target.name]["progesterone"])
+        estradiol_lower = target.estradiol_pg_ml * ANCKAERT_ESTRADIOL_RATIO_BOUNDS[0]
+        estradiol_upper = target.estradiol_pg_ml * ANCKAERT_ESTRADIOL_RATIO_BOUNDS[1]
+        if target.name == "ovulation":
+            progesterone_lower, progesterone_upper = (
+                ANCKAERT_OVULATION_PROGESTERONE_BOUNDS_NG_ML
+            )
+        elif target.name in {
+            "early_follicular",
+            "mid_follicular",
+            "pre_ovulatory",
+        }:
+            progesterone_lower, progesterone_upper = ANCKAERT_LOW_PROGESTERONE_BOUNDS_NG_ML
+        else:
+            progesterone_lower = max(
+                VALIDATION_MIN_PROGESTERONE_BOUND,
+                target.progesterone_ng_ml * ANCKAERT_PROGESTERONE_RATIO_BOUNDS[0],
+            )
+            progesterone_upper = target.progesterone_ng_ml * ANCKAERT_PROGESTERONE_RATIO_BOUNDS[1]
         metrics.append(
             ValidationMetric(
-                name=f"estradiol_{anchor.name}",
+                name=f"estradiol_{target.name}",
                 observed=round(estradiol_obs, 3),
-                expected=anchor.estradiol_pg_ml,
-                lower_bound=anchor.estradiol_pg_ml * VALIDATION_ESTRADIOL_RATIO_BOUNDS[0],
-                upper_bound=anchor.estradiol_pg_ml * VALIDATION_ESTRADIOL_RATIO_BOUNDS[1],
-                passed=anchor.estradiol_pg_ml * VALIDATION_ESTRADIOL_RATIO_BOUNDS[0] <= estradiol_obs <= anchor.estradiol_pg_ml * VALIDATION_ESTRADIOL_RATIO_BOUNDS[1],
-                citation_key="stricker_2006_reference",
-                notes="Median estradiol by menstrual sub-phase compared with Stricker et al.",
+                expected=round(target.estradiol_pg_ml, 3),
+                lower_bound=round(estradiol_lower, 3),
+                upper_bound=round(estradiol_upper, 3),
+                passed=estradiol_lower <= estradiol_obs <= estradiol_upper,
+                citation_key="anckaert_2021_hormones",
+                notes="Independent Anckaert serum-E2 subphase median; broad bound accounts for assay and cohort differences.",
             )
         )
         metrics.append(
             ValidationMetric(
-                name=f"progesterone_{anchor.name}",
+                name=f"progesterone_{target.name}",
                 observed=round(progesterone_obs, 3),
-                expected=anchor.progesterone_ng_ml,
-                lower_bound=max(VALIDATION_MIN_PROGESTERONE_BOUND, anchor.progesterone_ng_ml * VALIDATION_PROGESTERONE_RATIO_BOUNDS[0]),
-                upper_bound=anchor.progesterone_ng_ml * VALIDATION_PROGESTERONE_RATIO_BOUNDS[1],
-                passed=max(VALIDATION_MIN_PROGESTERONE_BOUND, anchor.progesterone_ng_ml * VALIDATION_PROGESTERONE_RATIO_BOUNDS[0]) <= progesterone_obs <= anchor.progesterone_ng_ml * VALIDATION_PROGESTERONE_RATIO_BOUNDS[1],
-                citation_key="stricker_2006_reference",
-                notes="Median progesterone by menstrual sub-phase compared with Stricker et al.",
+                expected=round(target.progesterone_ng_ml, 3),
+                lower_bound=round(progesterone_lower, 3),
+                upper_bound=round(progesterone_upper, 3),
+                passed=progesterone_lower <= progesterone_obs <= progesterone_upper,
+                citation_key="anckaert_2021_hormones",
+                notes="Independent Anckaert serum-P4 subphase median; broad bound accounts for assay and cohort differences.",
             )
         )
+    peak_width = median(estradiol_peak_widths)
+    metrics.append(
+        ValidationMetric(
+            name="estradiol_preovulatory_peak_width_days",
+            observed=round(peak_width, 3),
+            expected=3.0,
+            lower_bound=VALIDATION_ESTRADIOL_PEAK_WIDTH_DAYS_BOUNDS[0],
+            upper_bound=VALIDATION_ESTRADIOL_PEAK_WIDTH_DAYS_BOUNDS[1],
+            passed=(
+                VALIDATION_ESTRADIOL_PEAK_WIDTH_DAYS_BOUNDS[0]
+                <= peak_width
+                <= VALIDATION_ESTRADIOL_PEAK_WIDTH_DAYS_BOUNDS[1]
+            ),
+            citation_key="stricker_2006_reference",
+            notes="Median number of follicular days at or above 80% of the cycle-specific estradiol maximum; investigator-selected kinetic smoke-check bound.",
+        )
+    )
+    secondary_peak_ratio = median(estradiol_secondary_peak_ratios)
+    metrics.append(
+        ValidationMetric(
+            name="estradiol_luteal_secondary_peak_ratio",
+            observed=round(secondary_peak_ratio, 4),
+            expected=0.59,
+            lower_bound=VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_BOUNDS[0],
+            upper_bound=VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_BOUNDS[1],
+            passed=(
+                VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_BOUNDS[0]
+                <= secondary_peak_ratio
+                <= VALIDATION_ESTRADIOL_SECONDARY_PEAK_RATIO_BOUNDS[1]
+            ),
+            citation_key="stricker_2006_reference",
+            notes="Median ratio of luteal E2 maximum to the follicular maximum; checks the daily-series secondary luteal rise.",
+        )
+    )
+    plateau_days = median(progesterone_plateau_days)
+    metrics.append(
+        ValidationMetric(
+            name="progesterone_plateau_width_days",
+            observed=round(plateau_days, 3),
+            expected=6.0,
+            lower_bound=VALIDATION_PROGESTERONE_PLATEAU_DAYS_BOUNDS[0],
+            upper_bound=VALIDATION_PROGESTERONE_PLATEAU_DAYS_BOUNDS[1],
+            passed=(
+                VALIDATION_PROGESTERONE_PLATEAU_DAYS_BOUNDS[0]
+                <= plateau_days
+                <= VALIDATION_PROGESTERONE_PLATEAU_DAYS_BOUNDS[1]
+            ),
+            citation_key="stricker_2006_reference",
+            notes="Median days at or above 75% of cycle-specific P4 maximum; directly guards against a one-day triangular peak.",
+        )
+    )
+    peak_offset = median(progesterone_peak_offsets)
+    metrics.append(
+        ValidationMetric(
+            name="progesterone_peak_offset_from_ovulation_days",
+            observed=round(peak_offset, 3),
+            expected=6.0,
+            lower_bound=VALIDATION_PROGESTERONE_PEAK_OFFSET_BOUNDS[0],
+            upper_bound=VALIDATION_PROGESTERONE_PEAK_OFFSET_BOUNDS[1],
+            passed=(
+                VALIDATION_PROGESTERONE_PEAK_OFFSET_BOUNDS[0]
+                <= peak_offset
+                <= VALIDATION_PROGESTERONE_PEAK_OFFSET_BOUNDS[1]
+            ),
+            citation_key="stricker_2006_reference",
+            notes="Median day of maximum P4 relative to the simulator ovulation event after explicit LH-to-ovulation alignment.",
+        )
+    )
+    rise_offset = median(progesterone_rise_offsets)
+    metrics.append(
+        ValidationMetric(
+            name="progesterone_rise_to_5ng_offset_days",
+            observed=round(rise_offset, 3),
+            expected=2.0,
+            lower_bound=VALIDATION_PROGESTERONE_RISE_OFFSET_BOUNDS[0],
+            upper_bound=VALIDATION_PROGESTERONE_RISE_OFFSET_BOUNDS[1],
+            passed=(
+                VALIDATION_PROGESTERONE_RISE_OFFSET_BOUNDS[0]
+                <= rise_offset
+                <= VALIDATION_PROGESTERONE_RISE_OFFSET_BOUNDS[1]
+            ),
+            citation_key="stricker_2006_reference",
+            notes="Median first post-ovulation day reaching 5 ng/mL; guards the luteal-rise transition.",
+        )
+    )
+    withdrawal_days = median(progesterone_withdrawal_days)
+    metrics.append(
+        ValidationMetric(
+            name="progesterone_premenstrual_withdrawal_days",
+            observed=round(withdrawal_days, 3),
+            expected=4.0,
+            lower_bound=VALIDATION_PROGESTERONE_WITHDRAWAL_MIN_DAYS,
+            upper_bound=8.0,
+            passed=withdrawal_days >= VALIDATION_PROGESTERONE_WITHDRAWAL_MIN_DAYS,
+            citation_key="stricker_2006_reference",
+            notes="Median consecutive declining transitions before the next bleeding onset; investigator-selected kinetic smoke check.",
+        )
+    )
+    terminal_ratio = median(
+        [value for value in progesterone_terminal_ratios if math.isfinite(value)]
+    )
+    metrics.append(
+        ValidationMetric(
+            name="progesterone_terminal_to_peak_ratio",
+            observed=round(terminal_ratio, 4),
+            expected=0.04,
+            lower_bound=0.0,
+            upper_bound=VALIDATION_PROGESTERONE_TERMINAL_TO_PEAK_MAX,
+            passed=terminal_ratio <= VALIDATION_PROGESTERONE_TERMINAL_TO_PEAK_MAX,
+            citation_key="stricker_2006_reference",
+            notes="Median final-cycle progesterone divided by the cycle maximum; verifies withdrawal before bleeding rather than a vertical reset at bleeding onset.",
+        )
+    )
+    cross_cycle_jump = median(cross_cycle_progesterone_jumps)
+    metrics.append(
+        ValidationMetric(
+            name="progesterone_cross_cycle_jump_ng_ml",
+            observed=round(cross_cycle_jump, 4),
+            expected=0.0,
+            lower_bound=0.0,
+            upper_bound=VALIDATION_CROSS_CYCLE_PROGESTERONE_JUMP_MAX_NG_ML,
+            passed=(
+                cross_cycle_jump
+                <= VALIDATION_CROSS_CYCLE_PROGESTERONE_JUMP_MAX_NG_ML
+            ),
+            citation_key="stricker_2006_reference",
+            notes="Median absolute progesterone difference between one complete cycle's final day and the next complete cycle's first day.",
+        )
+    )
     return metrics
 
 
@@ -343,12 +762,10 @@ def _summarize_subgroup(population: Dict[str, object], baseline: Optional[Dict[s
     irregularity_by_patient: Dict[str, List[int]] = {}
     for cycle in cycles:
         irregularity_by_patient.setdefault(str(cycle["patient_id"]), []).append(int(cycle["cycle_length"]))
-    irregularity = mean(
-        [
-            cycle_irregularity(lengths)
-            for lengths in irregularity_by_patient.values()
-            if len(lengths) >= 2 and not math.isnan(cycle_irregularity(lengths))
-        ]
+    irregularity = proportion(
+        cycle_irregularity(lengths) >= IRREGULARITY_THRESHOLD_DAYS
+        for lengths in irregularity_by_patient.values()
+        if len(lengths) >= 2 and not math.isnan(cycle_irregularity(lengths))
     )
     amenorrhea = proportion(int(cycle["bleeding_days"]) == 0 for cycle in cycles)
     summary = {
@@ -367,15 +784,17 @@ def _summarize_subgroup(population: Dict[str, object], baseline: Optional[Dict[s
     return summary
 
 
-def _subgroup_analysis(seed: int, days: int) -> Dict[str, object]:
-    """Run factor-specific validation checks after the baseline cohort passes.
+def _subgroup_analysis(seed: int, days: int, start_mode: str) -> Dict[str, object]:
+    """Run age-matched factor-specific software stress tests after the primary gate passes.
 
     Args:
         seed: Base random seed used to derive subgroup-specific seeds.
         days: Diary length in days for each subgroup member.
+        start_mode: First-cycle observation rule used for all subgroup diaries.
 
     Returns:
-        A dictionary containing the baseline reference subgroup and one entry per medical factor.
+        A dictionary containing an adult display reference and one age-matched entry per factor.
+        These scenarios are secondary direction/range regression checks, not external validation.
     """
 
     baseline_population = simulate_population(
@@ -383,39 +802,67 @@ def _subgroup_analysis(seed: int, days: int) -> Dict[str, object]:
         days=days,
         seed=seed + 100,
         medical_factors=MedicalFactors(),
+        balanced_age_bands=False,
         include_diaries=False,
+        start_mode=start_mode,
+        age_range=(18.0, 45.0),
     )
     baseline_summary = _summarize_subgroup(baseline_population)
 
     subgroup_definitions = {
-        "pcos": MedicalFactors(pcos=True),
-        "cyclic_ocp": MedicalFactors(oral_contraceptive_mode="cyclic"),
-        "continuous_ocp": MedicalFactors(oral_contraceptive_mode="continuous"),
-        "hormonal_iud": MedicalFactors(hormonal_iud=True),
-        "copper_iud": MedicalFactors(copper_iud=True),
-        "perimenopause": MedicalFactors(perimenopause=True),
-        "peri_menarche": MedicalFactors(peri_menarche=True),
-        "dysmenorrhea": MedicalFactors(dysmenorrhea=True),
+        "pcos": (MedicalFactors(pcos=True), (18.0, 45.0)),
+        "cyclic_ocp": (MedicalFactors(oral_contraceptive_mode="cyclic"), (18.0, 45.0)),
+        "continuous_ocp": (MedicalFactors(oral_contraceptive_mode="continuous"), (18.0, 45.0)),
+        "hormonal_iud": (MedicalFactors(hormonal_iud=True), (18.0, 45.0)),
+        "copper_iud": (MedicalFactors(copper_iud=True), (18.0, 45.0)),
+        "perimenopause": (MedicalFactors(perimenopause=True), (45.0, 55.0)),
+        "peri_menarche": (MedicalFactors(peri_menarche=True), (13.0, 18.0)),
+        "dysmenorrhea": (MedicalFactors(dysmenorrhea=True), (18.0, 45.0)),
     }
 
-    results: Dict[str, object] = {"baseline_reference": baseline_summary, "subgroups": {}}
-    for index, (name, factors) in enumerate(subgroup_definitions.items(), start=1):
+    results: Dict[str, object] = {
+        "evaluation_type": "secondary direction/range software stress tests",
+        "interpretation": (
+            "Numerical margins are prespecified investigator-selected regression guards. "
+            "The cited studies support effect direction or broad ranges; these scenarios are "
+            "not held-out participant-level external validation."
+        ),
+        "baseline_reference": baseline_summary,
+        "baseline_reference_age_range": [18.0, 45.0],
+        "subgroups": {},
+    }
+    for index, (name, (factors, age_range)) in enumerate(subgroup_definitions.items(), start=1):
+        scenario_seed = seed + 1000 + index
+        matched_baseline_population = simulate_population(
+            num_patients=SUBGROUP_REFERENCE_PATIENTS,
+            days=days,
+            seed=scenario_seed,
+            medical_factors=MedicalFactors(),
+            balanced_age_bands=False,
+            include_diaries=False,
+            start_mode=start_mode,
+            age_range=age_range,
+        )
+        matched_baseline = _summarize_subgroup(matched_baseline_population)
         population = simulate_population(
             num_patients=SUBGROUP_REFERENCE_PATIENTS,
             days=days,
-            seed=seed + 1000 + index,
+            seed=scenario_seed,
             medical_factors=factors,
+            balanced_age_bands=False,
             include_diaries=False,
+            start_mode=start_mode,
+            age_range=age_range,
         )
-        summary = _summarize_subgroup(population, baseline=baseline_summary)
+        summary = _summarize_subgroup(population, baseline=matched_baseline)
         checks: List[ValidationMetric] = []
 
         if name == "pcos":
             checks.extend(
                 [
-                    ValidationMetric("pcos_longer_cycles", summary["mean_cycle_days"], baseline_summary["mean_cycle_days"] + PCOS_VALIDATION_MIN_CYCLE_DELTA_DAYS, baseline_summary["mean_cycle_days"] + PCOS_VALIDATION_MIN_CYCLE_DELTA_DAYS, 999.0, summary["mean_cycle_days"] >= baseline_summary["mean_cycle_days"] + PCOS_VALIDATION_MIN_CYCLE_DELTA_DAYS, "mortimer_2025_pcos", "PCOS should shift mean cycle length upward versus baseline."),
-                    ValidationMetric("pcos_higher_irregularity", summary["irregularity_rate"], baseline_summary["irregularity_rate"] + PCOS_VALIDATION_MIN_IRREGULARITY_DELTA, baseline_summary["irregularity_rate"] + PCOS_VALIDATION_MIN_IRREGULARITY_DELTA, 1.0, summary["irregularity_rate"] >= baseline_summary["irregularity_rate"] + PCOS_VALIDATION_MIN_IRREGULARITY_DELTA, "mortimer_2025_pcos", "PCOS should increase cycle irregularity."),
-                    ValidationMetric("pcos_lower_ovulation", summary["ovulation_rate"], baseline_summary["ovulation_rate"] - PCOS_VALIDATION_MIN_OVULATION_DELTA, 0.0, baseline_summary["ovulation_rate"] - PCOS_VALIDATION_MIN_OVULATION_DELTA, summary["ovulation_rate"] <= baseline_summary["ovulation_rate"] - PCOS_VALIDATION_MIN_OVULATION_DELTA, "doi_2005_pcos_hormones", "PCOS should reduce ovulation frequency."),
+                    ValidationMetric("pcos_longer_cycles", summary["mean_cycle_days"], matched_baseline["mean_cycle_days"] + PCOS_VALIDATION_MIN_CYCLE_DELTA_DAYS, matched_baseline["mean_cycle_days"] + PCOS_VALIDATION_MIN_CYCLE_DELTA_DAYS, 999.0, summary["mean_cycle_days"] >= matched_baseline["mean_cycle_days"] + PCOS_VALIDATION_MIN_CYCLE_DELTA_DAYS, "mortimer_2026_pcos", "Direction-only check: PCOS should shift mean cycle length upward versus its age-matched baseline."),
+                    ValidationMetric("pcos_higher_irregularity", summary["irregularity_rate"], matched_baseline["irregularity_rate"] + PCOS_VALIDATION_MIN_IRREGULARITY_DELTA, matched_baseline["irregularity_rate"] + PCOS_VALIDATION_MIN_IRREGULARITY_DELTA, 1.0, summary["irregularity_rate"] >= matched_baseline["irregularity_rate"] + PCOS_VALIDATION_MIN_IRREGULARITY_DELTA, "mortimer_2026_pcos", "Direction-only check: PCOS should increase cycle irregularity versus its age-matched baseline."),
+                    ValidationMetric("pcos_lower_ovulation", summary["ovulation_rate"], matched_baseline["ovulation_rate"] - PCOS_VALIDATION_MIN_OVULATION_DELTA, 0.0, matched_baseline["ovulation_rate"] - PCOS_VALIDATION_MIN_OVULATION_DELTA, summary["ovulation_rate"] <= matched_baseline["ovulation_rate"] - PCOS_VALIDATION_MIN_OVULATION_DELTA, "doi_2005_pcos_hormones", "Direction-only check: PCOS should reduce ovulation frequency versus its age-matched baseline."),
                 ]
             )
         elif name == "cyclic_ocp":
@@ -443,34 +890,37 @@ def _subgroup_analysis(seed: int, days: int) -> Dict[str, object]:
         elif name == "copper_iud":
             checks.extend(
                 [
-                    ValidationMetric("copper_iud_ovulation_preserved", summary["ovulation_rate"], baseline_summary["ovulation_rate"], baseline_summary["ovulation_rate"] - COPPER_IUD_VALIDATION_MAX_OVULATION_DELTA, baseline_summary["ovulation_rate"] + COPPER_IUD_VALIDATION_MAX_OVULATION_DELTA, abs(summary["ovulation_rate"] - baseline_summary["ovulation_rate"]) <= COPPER_IUD_VALIDATION_MAX_OVULATION_DELTA, "hubacher_2009_copper_iud", "Copper IUDs should not materially suppress ovulation."),
-                    ValidationMetric("copper_iud_bleeding_increase", summary["mean_bleeding_days"], baseline_summary["mean_bleeding_days"] + COPPER_IUD_VALIDATION_BLEEDING_DELTA_BOUNDS[0], baseline_summary["mean_bleeding_days"] + COPPER_IUD_VALIDATION_BLEEDING_DELTA_BOUNDS[0], baseline_summary["mean_bleeding_days"] + COPPER_IUD_VALIDATION_BLEEDING_DELTA_BOUNDS[1], baseline_summary["mean_bleeding_days"] + COPPER_IUD_VALIDATION_BLEEDING_DELTA_BOUNDS[0] <= summary["mean_bleeding_days"] <= baseline_summary["mean_bleeding_days"] + COPPER_IUD_VALIDATION_BLEEDING_DELTA_BOUNDS[1], "hubacher_2009_copper_iud", "Copper IUDs should increase bleeding duration."),
+                    ValidationMetric("copper_iud_ovulation_preserved", summary["ovulation_rate"], matched_baseline["ovulation_rate"], matched_baseline["ovulation_rate"] - COPPER_IUD_VALIDATION_MAX_OVULATION_DELTA, matched_baseline["ovulation_rate"] + COPPER_IUD_VALIDATION_MAX_OVULATION_DELTA, abs(summary["ovulation_rate"] - matched_baseline["ovulation_rate"]) <= COPPER_IUD_VALIDATION_MAX_OVULATION_DELTA, "faundes_1980_copper_iud", "Direction-only check: copper IUDs should not materially suppress ovulation versus an age-matched baseline."),
+                    ValidationMetric("copper_iud_bleeding_increase", summary["mean_bleeding_days"], matched_baseline["mean_bleeding_days"] + COPPER_IUD_VALIDATION_BLEEDING_DELTA_BOUNDS[0], matched_baseline["mean_bleeding_days"] + COPPER_IUD_VALIDATION_BLEEDING_DELTA_BOUNDS[0], matched_baseline["mean_bleeding_days"] + COPPER_IUD_VALIDATION_BLEEDING_DELTA_BOUNDS[1], matched_baseline["mean_bleeding_days"] + COPPER_IUD_VALIDATION_BLEEDING_DELTA_BOUNDS[0] <= summary["mean_bleeding_days"] <= matched_baseline["mean_bleeding_days"] + COPPER_IUD_VALIDATION_BLEEDING_DELTA_BOUNDS[1], "malmqvist_1974_copper_bleeding", "Direction-only check: copper IUDs should increase bleeding duration versus an age-matched baseline."),
                 ]
             )
         elif name == "perimenopause":
             checks.extend(
                 [
-                    ValidationMetric("perimenopause_irregularity", summary["irregularity_rate"], PERIMENOPAUSE_VALIDATION_EXPECTED_IRREGULARITY, PERIMENOPAUSE_VALIDATION_MIN_IRREGULARITY, 1.00, summary["irregularity_rate"] >= PERIMENOPAUSE_VALIDATION_MIN_IRREGULARITY, "santoro_2008_perimenopause", "Perimenopause should increase cycle irregularity."),
-                    ValidationMetric("perimenopause_lower_ovulation", summary["ovulation_rate"], PERIMENOPAUSE_VALIDATION_EXPECTED_OVULATION_RATE, PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[0], PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[1], PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[0] <= summary["ovulation_rate"] <= PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[1], "santoro_2008_perimenopause", "Perimenopause should reduce ovulation frequency."),
+                    ValidationMetric("perimenopause_irregularity", summary["irregularity_rate"], PERIMENOPAUSE_VALIDATION_EXPECTED_IRREGULARITY, PERIMENOPAUSE_VALIDATION_MIN_IRREGULARITY, 1.00, summary["irregularity_rate"] >= PERIMENOPAUSE_VALIDATION_MIN_IRREGULARITY, "santoro_2011_perimenopause", "Direction-only check: perimenopause should increase cycle irregularity."),
+                    ValidationMetric("perimenopause_lower_ovulation", summary["ovulation_rate"], PERIMENOPAUSE_VALIDATION_EXPECTED_OVULATION_RATE, PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[0], PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[1], PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[0] <= summary["ovulation_rate"] <= PERIMENOPAUSE_VALIDATION_OVULATION_BOUNDS[1], "santoro_2011_perimenopause", "Direction/range check: perimenopause should reduce ovulation frequency."),
                 ]
             )
         elif name == "peri_menarche":
             checks.extend(
                 [
-                    ValidationMetric("peri_menarche_long_cycles", summary["mean_cycle_days"], PERI_MENARCHE_VALIDATION_EXPECTED_CYCLE_LENGTH, PERI_MENARCHE_VALIDATION_MIN_CYCLE_LENGTH, 40.0, summary["mean_cycle_days"] >= PERI_MENARCHE_VALIDATION_MIN_CYCLE_LENGTH, "venturoli_1987_menarche", "Peri-menarche cycles should be longer on average."),
-                    ValidationMetric("peri_menarche_irregularity", summary["irregularity_rate"], PERI_MENARCHE_VALIDATION_EXPECTED_IRREGULARITY, PERI_MENARCHE_VALIDATION_MIN_IRREGULARITY, 1.00, summary["irregularity_rate"] >= PERI_MENARCHE_VALIDATION_MIN_IRREGULARITY, "venturoli_1987_menarche", "Peri-menarche cycles should be more irregular."),
-                    ValidationMetric("peri_menarche_lower_ovulation", summary["ovulation_rate"], PERI_MENARCHE_VALIDATION_EXPECTED_OVULATION_RATE, 0.30, PERI_MENARCHE_VALIDATION_MAX_OVULATION, summary["ovulation_rate"] <= PERI_MENARCHE_VALIDATION_MAX_OVULATION, "venturoli_1987_menarche", "Peri-menarche cycles should be frequently anovulatory."),
+                    ValidationMetric("peri_menarche_long_cycles", summary["mean_cycle_days"], PERI_MENARCHE_VALIDATION_EXPECTED_CYCLE_LENGTH, PERI_MENARCHE_VALIDATION_MIN_CYCLE_LENGTH, 40.0, summary["mean_cycle_days"] >= PERI_MENARCHE_VALIDATION_MIN_CYCLE_LENGTH, "who_1986_adolescent_cycles", "Direction/range check: early post-menarche cycles should be longer on average."),
+                    ValidationMetric("peri_menarche_irregularity", summary["irregularity_rate"], PERI_MENARCHE_VALIDATION_EXPECTED_IRREGULARITY, PERI_MENARCHE_VALIDATION_MIN_IRREGULARITY, 1.00, summary["irregularity_rate"] >= PERI_MENARCHE_VALIDATION_MIN_IRREGULARITY, "who_1986_adolescent_cycles", "Direction-only check: early post-menarche cycles should be more irregular."),
+                    ValidationMetric("peri_menarche_lower_ovulation", summary["ovulation_rate"], PERI_MENARCHE_VALIDATION_EXPECTED_OVULATION_RATE, 0.30, PERI_MENARCHE_VALIDATION_MAX_OVULATION, summary["ovulation_rate"] <= PERI_MENARCHE_VALIDATION_MAX_OVULATION, "venturoli_1986_menarche", "Direction/range check: adolescents with irregular menses should be frequently anovulatory; this is not a universal perimenarche estimate."),
                 ]
             )
         elif name == "dysmenorrhea":
             checks.extend(
                 [
-                    ValidationMetric("dysmenorrhea_preserved_ovulation", summary["ovulation_rate"], baseline_summary["ovulation_rate"], baseline_summary["ovulation_rate"] - DYSMENORRHEA_VALIDATION_MAX_OVULATION_DELTA, baseline_summary["ovulation_rate"] + DYSMENORRHEA_VALIDATION_MAX_OVULATION_DELTA, abs(summary["ovulation_rate"] - baseline_summary["ovulation_rate"]) <= DYSMENORRHEA_VALIDATION_MAX_OVULATION_DELTA, "dawood_2006_dysmenorrhea", "Primary dysmenorrhea should remain mostly ovulatory."),
-                    ValidationMetric("dysmenorrhea_bleeding_shift", summary["mean_bleeding_days"], baseline_summary["mean_bleeding_days"] + DYSMENORRHEA_VALIDATION_BLEEDING_DELTA_BOUNDS[0], baseline_summary["mean_bleeding_days"] + DYSMENORRHEA_VALIDATION_BLEEDING_DELTA_BOUNDS[0], baseline_summary["mean_bleeding_days"] + DYSMENORRHEA_VALIDATION_BLEEDING_DELTA_BOUNDS[1], baseline_summary["mean_bleeding_days"] + DYSMENORRHEA_VALIDATION_BLEEDING_DELTA_BOUNDS[0] <= summary["mean_bleeding_days"] <= baseline_summary["mean_bleeding_days"] + DYSMENORRHEA_VALIDATION_BLEEDING_DELTA_BOUNDS[1], "dawood_2006_dysmenorrhea", "Dysmenorrhea should mildly lengthen bleeding rather than strongly alter steroids."),
+                    ValidationMetric("dysmenorrhea_preserved_ovulation", summary["ovulation_rate"], matched_baseline["ovulation_rate"], matched_baseline["ovulation_rate"] - DYSMENORRHEA_VALIDATION_MAX_OVULATION_DELTA, matched_baseline["ovulation_rate"] + DYSMENORRHEA_VALIDATION_MAX_OVULATION_DELTA, abs(summary["ovulation_rate"] - matched_baseline["ovulation_rate"]) <= DYSMENORRHEA_VALIDATION_MAX_OVULATION_DELTA, "dawood_2006_dysmenorrhea", "Direction-only check: primary dysmenorrhea should preserve ovulation versus an age-matched baseline."),
+                    ValidationMetric("dysmenorrhea_bleeding_shift", summary["mean_bleeding_days"], matched_baseline["mean_bleeding_days"] + DYSMENORRHEA_VALIDATION_BLEEDING_DELTA_BOUNDS[0], matched_baseline["mean_bleeding_days"] + DYSMENORRHEA_VALIDATION_BLEEDING_DELTA_BOUNDS[0], matched_baseline["mean_bleeding_days"] + DYSMENORRHEA_VALIDATION_BLEEDING_DELTA_BOUNDS[1], matched_baseline["mean_bleeding_days"] + DYSMENORRHEA_VALIDATION_BLEEDING_DELTA_BOUNDS[0] <= summary["mean_bleeding_days"] <= matched_baseline["mean_bleeding_days"] + DYSMENORRHEA_VALIDATION_BLEEDING_DELTA_BOUNDS[1], "dawood_2006_dysmenorrhea", "Investigator-bounded check: dysmenorrhea should only mildly shift bleeding duration versus an age-matched baseline."),
                 ]
             )
 
         results["subgroups"][name] = {
+            "evaluation_type": "secondary direction/range software stress test",
+            "age_range": list(age_range),
+            "matched_baseline": matched_baseline,
             "summary": summary,
             "checks": [metric.to_dict() for metric in checks],
             "passed": all(metric.passed for metric in checks),
@@ -483,6 +933,7 @@ def run_population_validation(
     days: int = 365,
     seed: int = 7,
     include_subgroups: bool = True,
+    start_mode: str = DIARY_START_RANDOM,
 ) -> Dict[str, object]:
     """Run the full population validation workflow and optional subgroup checks.
 
@@ -492,6 +943,7 @@ def run_population_validation(
         seed: Random seed for reproducibility.
         include_subgroups: Whether to run factor-specific subgroup validation after the baseline
             cohort passes.
+        start_mode: First-cycle observation rule used for all simulated diaries.
 
     Returns:
         A validation report dictionary containing baseline metrics, citations, and optional
@@ -506,22 +958,58 @@ def run_population_validation(
         balanced_age_bands=True,
         include_diaries=True,
         capture_limit=16,
+        start_mode=start_mode,
+        age_range=BASELINE_VALIDATION_AGE_RANGE,
     )
     cycles = population["cycles"]
-    metrics = _age_band_metrics(cycles) + _overall_cycle_metrics(cycles) + _hormone_metrics(population["sample_diaries"])
-    baseline_passed = all(metric.passed for metric in metrics)
+    calibration_metrics = (
+        _age_band_metrics(cycles)
+        + _overall_cycle_metrics(cycles)
+        + _hormone_metrics(population["sample_diaries"])
+    )
+    waveform_metrics = [
+        metric
+        for metric in calibration_metrics
+        if metric.name.startswith(("estradiol_", "progesterone_"))
+    ]
+    external_metrics = _external_cycle_metrics(cycles)
+    metrics = calibration_metrics + external_metrics
+    calibration_passed = all(metric.passed for metric in calibration_metrics)
+    waveform_validation_passed = all(metric.passed for metric in waveform_metrics)
+    external_crosscheck_passed = all(metric.passed for metric in external_metrics)
+    baseline_passed = calibration_passed and external_crosscheck_passed
+    hormone_sample_age_bands: Dict[str, int] = {}
+    for diary in population["sample_diaries"]:
+        label = age_band_for(float(diary["profile"]["age_years"])).label
+        hormone_sample_age_bands[label] = hormone_sample_age_bands.get(label, 0) + 1
     report: Dict[str, object] = {
         "input": {
             "num_patients": num_patients,
             "days": days,
             "seed": seed,
+            "diary_start_mode": start_mode,
+            "age_range": list(BASELINE_VALIDATION_AGE_RANGE),
+        },
+        "evaluation_scope": "AWHS/Bull target reproduction plus held-out Flo cycle checks; daily Stricker waveform calibration is evaluated against independent Anckaert serum subphases and explicit daily morphology guards.",
+        "hormone_smoke_sample": {
+            "n_diaries": len(population["sample_diaries"]),
+            "age_band_counts": hormone_sample_age_bands,
         },
         "baseline_passed": baseline_passed,
+        "calibration_passed": calibration_passed,
+        "waveform_validation_passed": waveform_validation_passed,
+        "external_crosscheck_passed": external_crosscheck_passed,
+        "calibration_metrics": [metric.to_dict() for metric in calibration_metrics],
+        "external_crosscheck_metrics": [metric.to_dict() for metric in external_metrics],
         "baseline_metrics": [metric.to_dict() for metric in metrics],
         "citations": {key: asdict(value) for key, value in CITATIONS.items()},
     }
     if baseline_passed and include_subgroups:
-        report["subgroup_analysis"] = _subgroup_analysis(seed=seed, days=days)
+        report["subgroup_analysis"] = _subgroup_analysis(
+            seed=seed,
+            days=days,
+            start_mode=start_mode,
+        )
     return report
 
 

@@ -12,7 +12,8 @@
   },
   "audit_daily_fraction": 0.01,
   "phase_mode": "strict_herzog",
-  "circular_shift_target": "seizure",
+  "phase_modes": ["strict_herzog", "luteal_anchored_ovulatory"],
+  "hormone_cycle_start_mode": "random",
   "default_seizure_frequency": null,
   "suppress_infradian_seizure_cycles": false,
   "ilp_progesterone_threshold_ng_ml": 5.0,
@@ -41,6 +42,14 @@
       "study_level_n_studies": 100,
       "output_dir": "outputs_smoke"
     },
+    "bench_200": {
+      "n_total": 200,
+      "diary_months": 36,
+      "n_jobs": 1,
+      "chunk_size": 50,
+      "study_level_n_studies": 200,
+      "output_dir": "outputs_bench_200"
+    },
     "full": {
       "cohort_sizes": {
         "healthy_ovulatory": 50000,
@@ -48,7 +57,7 @@
       },
       "diary_months": 36,
       "n_jobs": -1,
-      "chunk_size": 500,
+      "chunk_size": 5000,
       "study_level_n_studies": 10000,
       "output_dir": "outputs"
     },
@@ -72,7 +81,7 @@
       },
       "diary_months": 36,
       "n_jobs": -1,
-      "chunk_size": 500,
+      "chunk_size": 5000,
       "study_level_n_studies": 10000,
       "output_dir": "outputs_true_coupling",
       "true_coupling": {
@@ -88,7 +97,7 @@
     "rate_ratio": 1.5
   },
   "windows": {
-    "calendar_months": [1, 3, 4, 6, 12],
+    "calendar_months": [1, 3, 4, 6, 9, 12, 18, 24, 36],
     "cycle_counts": [3, 6, 12]
   },
   "thresholds": {
@@ -108,6 +117,9 @@
   "regression": {
     "enabled": true,
     "fallback_alpha": 1.0,
+    "evaluated_windows": [
+      {"window_type": "full"}
+    ],
     "window_alpha_sensitivity_windows": [
       {"window_type": "full"}
     ]
@@ -119,6 +131,7 @@
   "study_level": {
     "n_studies": 10000,
     "n_participants": 30,
+    "n_participants_values": [30, 50, 100],
     "window_months": 3,
     "window_pool_per_participant": 5,
     "benchmarks": [0.391, 0.442]

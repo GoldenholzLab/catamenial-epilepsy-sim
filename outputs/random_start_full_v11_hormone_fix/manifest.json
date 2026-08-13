@@ -1,0 +1,310 @@
+{
+  "analysis_code_sha256": "790990c743eba8c906a4a3f7308269c7f8e33045a33af8dccbf31ae9596d6512",
+  "analysis_config_sha256": "a74b5e244b27d698e749754ba114b58d543bf36bcf6002ed9faf449cb17e688c",
+  "assumptions": [
+    "Definition D uses a participant-full-diary method-of-moments negative-binomial alpha recorded in d_alpha; Poisson robust fallback is recorded in d_reason when statsmodels NB fitting fails. Definition D_window_alpha re-estimates alpha from the analyzed window as a non-oracle sensitivity.",
+    "HORMONE-CYCLE selected diary day 1 uniformly from the first generated cycle.",
+    "Healthy ovulatory cohort used hormone_cycler build_patient_profile/render_cycle with ovulation_probability set to 1.0 because simulate_diary does not expose a public force-ovulation knob.",
+    "Historical definitions H1-H4 are assumption-based operationalizations and are flagged in summary outputs.",
+    "Study-level Monte Carlo samples each selected participant from a deterministic pool of precomputed random valid 3-month windows to avoid retaining all daily diaries in memory.",
+    "The hormone simulator exposes medical-factor knobs but no natural prevalence sampler; population medical factors were sampled from config.yaml rates."
+  ],
+  "config": {
+    "analysis_modes": {
+      "coupled_full": {
+        "chunk_size": 5000,
+        "cohort_sizes": {
+          "healthy_ovulatory": 50000,
+          "population": 50000
+        },
+        "diary_months": 36,
+        "n_jobs": -1,
+        "output_dir": "outputs_true_coupling_random_start",
+        "study_level_n_studies": 10000,
+        "true_coupling": {
+          "enabled": true,
+          "rate_ratio": 1.5,
+          "target_phase": "M"
+        }
+      },
+      "coupled_smoke": {
+        "chunk_size": 25,
+        "diary_months": 6,
+        "n_jobs": 1,
+        "n_total": 100,
+        "output_dir": "outputs_true_coupling_random_start_smoke",
+        "study_level_n_studies": 100,
+        "true_coupling": {
+          "enabled": true,
+          "rate_ratio": 1.5,
+          "target_phase": "M"
+        }
+      },
+      "full": {
+        "chunk_size": 5000,
+        "cohort_sizes": {
+          "healthy_ovulatory": 50000,
+          "population": 50000
+        },
+        "diary_months": 36,
+        "n_jobs": -1,
+        "output_dir": "outputs/random_start_full_v11_hormone_fix",
+        "study_level_n_studies": 10000
+      },
+      "smoke": {
+        "chunk_size": 25,
+        "diary_months": 6,
+        "n_jobs": 1,
+        "n_total": 100,
+        "output_dir": "outputs_random_start_smoke_v11_hormone_fix",
+        "study_level_n_studies": 100
+      }
+    },
+    "audit_daily_fraction": 0.01,
+    "bootstrap": {
+      "n_replicates": 1000
+    },
+    "chunk_size": 250,
+    "cohorts": {
+      "healthy_ovulatory": {
+        "age_range": [
+          18.0,
+          45.0
+        ],
+        "force_ovulatory_cycles": true
+      },
+      "population": {
+        "age_range": [
+          13.0,
+          54.9
+        ],
+        "force_ovulatory_cycles": false
+      }
+    },
+    "days_per_month": 30,
+    "default_seizure_frequency": null,
+    "definition_b": {
+      "min_cycle_window_cycles": 6,
+      "min_months": 4,
+      "min_seizure_days": 4
+    },
+    "historical": {
+      "h1_sensitivity_threshold": 0.667,
+      "h1_threshold": 0.5
+    },
+    "hormone_cycle_start_mode": "random",
+    "ilp_progesterone_threshold_ng_ml": 5.0,
+    "master_seed": 20260505,
+    "n_jobs": -1,
+    "output_dir": "outputs/random_start_full_v11_hormone_fix",
+    "phase_mode": "strict_herzog",
+    "phase_modes": [
+      "strict_herzog",
+      "luteal_anchored_ovulatory"
+    ],
+    "population_factor_rates": {
+      "dysmenorrhea": 0.12,
+      "pcos": 0.1,
+      "peri_menarche_if_age_lt_20": 0.6,
+      "perimenopause_if_age_gte_45": 0.55
+    },
+    "progress": {
+      "enabled": true,
+      "print_every_chunks": 1,
+      "print_updates": true,
+      "write_json": true
+    },
+    "regression": {
+      "enabled": true,
+      "evaluated_windows": [
+        {
+          "window_type": "full"
+        }
+      ],
+      "fallback_alpha": 1.0,
+      "window_alpha_sensitivity_windows": [
+        {
+          "window_type": "full"
+        }
+      ]
+    },
+    "reproducibility": {
+      "primary_min_complete_cycles": 6,
+      "sensitivity_min_complete_cycles": 12
+    },
+    "study_level": {
+      "benchmarks": [
+        0.391,
+        0.442
+      ],
+      "n_participants": 30,
+      "n_participants_values": [
+        30,
+        50,
+        100
+      ],
+      "n_studies": 10000,
+      "window_months": 3,
+      "window_pool_per_participant": 5
+    },
+    "suppress_infradian_seizure_cycles": false,
+    "thresholds": {
+      "C1": 1.69,
+      "C2": 1.83,
+      "C3": 1.62
+    },
+    "true_coupling": {
+      "enabled": false,
+      "rate_ratio": 1.5,
+      "target_phase": "M"
+    },
+    "windows": {
+      "calendar_months": [
+        1,
+        3,
+        4,
+        6,
+        9,
+        12,
+        18,
+        24,
+        36
+      ],
+      "cycle_counts": [
+        3,
+        6,
+        12
+      ]
+    }
+  },
+  "created_unix_time": 1786526576.653845,
+  "files": [
+    {
+      "bytes": 7115461,
+      "path": "outputs/random_start_full_v11_hormone_fix/audit_daily_sample.parquet",
+      "sha256": "4776305d50ab78c77c5e58c02dc5800cf95a4c0e286202896929b9d375e4012a"
+    },
+    {
+      "bytes": 19625,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig1_false_positive_by_window.pdf",
+      "sha256": "2c58b3eb26baefcc7fb5e699cff3a8e8ef8f8659e5e8a6b2c99678f56fec9ced"
+    },
+    {
+      "bytes": 116010,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig1_false_positive_by_window.png",
+      "sha256": "8ade15129ef166f22a186149026e2353fb4ba9d335f8725f41b2f37ac1b240b8"
+    },
+    {
+      "bytes": 80369,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig1_false_positive_by_window.svg",
+      "sha256": "3f198a61abacd33ba57c20008519db1e06176fc1639767b959e665cfd967a08a"
+    },
+    {
+      "bytes": 16831,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig2_pattern_decomposition.pdf",
+      "sha256": "a7a688b7dd98091ccf766977ada410b73cd75b701cbbd3dee562b9d7444cd903"
+    },
+    {
+      "bytes": 71411,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig2_pattern_decomposition.png",
+      "sha256": "b8870d58953f2a92aa248b6a99779d6cf7f8d7db8f91e9e923628a1b5c8bed02"
+    },
+    {
+      "bytes": 54021,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig2_pattern_decomposition.svg",
+      "sha256": "ee45a435e413f519efc165eb748a3903a6fb9e479b77ca654f02744463d40a79"
+    },
+    {
+      "bytes": 18032,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig3_study_prevalence_distribution_3month.pdf",
+      "sha256": "2e2766461370c91306a5e13e7ca3ec5161ed8b48aa91466a94f07e1accc61d5f"
+    },
+    {
+      "bytes": 95767,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig3_study_prevalence_distribution_3month.png",
+      "sha256": "137f31d9f7d3148f8703bde93c637bf32c742dd5826c1545f2ced0d2c49135f6"
+    },
+    {
+      "bytes": 65953,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig3_study_prevalence_distribution_3month.svg",
+      "sha256": "5f119bfb2067993df7d884bef63d4049be5f8defb8cc72baa6815dafdf4970f0"
+    },
+    {
+      "bytes": 17699,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig4_historical_vs_core_definitions.pdf",
+      "sha256": "8bab23ff4b459a0445cd71b6ce0fc707317a2c3a57dd9bfee613c5bac6f51036"
+    },
+    {
+      "bytes": 78246,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig4_historical_vs_core_definitions.png",
+      "sha256": "143b657b4062d4120e9588270ecf1d9c7fb3387478915746eca3bea541708997"
+    },
+    {
+      "bytes": 51008,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig4_historical_vs_core_definitions.svg",
+      "sha256": "85502ef45e495755cea914d566627b5e58b027c14747b331894ec78e578b0f54"
+    },
+    {
+      "bytes": 25296,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig4_indeterminate_vs_fpr_frontier.pdf",
+      "sha256": "96e00678588966bc82ca69244dac1c9f5f8a107f762eada7635e674c266aebe4"
+    },
+    {
+      "bytes": 150406,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig4_indeterminate_vs_fpr_frontier.png",
+      "sha256": "d6fc35857eb6db75452a64400c3d1d7e4660e04421d9acf2b5c84ec3ecb4add9"
+    },
+    {
+      "bytes": 98905,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig4_indeterminate_vs_fpr_frontier.svg",
+      "sha256": "e9875fc18220464f9dc0d9a138851c6cca73182f201c2b0584cbd788debdbc59"
+    },
+    {
+      "bytes": 19283,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig5_qc_null_cycle_day_profile.pdf",
+      "sha256": "20352c1c5ced50b065cfb5318fc00a43071b6a1232b0803518c6b697b916b11a"
+    },
+    {
+      "bytes": 117112,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig5_qc_null_cycle_day_profile.png",
+      "sha256": "eb3aa75b982520c1c198e91a14661a206c7a7dadbde12d1d619ad9686413108f"
+    },
+    {
+      "bytes": 75869,
+      "path": "outputs/random_start_full_v11_hormone_fix/fig5_qc_null_cycle_day_profile.svg",
+      "sha256": "04cd5c168360d9db98a8c4148ede27d2280cdd310ba1ec4ecf641ac0ab3b132e"
+    },
+    {
+      "bytes": 7097462,
+      "path": "outputs/random_start_full_v11_hormone_fix/participant_summary.parquet",
+      "sha256": "bfd9e8859404d675330093dfebb577b48ede15b315fe5dd138744f36c5249a7a"
+    },
+    {
+      "bytes": 2536,
+      "path": "outputs/random_start_full_v11_hormone_fix/progress.json",
+      "sha256": "f8c460984e99dd73309a037e98a6ab6e1cbae834b9d8849c55d9e6a55a0c7e4f"
+    },
+    {
+      "bytes": 3017447,
+      "path": "outputs/random_start_full_v11_hormone_fix/study_level_3month.parquet",
+      "sha256": "5853fe50b42a55c077be4417c6f67dea9bd54796331f8681157170ec5e5b8186"
+    },
+    {
+      "bytes": 3017447,
+      "path": "outputs/random_start_full_v11_hormone_fix/study_level_3month_n30.parquet",
+      "sha256": "5853fe50b42a55c077be4417c6f67dea9bd54796331f8681157170ec5e5b8186"
+    },
+    {
+      "bytes": 4110403,
+      "path": "outputs/random_start_full_v11_hormone_fix/summary_tables.csv",
+      "sha256": "190902c491ef1bb65914d5d40853fff4d3f0fc70356ea2ede0d0bef8549a9f21"
+    },
+    {
+      "bytes": 114773077,
+      "path": "outputs/random_start_full_v11_hormone_fix/window_results.parquet",
+      "sha256": "57524c02f6dd3459de255827ca318a46e540ea3b9ab44ed63691799925d8f830"
+    }
+  ],
+  "finalized_unix_time": 1786526894.848703,
+  "output_dir": "outputs/random_start_full_v11_hormone_fix"
+}

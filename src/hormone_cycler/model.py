@@ -12,11 +12,14 @@ This keeps age effects, between-person variability, and within-person variabilit
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import math
 import random
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+
+from scipy.interpolate import PchipInterpolator
 
 from .hormone_constants import (
     ANOVULATORY_ESTRADIOL_ANCHORS_PG_ML,
@@ -55,6 +58,7 @@ from .hormone_constants import (
     COPPER_IUD_BLEED_MEAN_DELTA_DAYS,
     COPPER_IUD_BLEED_SIGMA_DELTA_DAYS,
     CYCLE_ESTRADIOL_SCALE_CV,
+    CYCLE_LENGTH_LOGNORMAL_SHIFT_DAYS,
     CYCLE_PROGESTERONE_SCALE_CV,
     CYCLIC_OCP_BLEED_MEAN_DAYS,
     CYCLIC_OCP_BLEED_RANGE,
@@ -68,6 +72,7 @@ from .hormone_constants import (
     DYSMENORRHEA_BLEED_SIGMA_DELTA_DAYS,
     EARLY_LUTEAL_FRACTION,
     EARLY_LUTEAL_MIN_OFFSET_DAYS,
+    FAILED_FOLLICULAR_WAVE_PEAK_FRACTION,
     FOLLICULAR_MIDPOINT_FRACTION,
     HORMONE_NOISE_AR_COEFFICIENT,
     HORMONAL_IUD_AMENORRHEA_PROBABILITY,
@@ -78,12 +83,14 @@ from .hormone_constants import (
     HORMONAL_IUD_MIN_BLEED_MEAN_DAYS,
     HORMONAL_IUD_MIN_BLEED_SIGMA_DAYS,
     HORMONAL_IUD_PROGESTERONE_SCALE_MULTIPLIER,
-    IRREGULARITY_THRESHOLD_DAYS,
-    LATE_LUTEAL_DAY_OFFSET,
     LUTEAL_ROOM_BUFFER_DAYS,
     LUTEAL_SIGMA_DAYS,
+    LH_PEAK_TO_OVULATION_DAYS,
+    LONG_FOLLICULAR_FAILED_WAVE_SHARE,
+    LONG_FOLLICULAR_PHASE_MIN_DAYS,
     MAX_BLEEDING_DAYS,
     MAX_CYCLE_LENGTH_DAYS,
+    MAX_LUTEAL_LENGTH_DAYS,
     MID_LUTEAL_FRACTION,
     MID_LUTEAL_MIN_OFFSET_DAYS,
     MIN_CYCLE_LENGTH_DAYS,
@@ -122,17 +129,37 @@ from .hormone_constants import (
     PERIMENOPAUSE_OVULATION_PROBABILITY_GTE52,
     PERIMENOPAUSE_OVULATION_PROBABILITY_LT52,
     PERIMENOPAUSE_PROGESTERONE_SCALE_MULTIPLIER,
-    PERSONAL_SIGMA_CV_FROM_IRREGULARITY,
-    PERSONAL_SIGMA_SCALE_FROM_IRREGULARITY,
     PLACEBO_WEEK_REFERENCE_DAY,
     PLACEBO_WEEK_START_DAY,
-    PRE_OVULATION_DAY_OFFSET,
+    PREMENSTRUAL_WITHDRAWAL_DAYS,
+    PRE_OVULATION_PEAK_LEAD_DAYS,
     PROGESTERONE_NOISE_SCALE_MULTIPLIER,
     SERUM_REPORTING_DECIMALS,
+    TERMINAL_FOLLICULAR_MATURATION_DAYS,
 )
-from .literature import BULL_PHASE_TARGETS, HORMONE_ANCHORS
+from .literature import BULL_PHASE_TARGETS, HORMONE_ANCHORS, STRICKER_DAILY_SERUM_REFERENCE
 from .literature import age_band_for
 from .types import CycleSummary, DailyRecord, MedicalFactors, PatientProfile, SimulationResult
+
+
+DIARY_START_RANDOM = "random"
+DIARY_START_CYCLE_DAY_1 = "cycle_day_1"
+VALID_DIARY_START_MODES = {DIARY_START_RANDOM, DIARY_START_CYCLE_DAY_1}
+
+
+def domain_separated_rng(
+    seed: Optional[int],
+    *,
+    patient_id: str,
+    stream: str,
+) -> random.Random:
+    """Create a reproducible RNG whose stream cannot overlap another model stage."""
+
+    if seed is None:
+        return random.Random()
+    material = f"hormone-cycler|{stream}|{int(seed)}|{patient_id}".encode("utf-8")
+    stream_seed = int.from_bytes(hashlib.sha256(material).digest()[:8], "big")
+    return random.Random(stream_seed)
 
 
 def clamp(value: float, low: float, high: float) -> float:
@@ -150,17 +177,45 @@ def clamp(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
 
 
-def normal_cdf(value: float) -> float:
-    """Return the standard normal cumulative distribution function.
+def select_diary_start_offset(
+    cycle_length: int,
+    *,
+    start_mode: str = DIARY_START_RANDOM,
+    seed: Optional[int] = None,
+    patient_id: str = "patient-0001",
+) -> int:
+    """Select the zero-based observation offset within the first generated cycle.
+
+    The default selects each day of the first cycle with equal probability. A
+    domain-separated random stream is used so choosing the observation boundary
+    does not consume values from the stream that generates patient and cycle
+    characteristics.
 
     Args:
-        value: Z-score at which to evaluate the standard normal CDF.
+        cycle_length: Number of days in the first generated cycle.
+        start_mode: ``"random"`` for a uniformly sampled phase or
+            ``"cycle_day_1"`` to begin on cycle day 1.
+        seed: Optional simulation seed. Supplying a seed makes the offset
+            reproducible.
+        patient_id: Participant identifier used to separate otherwise equal seeds.
 
     Returns:
-        Probability that a standard normal random variable is less than or equal to ``value``.
+        A zero-based index into the first cycle's daily records.
     """
 
-    return 0.5 * (1.0 + math.erf(value / math.sqrt(2.0)))
+    if cycle_length <= 0:
+        raise ValueError("cycle_length must be positive.")
+    if start_mode not in VALID_DIARY_START_MODES:
+        allowed = ", ".join(sorted(VALID_DIARY_START_MODES))
+        raise ValueError(f"start_mode must be one of: {allowed}.")
+    if start_mode == DIARY_START_CYCLE_DAY_1:
+        return 0
+    if seed is None:
+        return random.SystemRandom().randrange(cycle_length)
+
+    seed_material = f"hormone-cycler-diary-start|{int(seed)}|{patient_id}".encode("utf-8")
+    offset_seed = int.from_bytes(hashlib.sha256(seed_material).digest()[:8], "big")
+    return random.Random(offset_seed).randrange(cycle_length)
 
 
 def truncated_gauss(
@@ -211,63 +266,135 @@ def sample_unit_lognormal(rng: random.Random, coefficient_of_variation: float) -
     return math.exp(rng.gauss(mu, sigma))
 
 
-def solve_sigma_for_irregularity(
-    irregularity_probability: float,
-    threshold_days: float = IRREGULARITY_THRESHOLD_DAYS,
+def bounded_shifted_lognormal(
+    rng: random.Random,
+    mean: float,
+    sigma: float,
+    low: float = MIN_CYCLE_LENGTH_DAYS,
+    high: float = MAX_CYCLE_LENGTH_DAYS,
+    shift: float = CYCLE_LENGTH_LOGNORMAL_SHIFT_DAYS,
 ) -> float:
-    """Convert an irregularity prevalence into a within-person cycle-length SD.
+    """Sample a right-skewed cycle length with a requested latent mean and SD.
 
-    Purpose:
-        Li et al. 2024 define irregular cycles using adjacent-cycle differences of at least
-        seven days. This helper numerically inverts that relationship under a Gaussian
-        cycle-length model so patient-level dispersion matches the reported prevalence.
-
-    Args:
-        irregularity_probability: Target probability that adjacent cycle lengths differ by at
-            least ``threshold_days``.
-        threshold_days: Irregularity threshold in days; defaults to the Li et al. 2024 value.
-
-    Returns:
-        A standard deviation in cycle-length days consistent with the requested prevalence.
+    If ``Y = X - shift`` is lognormal, its two parameters are determined from
+    ``E[X] = mean`` and ``SD[X] = sigma``.  The broad bounds are winsorization
+    safeguards rather than calibration limits.  This distribution replaces the
+    former symmetric Gaussian, which produced too many short cycles and too few
+    long cycles for the same within-person variance.
     """
 
-    irregularity_probability = clamp(irregularity_probability, 0.01, 0.95)
-    low = 0.5
-    high = 20.0
-    for _ in range(80):
-        mid = (low + high) / 2.0
-        z_score = threshold_days / (math.sqrt(2.0) * mid)
-        estimate = 2.0 * (1.0 - normal_cdf(z_score))
-        if estimate < irregularity_probability:
-            low = mid
-        else:
-            high = mid
-    return (low + high) / 2.0
+    residual_mean = max(mean - shift, 0.25)
+    if sigma <= 0.0:
+        return clamp(mean, low, high)
+    log_variance = math.log1p((sigma / residual_mean) ** 2)
+    log_sigma = math.sqrt(log_variance)
+    log_mean = math.log(residual_mean) - 0.5 * log_variance
+    sample = shift + math.exp(rng.gauss(log_mean, log_sigma))
+    return clamp(sample, low, high)
+
+
+def _normalized_control_points(
+    points: Sequence[Tuple[float, float]],
+) -> Tuple[List[float], List[float]]:
+    """Return strictly increasing control-point coordinates for interpolation.
+
+    When a very short phase makes two conceptual anchors coincide, the later anchor wins. This
+    preserves the intended temporal ordering while satisfying the strict-coordinate requirement of
+    shape-preserving cubic interpolation.
+    """
+
+    merged: Dict[float, float] = {}
+    for x_value, y_value in points:
+        merged[float(x_value)] = float(y_value)
+    ordered = sorted(merged.items())
+    if len(ordered) < 2:
+        raise ValueError("At least two distinct hormone control points are required.")
+    return [item[0] for item in ordered], [item[1] for item in ordered]
+
+
+def shape_preserving_curve(
+    points: Sequence[Tuple[float, float]],
+) -> Callable[[float], float]:
+    """Build a non-overshooting, continuously differentiable hormone curve.
+
+    PCHIP interpolation preserves the direction of each adjacent control-point interval and avoids
+    the overshoot that an unconstrained cubic spline could introduce near hormone maxima or low
+    follicular baselines.
+    """
+
+    x_points, y_points = _normalized_control_points(points)
+    interpolator = PchipInterpolator(x_points, y_points, extrapolate=False)
+
+    def evaluate(x_value: float) -> float:
+        if x_value <= x_points[0]:
+            return y_points[0]
+        if x_value >= x_points[-1]:
+            return y_points[-1]
+        return float(interpolator(float(x_value)))
+
+    return evaluate
 
 
 def smooth_piecewise(points: Sequence[Tuple[float, float]], x_value: float) -> float:
-    """Evaluate a smoothstep interpolation across ordered control points.
+    """Evaluate the shape-preserving cubic curve through ordered control points.
 
     Args:
         points: Ordered ``(x, y)`` control points.
         x_value: X position at which to evaluate the interpolated curve.
 
     Returns:
-        Interpolated y-value at ``x_value``.
+        Interpolated y-value at ``x_value``. The legacy function name is retained for API
+        compatibility; interpolation now uses a PCHIP curve rather than segment-wise smoothstep.
     """
 
-    if x_value <= points[0][0]:
-        return points[0][1]
-    if x_value >= points[-1][0]:
-        return points[-1][1]
-    for left, right in zip(points[:-1], points[1:]):
-        if left[0] <= x_value <= right[0]:
-            if math.isclose(right[0], left[0]):
-                return right[1]
-            ratio = (x_value - left[0]) / (right[0] - left[0])
-            ratio = ratio * ratio * (3.0 - 2.0 * ratio)
-            return left[1] + ratio * (right[1] - left[1])
-    return points[-1][1]
+    return shape_preserving_curve(points)(x_value)
+
+
+def correlated_cycle_noise(
+    cycle_length: int,
+    rng: random.Random,
+    estradiol_sigma: float,
+    progesterone_sigma: float,
+) -> Tuple[List[float], List[float]]:
+    """Generate slowly varying fractional deviations anchored at both cycle boundaries.
+
+    ``estradiol_sigma`` and ``progesterone_sigma`` are stationary standard deviations. Innovations
+    are interleaved in the same order as the original daily renderer, keeping the random-stream
+    consumption stable for subsequent cycle-level draws. A linear bridge removes the two endpoint
+    values, preventing stochastic noise from reintroducing a cross-cycle reset.
+    """
+
+    if cycle_length <= 0:
+        return [], []
+    phi = HORMONE_NOISE_AR_COEFFICIENT
+    innovation_factor = math.sqrt(max(0.0, 1.0 - phi * phi))
+    estradiol_state = 0.0
+    progesterone_state = 0.0
+    estradiol_raw: List[float] = []
+    progesterone_raw: List[float] = []
+    for _ in range(cycle_length):
+        estradiol_state = phi * estradiol_state + rng.gauss(
+            0.0, estradiol_sigma * innovation_factor
+        )
+        progesterone_state = phi * progesterone_state + rng.gauss(
+            0.0, progesterone_sigma * innovation_factor
+        )
+        estradiol_raw.append(estradiol_state)
+        progesterone_raw.append(progesterone_state)
+
+    if cycle_length == 1:
+        return [0.0], [0.0]
+
+    def bridge_to_zero(values: Sequence[float]) -> List[float]:
+        first = values[0]
+        last = values[-1]
+        denominator = cycle_length - 1
+        return [
+            value - (first + (last - first) * index / denominator)
+            for index, value in enumerate(values)
+        ]
+
+    return bridge_to_zero(estradiol_raw), bridge_to_zero(progesterone_raw)
 
 
 def lookup_age_constant(age_years: float, ranges: Sequence[Tuple[float, float, float]]) -> float:
@@ -313,8 +440,9 @@ def baseline_ovulation_probability(age_years: float, stage: str) -> float:
 
     Purpose:
         This function encodes age and stage effects on ovulation. The values are constrained by
-        Venturoli et al. 1987 for peri-menarche, Santoro and Randolph 2011 for perimenopause,
-        and the need to preserve the age-specific cycle-length targets from Li et al. 2024.
+        WHO Task Force 1986 and Venturoli et al. 1986 for peri-menarche, Santoro and
+        Randolph 2011 for perimenopause,
+        and the need to preserve the age-specific cycle-length targets from Li et al. 2023.
 
     Args:
         age_years: Chronologic age in years.
@@ -365,9 +493,10 @@ def apply_factor_adjustments(
     Purpose:
         This function translates medical-factor flags into parameter shifts. The modifiers are
         constrained by the condition-specific studies summarized in ``hormone_constants.py``:
-        Mortimer et al. 2025 and Doi et al. 2005 for PCOS, Venturoli et al. 1987 for
+        Mortimer et al. 2026, Doi et al. 2005, and Jarrett et al. 2020 for PCOS; WHO Task
+        Force 1986 and Venturoli et al. 1986 for
         peri-menarche, Santoro and Randolph 2011 for perimenopause, Edelman et al. 2014 for
-        combined OCPs, Xiao et al. for levonorgestrel IUDs, Hubacher et al. for copper IUDs,
+        combined OCPs, Xiao et al. for levonorgestrel IUDs, Faundes et al. and Malmqvist et al. for copper IUDs,
         and Dawood 2006 for dysmenorrhea.
 
     Args:
@@ -470,7 +599,7 @@ def build_patient_profile(
     Purpose:
         This function creates the reusable patient-level parameters that drive all simulated
         cycles: mean cycle length, within-person variability, bleeding behavior, ovulation
-        probability, and hormone amplitudes. Li et al. 2024 and Bull et al. 2019 define the
+        probability, and hormone amplitudes. Li et al. 2023 and Bull et al. 2019 define the
         baseline timing targets; factor-specific studies modify the baseline.
 
     Args:
@@ -486,24 +615,35 @@ def build_patient_profile(
     medical_factors = medical_factors or MedicalFactors()
     medical_factors.validate()
     stage = age_stage(age_years, medical_factors)
-    rng = random.Random(seed)
+    rng = domain_separated_rng(seed, patient_id=patient_id, stream="profile")
     age_target = age_band_for(age_years)
-    base_sigma = solve_sigma_for_irregularity(age_target.irregularity_probability)
+    ovulation_probability = baseline_ovulation_probability(age_years, stage)
+    variability_component = (
+        "high"
+        if rng.random() < age_target.high_variability_component_probability
+        else "low"
+    )
+    personal_sigma = (
+        age_target.high_component_sigma_days
+        if variability_component == "high"
+        else age_target.low_component_sigma_days
+    )
+    target_personal_mean = age_target.mean_cycle_days
+    target_personal_mean -= (
+        age_target.long_cycle_episode_probability
+        * age_target.long_cycle_episode_extension_days
+    )
+    if stage == "reproductive":
+        target_personal_mean -= (
+            (1.0 - ovulation_probability) * ANOVULATORY_MEAN_SHIFT_REPRODUCTIVE_DAYS
+        )
     personal_mean = truncated_gauss(
         rng,
-        age_target.mean_cycle_days,
+        target_personal_mean,
         between_person_sigma(age_years),
         20.0,
         90.0,
     )
-    personal_sigma = truncated_gauss(
-        rng,
-        base_sigma * PERSONAL_SIGMA_SCALE_FROM_IRREGULARITY,
-        max(0.3, base_sigma * PERSONAL_SIGMA_CV_FROM_IRREGULARITY),
-        1.2,
-        20.0,
-    )
-    ovulation_probability = baseline_ovulation_probability(age_years, stage)
     bleed_mean = BULL_PHASE_TARGETS["mean_bleeding_days"]
     bleed_sigma = BASELINE_BLEED_SIGMA_DAYS
     estradiol_scale = sample_unit_lognormal(rng, BASELINE_ESTRADIOL_SCALE_CV)
@@ -532,11 +672,15 @@ def build_patient_profile(
         noise_scale,
     )
 
+    if medical_factors.oral_contraceptive_mode:
+        variability_component = "contraceptive_suppressed"
+
     return PatientProfile(
         patient_id=patient_id,
         age_years=age_years,
         medical_factors=medical_factors,
         stage=stage,
+        cycle_variability_component=variability_component,
         personal_cycle_mean_days=personal_mean,
         personal_cycle_sigma_days=personal_sigma,
         ovulation_probability=clamp(ovulation_probability, 0.0, 0.99),
@@ -580,7 +724,14 @@ def sample_cycle_length(profile: PatientProfile, rng: random.Random, ovulatory: 
         else:
             mean += ANOVULATORY_MEAN_SHIFT_REPRODUCTIVE_DAYS
 
-    cycle_length = int(round(truncated_gauss(rng, mean, sigma, MIN_CYCLE_LENGTH_DAYS, MAX_CYCLE_LENGTH_DAYS)))
+    sampled_length = bounded_shifted_lognormal(rng, mean, sigma)
+    age_target = age_band_for(profile.age_years)
+    if (
+        age_target.long_cycle_episode_probability > 0.0
+        and rng.random() < age_target.long_cycle_episode_probability
+    ):
+        sampled_length += age_target.long_cycle_episode_extension_days
+    cycle_length = int(round(clamp(sampled_length, MIN_CYCLE_LENGTH_DAYS, MAX_CYCLE_LENGTH_DAYS)))
     return max(int(MIN_CYCLE_LENGTH_DAYS), cycle_length)
 
 
@@ -625,7 +776,10 @@ def sample_phase_lengths(
         luteal_mean += PCOS_LUTEAL_MEAN_DELTA_DAYS
         luteal_sigma += PCOS_LUTEAL_SIGMA_DELTA_DAYS
 
-    max_luteal = max(int(MIN_LUTEAL_LENGTH_DAYS), cycle_length - LUTEAL_ROOM_BUFFER_DAYS)
+    max_luteal = min(
+        int(MAX_LUTEAL_LENGTH_DAYS),
+        max(int(MIN_LUTEAL_LENGTH_DAYS), cycle_length - LUTEAL_ROOM_BUFFER_DAYS),
+    )
     luteal_length = int(round(truncated_gauss(rng, luteal_mean, luteal_sigma, MIN_LUTEAL_LENGTH_DAYS, float(max_luteal))))
     follicular_length = max(MIN_FOLLICULAR_LENGTH_DAYS, cycle_length - luteal_length)
     luteal_length = cycle_length - follicular_length
@@ -676,19 +830,222 @@ def sample_bleeding_days(
     return int(round(truncated_gauss(rng, mean, sigma, 0.0, MAX_BLEEDING_DAYS)))
 
 
+def ovulatory_hormone_positions(
+    cycle_length: int,
+    follicular_length: int,
+    luteal_length: int,
+) -> Dict[str, int]:
+    """Place the seven published sub-phase anchors within one realized cycle.
+
+    The preovulatory maximum is centered two days before ovulation, and the late-luteal anchor is
+    placed four days before the next bleeding onset. The final interval therefore represents a
+    gradual steroid withdrawal rather than a vertical reset at the cycle boundary.
+    """
+
+    ovulation = int(follicular_length)
+    follicular_mid = min(
+        ovulation - 2,
+        max(2, int(round(follicular_length * FOLLICULAR_MIDPOINT_FRACTION))),
+    )
+    pre_ovulatory = min(
+        ovulation - 1,
+        max(follicular_mid + 1, ovulation - PRE_OVULATION_PEAK_LEAD_DAYS),
+    )
+
+    late_luteal = max(ovulation + 3, cycle_length - PREMENSTRUAL_WITHDRAWAL_DAYS)
+    mid_luteal = min(
+        late_luteal - 1,
+        ovulation
+        + max(
+            int(MID_LUTEAL_MIN_OFFSET_DAYS),
+            int(round(luteal_length * MID_LUTEAL_FRACTION)),
+        ),
+    )
+    early_luteal = min(
+        mid_luteal - 1,
+        ovulation
+        + max(
+            int(math.ceil(EARLY_LUTEAL_MIN_OFFSET_DAYS)),
+            int(round(luteal_length * EARLY_LUTEAL_FRACTION)),
+        ),
+    )
+
+    return {
+        "early_follicular": 1,
+        "mid_follicular": follicular_mid,
+        "pre_ovulatory": pre_ovulatory,
+        "ovulation": ovulation,
+        "early_luteal": early_luteal,
+        "mid_luteal": mid_luteal,
+        "late_luteal": late_luteal,
+    }
+
+
+LONG_ESTRADIOL_DELAYED_EMERGENCE = "delayed_dominant_emergence"
+LONG_ESTRADIOL_FAILED_WAVE = "failed_dominant_wave"
+
+
+def long_follicular_estradiol_variant(
+    profile: PatientProfile,
+    cycle_index: int,
+) -> str:
+    """Select a documented long-follicular E2 geometry without consuming cycle RNG draws.
+
+    Harlow et al. observed several heterogeneous urinary-oestrogen patterns in follicular phases
+    lasting at least 24 days. The paper identifies delayed dominant-follicle emergence as the most
+    common class but does not publish class frequencies in its abstract-accessible data. The model
+    therefore uses delayed emergence by default and exposes a conservative 25% failed-wave class
+    as an investigator-set heterogeneity component, not as an estimated prevalence.
+
+    The selector hashes patient-level latent values already generated from the profile stream. It
+    is reproducible and seed-sensitive while leaving the cycle RNG state—and therefore cycle length,
+    phase timing, ovulation, bleeding, spotting, and noise streams—unchanged.
+    """
+
+    material = (
+        f"hormone-cycler|long-e2-geometry|{profile.patient_id}|{cycle_index}|"
+        f"{profile.age_years:.12g}|{profile.personal_cycle_mean_days:.12g}|"
+        f"{profile.personal_cycle_sigma_days:.12g}|{profile.estradiol_scale:.12g}"
+    ).encode("utf-8")
+    unit_value = int.from_bytes(hashlib.sha256(material).digest()[:8], "big") / 2**64
+    if unit_value < LONG_FOLLICULAR_FAILED_WAVE_SHARE:
+        return LONG_ESTRADIOL_FAILED_WAVE
+    return LONG_ESTRADIOL_DELAYED_EMERGENCE
+
+
+def _luteal_reference_day(
+    lh_peak_day: float,
+    lh_offset_days: int,
+    cycle_length: int,
+) -> float:
+    """Map a Stricker LH-relative day into the realized luteal interval.
+
+    Negative offsets retain their observed daily spacing. Positive offsets are scaled so the
+    published +14-day tail reaches the final simulated day, allowing luteal-length variability to
+    alter the envelope duration without moving the rise to before ovulation or creating a reset at
+    the next menses.
+    """
+
+    if lh_offset_days <= 0:
+        return lh_peak_day + lh_offset_days
+    positive_scale = (float(cycle_length) - lh_peak_day) / 14.0
+    return lh_peak_day + lh_offset_days * positive_scale
+
+
+def _ovulatory_estradiol_points(
+    cycle_length: int,
+    follicular_length: int,
+    estradiol_scale: float,
+    estradiol_variant: str,
+) -> List[Tuple[float, float]]:
+    """Build an E2 envelope with an ovulation-anchored terminal maturation interval."""
+
+    anchors = {anchor.name: anchor for anchor in HORMONE_ANCHORS}
+    ovulation_day = float(follicular_length)
+    lh_peak_day = ovulation_day - LH_PEAK_TO_OVULATION_DAYS
+    early_value = anchors["early_follicular"].estradiol_pg_ml
+    mid_value = anchors["mid_follicular"].estradiol_pg_ml
+    preovulatory_value = anchors["pre_ovulatory"].estradiol_pg_ml
+    points: List[Tuple[float, float]] = [(1.0, early_value * estradiol_scale)]
+
+    if follicular_length >= LONG_FOLLICULAR_PHASE_MIN_DAYS:
+        terminal_start = max(
+            2.0,
+            ovulation_day - float(TERMINAL_FOLLICULAR_MATURATION_DAYS),
+        )
+        if estradiol_variant not in {
+            LONG_ESTRADIOL_DELAYED_EMERGENCE,
+            LONG_ESTRADIOL_FAILED_WAVE,
+        }:
+            raise ValueError(f"Unsupported long-follicular estradiol variant: {estradiol_variant}")
+        if estradiol_variant == LONG_ESTRADIOL_FAILED_WAVE and terminal_start >= 9.0:
+            failed_peak_day = 2.0 + 0.42 * (terminal_start - 2.0)
+            failed_resolution_day = 2.0 + 0.72 * (terminal_start - 2.0)
+            points.extend(
+                [
+                    (
+                        failed_peak_day,
+                        preovulatory_value
+                        * FAILED_FOLLICULAR_WAVE_PEAK_FRACTION
+                        * estradiol_scale,
+                    ),
+                    (failed_resolution_day, early_value * 1.08 * estradiol_scale),
+                ]
+            )
+        points.extend(
+            [
+                (terminal_start, early_value * estradiol_scale),
+                (
+                    max(terminal_start + 1.0, ovulation_day - 8.0),
+                    mid_value * estradiol_scale,
+                ),
+            ]
+        )
+    else:
+        follicular_mid = min(
+            ovulation_day - 2.0,
+            max(2.0, round(follicular_length * FOLLICULAR_MIDPOINT_FRACTION)),
+        )
+        points.append((follicular_mid, mid_value * estradiol_scale))
+
+    points.append(
+        (
+            max(2.0, ovulation_day - PRE_OVULATION_PEAK_LEAD_DAYS),
+            preovulatory_value * estradiol_scale,
+        )
+    )
+    for reference in STRICKER_DAILY_SERUM_REFERENCE:
+        if reference.lh_offset_days < -1:
+            continue
+        x_value = _luteal_reference_day(
+            lh_peak_day,
+            reference.lh_offset_days,
+            cycle_length,
+        )
+        if 1.0 < x_value < float(cycle_length):
+            points.append((x_value, reference.estradiol_pg_ml * estradiol_scale))
+    points.append((float(cycle_length), early_value * estradiol_scale))
+    return points
+
+
+def _ovulatory_progesterone_points(
+    cycle_length: int,
+    follicular_length: int,
+    progesterone_scale: float,
+) -> List[Tuple[float, float]]:
+    """Build a broad P4 envelope from all daily Stricker serum medians."""
+
+    anchors = {anchor.name: anchor for anchor in HORMONE_ANCHORS}
+    baseline = anchors["early_follicular"].progesterone_ng_ml
+    lh_peak_day = float(follicular_length) - LH_PEAK_TO_OVULATION_DAYS
+    points: List[Tuple[float, float]] = [(1.0, baseline * progesterone_scale)]
+    for reference in STRICKER_DAILY_SERUM_REFERENCE:
+        x_value = _luteal_reference_day(
+            lh_peak_day,
+            reference.lh_offset_days,
+            cycle_length,
+        )
+        if 1.0 < x_value < float(cycle_length):
+            points.append((x_value, reference.progesterone_ng_ml * progesterone_scale))
+    points.append((float(cycle_length), baseline * progesterone_scale))
+    return points
+
+
 def ovulatory_hormone_points(
     cycle_length: int,
     follicular_length: int,
     luteal_length: int,
     estradiol_scale: float,
     progesterone_scale: float,
+    estradiol_variant: str = LONG_ESTRADIOL_DELAYED_EMERGENCE,
 ) -> Tuple[List[Tuple[float, float]], List[Tuple[float, float]]]:
     """Build estradiol and progesterone control points for an ovulatory cycle.
 
     Purpose:
-        Stricker et al. 2006 reported serum estradiol and progesterone medians for seven
-        menstrual sub-phases. This function places those medians into the simulated cycle and
-        returns control points that can be smoothly interpolated day by day.
+        Stricker et al. 2006 reported daily LH-aligned serum medians. This function uses the full
+        daily luteal E2/P4 series, aligns the LH peak before the simulator's ovulation marker, and
+        scales only the post-LH interval to the realized luteal length. Long follicular phases use
+        an ovulation-anchored terminal maturation segment rather than horizontal template stretch.
 
     Args:
         cycle_length: Total cycle length in days.
@@ -696,38 +1053,24 @@ def ovulatory_hormone_points(
         luteal_length: Luteal-phase length in days.
         estradiol_scale: Patient- and cycle-specific estradiol amplitude multiplier.
         progesterone_scale: Patient- and cycle-specific progesterone amplitude multiplier.
+        estradiol_variant: Documented long-follicular E2 geometry. Ignored for ordinary cycles.
 
     Returns:
         Two ordered point lists: estradiol points and progesterone points.
     """
 
-    anchors = {anchor.name: anchor for anchor in HORMONE_ANCHORS}
-    follicular_mid = max(2.0, follicular_length * FOLLICULAR_MIDPOINT_FRACTION)
-    pre_ovulatory = max(follicular_mid + PRE_OVULATION_DAY_OFFSET, follicular_length - PRE_OVULATION_DAY_OFFSET)
-    early_luteal = min(cycle_length - 1.0, follicular_length + max(EARLY_LUTEAL_MIN_OFFSET_DAYS, luteal_length * EARLY_LUTEAL_FRACTION))
-    mid_luteal = min(cycle_length - 1.0, follicular_length + max(MID_LUTEAL_MIN_OFFSET_DAYS, luteal_length * MID_LUTEAL_FRACTION))
-    late_luteal = max(mid_luteal + 1.0, cycle_length - LATE_LUTEAL_DAY_OFFSET)
-
-    estradiol_points = [
-        (1.0, anchors["early_follicular"].estradiol_pg_ml * estradiol_scale),
-        (follicular_mid, anchors["mid_follicular"].estradiol_pg_ml * estradiol_scale),
-        (pre_ovulatory, anchors["pre_ovulatory"].estradiol_pg_ml * estradiol_scale),
-        (float(follicular_length), anchors["ovulation"].estradiol_pg_ml * estradiol_scale),
-        (early_luteal, anchors["early_luteal"].estradiol_pg_ml * estradiol_scale),
-        (mid_luteal, anchors["mid_luteal"].estradiol_pg_ml * estradiol_scale),
-        (late_luteal, anchors["late_luteal"].estradiol_pg_ml * estradiol_scale),
-        (float(cycle_length), anchors["late_luteal"].estradiol_pg_ml * estradiol_scale),
-    ]
-    progesterone_points = [
-        (1.0, anchors["early_follicular"].progesterone_ng_ml * progesterone_scale),
-        (follicular_mid, anchors["mid_follicular"].progesterone_ng_ml * progesterone_scale),
-        (pre_ovulatory, anchors["pre_ovulatory"].progesterone_ng_ml * progesterone_scale),
-        (float(follicular_length), anchors["ovulation"].progesterone_ng_ml * progesterone_scale),
-        (early_luteal, anchors["early_luteal"].progesterone_ng_ml * progesterone_scale),
-        (mid_luteal, anchors["mid_luteal"].progesterone_ng_ml * progesterone_scale),
-        (late_luteal, anchors["late_luteal"].progesterone_ng_ml * progesterone_scale),
-        (float(cycle_length), anchors["late_luteal"].progesterone_ng_ml * progesterone_scale),
-    ]
+    del luteal_length  # Luteal duration is already encoded by cycle_length - follicular_length.
+    estradiol_points = _ovulatory_estradiol_points(
+        cycle_length,
+        follicular_length,
+        estradiol_scale,
+        estradiol_variant,
+    )
+    progesterone_points = _ovulatory_progesterone_points(
+        cycle_length,
+        follicular_length,
+        progesterone_scale,
+    )
     return estradiol_points, progesterone_points
 
 
@@ -821,12 +1164,14 @@ def render_cycle(
         cycle_e2_scale = profile.estradiol_scale * sample_unit_lognormal(rng, CYCLE_ESTRADIOL_SCALE_CV)
         cycle_p4_scale = profile.progesterone_scale * sample_unit_lognormal(rng, CYCLE_PROGESTERONE_SCALE_CV)
         if ovulatory:
+            estradiol_variant = long_follicular_estradiol_variant(profile, cycle_index)
             estradiol_points, progesterone_points = ovulatory_hormone_points(
                 cycle_length,
                 follicular_length,
                 luteal_length,
                 cycle_e2_scale,
                 cycle_p4_scale,
+                estradiol_variant,
             )
         else:
             estradiol_points, progesterone_points = anovulatory_hormone_points(
@@ -836,8 +1181,6 @@ def render_cycle(
             )
 
     records: List[DailyRecord] = []
-    estradiol_noise_state = 0.0
-    progesterone_noise_state = 0.0
     spotting_window = None
 
     if not factors.oral_contraceptive_mode and not ovulatory and profile.stage in {"peri_menarche", "perimenopause"}:
@@ -855,14 +1198,23 @@ def render_cycle(
         else None
     )
 
+    estradiol_curve = shape_preserving_curve(estradiol_points)
+    progesterone_curve = shape_preserving_curve(progesterone_points)
+    estradiol_noise, progesterone_noise = correlated_cycle_noise(
+        cycle_length,
+        rng,
+        profile.noise_scale,
+        profile.noise_scale * PROGESTERONE_NOISE_SCALE_MULTIPLIER,
+    )
+
     for cycle_day in range(1, cycle_length + 1):
-        estradiol_noise_state = HORMONE_NOISE_AR_COEFFICIENT * estradiol_noise_state + rng.gauss(0.0, profile.noise_scale)
-        progesterone_noise_state = (
-            HORMONE_NOISE_AR_COEFFICIENT * progesterone_noise_state
-            + rng.gauss(0.0, profile.noise_scale * PROGESTERONE_NOISE_SCALE_MULTIPLIER)
+        noise_index = cycle_day - 1
+        estradiol = estradiol_curve(float(cycle_day)) * (
+            1.0 + estradiol_noise[noise_index]
         )
-        estradiol = smooth_piecewise(estradiol_points, float(cycle_day)) * (1.0 + estradiol_noise_state)
-        progesterone = smooth_piecewise(progesterone_points, float(cycle_day)) * (1.0 + progesterone_noise_state)
+        progesterone = progesterone_curve(float(cycle_day)) * (
+            1.0 + progesterone_noise[noise_index]
+        )
         estradiol = max(MIN_ESTRADIOL_PG_ML, round(estradiol, SERUM_REPORTING_DECIMALS))
         progesterone = max(MIN_PROGESTERONE_NG_ML, round(progesterone, SERUM_REPORTING_DECIMALS))
 
@@ -908,21 +1260,148 @@ def render_cycle(
     return records, summary
 
 
+def render_cycle_compact(
+    profile: PatientProfile,
+    cycle_index: int,
+    rng: random.Random,
+) -> Tuple[CycleSummary, List[float]]:
+    """Generate cycle structure and midluteal progesterone without daily rows.
+
+    This path is intended for large analyses that retain only cycle structure.
+    It deliberately executes the same stochastic draws, in the same order, as
+    :func:`render_cycle`; therefore subsequent cycle lengths and all returned
+    summary fields are identical for a shared profile and RNG state. Only the
+    progesterone values needed to reproduce the adapter's ILP classification
+    are evaluated and returned.
+    """
+
+    factors = profile.medical_factors
+    if factors.oral_contraceptive_mode:
+        cycle_length = int(OCP_REFERENCE_CYCLE_LENGTH_DAYS)
+        follicular_length = 0
+        luteal_length = 0
+        ovulation_day = 0
+        ovulatory = False
+        bleeding_days = sample_bleeding_days(profile, rng, False)
+        _, progesterone_points = contraceptive_points(factors.oral_contraceptive_mode)
+    else:
+        ovulatory = rng.random() < profile.ovulation_probability
+        cycle_length = sample_cycle_length(profile, rng, ovulatory)
+        follicular_length, luteal_length, ovulation_day = sample_phase_lengths(
+            profile,
+            cycle_length,
+            ovulatory,
+            rng,
+        )
+        bleeding_days = sample_bleeding_days(profile, rng, ovulatory)
+        cycle_e2_scale = profile.estradiol_scale * sample_unit_lognormal(rng, CYCLE_ESTRADIOL_SCALE_CV)
+        cycle_p4_scale = profile.progesterone_scale * sample_unit_lognormal(rng, CYCLE_PROGESTERONE_SCALE_CV)
+        if ovulatory:
+            _, progesterone_points = ovulatory_hormone_points(
+                cycle_length,
+                follicular_length,
+                luteal_length,
+                cycle_e2_scale,
+                cycle_p4_scale,
+            )
+        else:
+            _, progesterone_points = anovulatory_hormone_points(
+                cycle_length,
+                cycle_e2_scale,
+                cycle_p4_scale,
+            )
+
+    spotting_window = None
+    if not factors.oral_contraceptive_mode and not ovulatory and profile.stage in {"peri_menarche", "perimenopause"}:
+        if rng.random() < ANOVULATORY_STAGE_SPOTTING_PROBABILITY:
+            spotting_start = min(
+                cycle_length,
+                max(2, int(round(cycle_length * ANOVULATORY_STAGE_SPOTTING_START_FRACTION))),
+            )
+            spotting_window = range(
+                spotting_start,
+                min(cycle_length + 1, spotting_start + ANOVULATORY_STAGE_SPOTTING_DURATION_DAYS),
+            )
+
+    if factors.oral_contraceptive_mode == "continuous" and bleeding_days > 0:
+        start_day = rng.randint(*CONTINUOUS_OCP_BREAKTHROUGH_START_RANGE)
+        spotting_window = range(start_day, min(PLACEBO_WEEK_REFERENCE_DAY, start_day + bleeding_days))
+
+    withdrawal_start = (
+        max(PLACEBO_WEEK_START_DAY, PLACEBO_WEEK_REFERENCE_DAY - bleeding_days)
+        if factors.oral_contraceptive_mode == "cyclic"
+        else None
+    )
+
+    progesterone_curve = shape_preserving_curve(progesterone_points)
+    _, progesterone_noise = correlated_cycle_noise(
+        cycle_length,
+        rng,
+        profile.noise_scale,
+        profile.noise_scale * PROGESTERONE_NOISE_SCALE_MULTIPLIER,
+    )
+    progesterone_values: List[float] = []
+    realized_bleeding_days = 0
+    for cycle_day in range(1, cycle_length + 1):
+        progesterone = progesterone_curve(float(cycle_day)) * (
+            1.0 + progesterone_noise[cycle_day - 1]
+        )
+        progesterone_values.append(
+            max(MIN_PROGESTERONE_NG_ML, round(progesterone, SERUM_REPORTING_DECIMALS))
+        )
+        if factors.oral_contraceptive_mode == "cyclic":
+            bleeding = int(
+                withdrawal_start is not None
+                and withdrawal_start <= cycle_day <= withdrawal_start + bleeding_days - 1
+            )
+        elif factors.oral_contraceptive_mode == "continuous":
+            bleeding = int(spotting_window is not None and cycle_day in spotting_window)
+        else:
+            bleeding = int(cycle_day <= bleeding_days)
+            if spotting_window is not None and cycle_day in spotting_window:
+                bleeding = 1
+        realized_bleeding_days += bleeding
+
+    summary = CycleSummary(
+        patient_id=profile.patient_id,
+        cycle_index=cycle_index,
+        age_years=profile.age_years,
+        cycle_length=cycle_length,
+        follicular_length=follicular_length,
+        luteal_length=luteal_length,
+        ovulation_day=ovulation_day,
+        ovulatory=ovulatory,
+        bleeding_days=realized_bleeding_days,
+        stage=profile.stage,
+        medical_factors=factors.to_dict(),
+    )
+    return summary, progesterone_values
+
+
 def simulate_diary(
     days: int,
     age_years: float,
     medical_factors: Optional[MedicalFactors] = None,
     seed: Optional[int] = None,
     patient_id: str = "patient-0001",
+    start_mode: str = DIARY_START_RANDOM,
 ) -> SimulationResult:
     """Generate a day-by-day hormone and bleeding diary for one synthetic patient.
 
+    By default, diary day 1 is a uniformly selected day within simulated cycle 1.
+    The diary then proceeds forward through the remainder of that cycle and through
+    subsequently generated cycles without wrapping. ``start_mode="cycle_day_1"``
+    retains the legacy behavior in which diary day 1 is cycle day 1. The final
+    generated cycle may be only partly represented in the returned diary.
+
     Args:
-        days: Number of diary days to generate.
+        days: Exact number of daily records to return.
         age_years: Chronologic age in years.
         medical_factors: Optional medical modifiers to apply.
         seed: Optional random seed for reproducibility.
         patient_id: Identifier to attach to all output rows.
+        start_mode: First-cycle observation rule. ``"random"`` samples a cycle
+            day uniformly; ``"cycle_day_1"`` starts at cycle day 1.
 
     Returns:
         A :class:`SimulationResult` containing the patient profile, daily rows, and cycle-level
@@ -931,6 +1410,9 @@ def simulate_diary(
 
     if days <= 0:
         raise ValueError("days must be positive.")
+    if start_mode not in VALID_DIARY_START_MODES:
+        allowed = ", ".join(sorted(VALID_DIARY_START_MODES))
+        raise ValueError(f"start_mode must be one of: {allowed}.")
 
     profile = build_patient_profile(
         age_years=age_years,
@@ -938,14 +1420,26 @@ def simulate_diary(
         seed=seed,
         patient_id=patient_id,
     )
-    rng = random.Random(seed)
+    rng = domain_separated_rng(seed, patient_id=patient_id, stream="cycles")
     diary: List[DailyRecord] = []
     cycles: List[CycleSummary] = []
     cycle_index = 1
     while len(diary) < days:
+        # One loop iteration generates one complete cycle. The retention check below
+        # clips only the final cycle's daily records to the exact requested diary length.
         cycle_records, cycle_summary = render_cycle(profile, cycle_index, rng)
         cycles.append(cycle_summary)
-        for record in cycle_records:
+        start_offset = (
+            select_diary_start_offset(
+                len(cycle_records),
+                start_mode=start_mode,
+                seed=seed,
+                patient_id=patient_id,
+            )
+            if cycle_index == 1
+            else 0
+        )
+        for record in cycle_records[start_offset:]:
             if len(diary) >= days:
                 break
             diary.append(

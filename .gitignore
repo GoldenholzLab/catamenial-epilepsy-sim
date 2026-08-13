@@ -180,3 +180,21 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Codex
+AGENTS.md
+AGENTS.override.md
+.codex/
+.codex_review/
+.codex-*/
+.codex_*/
+
+# Local application and browser-control artifacts
+.DS_Store
+.playwright-cli/
+.claude/worktrees/
+
+# Full-run window-level tables exceed GitHub's per-file limit. Curated summaries,
+# audit samples, figures, and manifests remain versioned.
+outputs/window_results.parquet
+outputs/*full*/window_results.parquet

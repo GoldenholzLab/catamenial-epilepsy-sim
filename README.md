@@ -2,7 +2,7 @@
 
 ## Paper 1 null CE analysis
 
-This repository now includes a reproducible Paper 1 analysis package for the null-simulation study of apparent catamenial epilepsy (CE) false positives. The analysis combines independent seizure diaries from CHOCOLATES with independent menstrual/hormone diaries from `hormone_cycler`, applies a random circular alignment shift, labels Herzog phases, and evaluates exact, windowed, reproducibility, regression, and assumption-based historical CE definitions.
+This repository now includes a reproducible Paper 1 analysis package for the null-simulation study of apparent catamenial epilepsy (CE) false positives. The analysis combines independent seizure diaries from CHOCOLATES with independent menstrual/hormone diaries from `hormone_cycler`, aligns them directly by calendar day, labels Herzog phases, and evaluates exact, windowed, reproducibility, regression, and assumption-based historical CE definitions. HORMONE-CYCLE diaries begin at a uniformly selected day within the first generated cycle by default.
 
 Paper 1 scope only:
 
@@ -28,10 +28,10 @@ Run the end-to-end smoke test (`N=100`, six-month diaries):
 python3.11 run_paper1_null_ce.py --config config.yaml --smoke-test
 ```
 
-Run the full prespecified analysis (`N=100,000`, 36-month diaries):
+Run the full randomized-start analysis (`N=100,000`, 36-month diaries):
 
 ```bash
-python3.11 run_paper1_null_ce.py --config config.yaml --full
+python3.11 run_paper1_null_ce.py --config config_random_start_full.yaml --full
 ```
 
 While a run is active, progress and ETA are printed after each participant chunk and also written to `outputs/progress.json`. From another terminal, check the latest ETA with:
@@ -67,6 +67,8 @@ Implementation assumptions recorded in `outputs/manifest.json` include simulator
 - ovulation (`0/1`)
 - uterine bleeding (`0/1`)
 
+By default, diary day 1 is selected uniformly from the days of the first generated cycle. The output then proceeds forward continuously through subsequent cycles. Use `--start-mode cycle_day_1` to make cycle day 1 the first output day.
+
 The repo also includes:
 
 - `vis_cycles`: an SVG visualizer for individual diaries
@@ -77,24 +79,25 @@ The repo also includes:
 
 The model is hierarchical rather than a hand-drawn waveform:
 
-1. Age-specific cycle-length targets come from the Apple Women's Health Study / Nurses' Health Study 3 analysis in [Li et al. 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11228203/).
-2. Follicular and luteal phase timing targets come from the 600,000-cycle Natural Cycles analysis in [Bull et al. 2019](https://www.nature.com/articles/s41746-019-0152-7).
-3. Daily estradiol and progesterone curves are interpolated from serum sub-phase medians reported in [Stricker et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16776638/).
-4. Bleeding-duration targets use normal uterine-bleeding ranges summarized by [Fraser et al. 2011](https://pubmed.ncbi.nlm.nih.gov/22045566/).
-5. Clinical-factor modifiers are constrained by peer-reviewed subgroup literature:
-   - PCOS: [Mortimer et al. 2025](https://pubmed.ncbi.nlm.nih.gov/39960584/) and [Doi et al. 2005](https://pubmed.ncbi.nlm.nih.gov/16117815/)
-   - Peri-menarche: [Venturoli et al. 1987](https://pubmed.ncbi.nlm.nih.gov/3127843/)
-   - Perimenopause: [Santoro and Randolph 2011](https://pmc.ncbi.nlm.nih.gov/articles/PMC3414596/)
+1. Age-specific cycle means, within-person SDs, participant-level irregularity, and short/long-cycle tails come from the Apple Women's Health Study analysis in [Li et al. 2023](https://pubmed.ncbi.nlm.nih.gov/37248288/). Version 0.2.0 uses a participant-level mean adjacent-cycle difference of at least seven days and operationalizes “difference” as absolute, consistent with the article's methods definition of adjacent-cycle differences.
+2. Follicular and luteal phase timing targets come from the 600,000-cycle Natural Cycles analysis in [Bull et al. 2019](https://pubmed.ncbi.nlm.nih.gov/31482137/).
+3. Daily estradiol and progesterone curves use shape-preserving cubic interpolation through serum sub-phase medians reported in [Stricker et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16776638/). Ovulatory curves reserve the final four cycle days for gradual steroid withdrawal before the next bleeding onset, and preovulatory estradiol maxima span multiple daily samples.
+4. Bleeding-duration targets use the Natural Cycles analysis and normal uterine-bleeding terminology/range context from [Fraser et al. 2011](https://pubmed.ncbi.nlm.nih.gov/22065325/).
+5. Twelve-month participant means and personal SDs from [Cunningham et al. 2024](https://pubmed.ncbi.nlm.nih.gov/38702411/) are held out from fitting and used as an external cross-check.
+6. Clinical-factor modifiers are constrained by peer-reviewed subgroup literature:
+   - PCOS: [Mortimer et al. 2026](https://pubmed.ncbi.nlm.nih.gov/41297783/), [Doi et al. 2005](https://pubmed.ncbi.nlm.nih.gov/15932911/), and [Jarrett et al. 2020](https://pubmed.ncbi.nlm.nih.gov/32785651/)
+   - Peri-menarche: [WHO Task Force 1986](https://pubmed.ncbi.nlm.nih.gov/3721946/), [Venturoli et al. 1986](https://pubmed.ncbi.nlm.nih.gov/3491030/), with [Zhang et al. 2008](https://pubmed.ncbi.nlm.nih.gov/18252789/) retained as a counterpoint
+   - Perimenopause: [Santoro and Randolph 2011](https://pubmed.ncbi.nlm.nih.gov/21961713/)
    - Combined oral contraceptives: [Edelman et al. 2014](https://pubmed.ncbi.nlm.nih.gov/25072731/)
-   - Levonorgestrel IUD: [Xiao et al.](https://pubmed.ncbi.nlm.nih.gov/7554977/)
-   - Copper IUD / non-hormonal IUD bleeding effects: [Hubacher et al.](https://pubmed.ncbi.nlm.nih.gov/17157103/)
+   - Levonorgestrel IUD: [Xiao et al. 1995](https://pubmed.ncbi.nlm.nih.gov/7554977/)
+   - Copper IUD / non-hormonal IUD effects: [Faundes et al. 1980](https://pubmed.ncbi.nlm.nih.gov/7439408/) and [Malmqvist et al. 1974](https://pubmed.ncbi.nlm.nih.gov/4448089/)
    - Dysmenorrhea: [Dawood 2006](https://pubmed.ncbi.nlm.nih.gov/16880317/)
 
 Important modeling note:
 
 - The combined oral-contraceptive modes simulate suppression of endogenous ovarian estradiol and progesterone. They do not separately model synthetic ethinyl estradiol or progestin assay concentrations.
 - "Bare metal IUD" is implemented as a copper / non-hormonal IUD phenotype.
-- For several factor subgroups, the published literature provides effect direction and clinically useful ranges rather than full raw daily hormone series. In those cases, the simulator uses fitted latent modifiers constrained by the reported study summaries instead of unconstrained ad hoc constants. Those fit decisions are documented inline in the code comments.
+- For several factor subgroups, the literature provides effect direction or broad clinical ranges rather than directly estimable daily-hormone distributions. Those checks are explicitly labeled direction/range checks; their numerical margins are investigator-specified regression guards, not estimates copied from the cited papers. The healthy adult calibration and held-out validation are reported separately.
 
 ## Layout
 
@@ -146,8 +149,30 @@ Run the literature validation suite:
 python3 hormone_cycler validate \
   --patients 10000 \
   --days 365 \
-  --json-output examples/reports/validation_report.json
+  --json-output examples/reports/healthy_cycle_validation_v12.json
 ```
+
+Run the deterministic low/high variability surrogate audit without changing source files:
+
+```bash
+python3 scripts/calibrate_healthy_cycle_variability.py \
+  --output examples/reports/healthy_cycle_calibration_fit_v12.json
+```
+
+The surrogate supplies transparent initialization and sensitivity results; it deliberately omits
+some full-simulator features. Production constants were refined and are evaluated by the complete
+validation run above, including the held-out Cunningham cross-check.
+
+Verify every simulator citation title, PMID, DOI, URL, and evidence role against PubMed:
+
+```bash
+PYTHONPATH=src python3 scripts/audit_hormone_citations.py \
+  --output examples/reports/hormone_citation_audit_v12.json
+```
+
+The executed [recalibration plan](docs/healthy_cycle_recalibration_plan_v12.md) and
+[critical validation report](docs/healthy_cycle_validation_v12.md) document the source separation,
+acceptance gate, results, and remaining limitations.
 
 Open the validation notebook:
 
@@ -157,18 +182,28 @@ jupyter notebook show_validation.ipynb
 
 ## Validation design
 
-Baseline validation compares a balanced 10,000-woman natural-cycle cohort with literature targets:
+Baseline validation compares a balanced 10,000-woman adult natural-cycle cohort (ages 18--54.9,
+matching AWHS adult eligibility) with literature targets:
 
 - age-stratified mean cycle length
-- age-stratified cycle irregularity
+- pooled age-stratified within-person cycle-length SD
+- participant-level age-stratified cycle irregularity
+- age-stratified short-cycle (<24 days) and long-cycle (>38 days) tails
 - mean follicular length
 - mean luteal length
-- mean bleeding duration
+- mean and SD of bleeding duration and luteal length
+- held-out 12-month mean cycle length and mean personal SD by age (Cunningham et al. 2024)
 - sub-phase estradiol and progesterone medians
+- preovulatory estradiol peak width
+- consecutive premenstrual progesterone withdrawal
+- terminal-to-peak progesterone ratio
+- progesterone continuity across cycle boundaries
+
+The 16 full diaries retained for hormone checks are balanced across the eight age bands (two per band). Hormone plotting uses separate estradiol (pg/mL) and progesterone (ng/mL) panels, because those concentrations do not share a commensurate physical scale. Hormone-anchor and waveform checks remain internal software checks; the Cunningham comparison is genuinely held out from calibration.
 
 Age-stratified cycle metrics use equivalence windows centered on the published target estimates rather than requiring the simulator to fall inside the source-study confidence interval exactly. That choice is deliberate: the source cohorts are extremely large, so their confidence intervals are much narrower than a reasonable calibration tolerance for a simulator built from summary statistics rather than raw participant-level data.
 
-If the baseline cohort passes, subgroup validation runs for:
+If the healthy-cycle primary gate passes, secondary modifier stress tests run for:
 
 - PCOS
 - cyclic OCP use
@@ -179,7 +214,7 @@ If the baseline cohort passes, subgroup validation runs for:
 - peri-menarche
 - dysmenorrhea
 
-Each subgroup check compares the simulated cohort against the relevant literature-backed direction or range: for example, higher irregularity and lower ovulation in PCOS, preserved ovulation with shorter bleeding under levonorgestrel IUD use, and longer bleeding without ovarian suppression under copper IUD use.
+Each modifier is compared with an unmodified cohort generated from the same seed and age range: ages 18–44.9 for PCOS, contraception, IUD, and dysmenorrhea scenarios; ages 45–54.9 for perimenopause; and ages 13–17.9 for peri-menarche. The checks assess literature-supported directions or broad ranges—for example, higher irregularity and lower ovulation in PCOS, preserved ovulation with shorter bleeding under levonorgestrel IUD use, and longer bleeding without ovarian suppression under copper IUD use. Exact margins are investigator-selected regression guards, so these passes are software stress-test results rather than clinical validation.
 
 ## Running tests
 
