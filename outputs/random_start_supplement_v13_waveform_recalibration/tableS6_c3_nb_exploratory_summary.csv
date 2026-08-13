@@ -1,0 +1,2 @@
+analysis,n_attempted_audit_participants,n_ratio_c3_applicable,n_nb_classifiable,positives,false_positive_rate_classifiable,wilson95_low,wilson95_high,positive_rate_all_attempted,reason_counts,multiplicity,effect_threshold,p_threshold_one_sided
+Exploratory NB C3 calibration check,500,427,197,12,0.06091370558375635,0.03518509455234576,0.10343896735287192,0.024,"{""classifiable"": 197, ""fewer_than_required_complete_ilp_cycles"": 279, ""seizure_days_below_minimum"": 24}",Standalone exploratory C3 family; no cross-family adjustment,1.62,0.05

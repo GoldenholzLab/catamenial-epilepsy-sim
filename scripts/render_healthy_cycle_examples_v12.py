@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render transparent healthy-cycle example traces for simulator v0.2.0."""
+"""Render transparent healthy-cycle example traces for simulator v0.3.0."""
 
 from __future__ import annotations
 
@@ -108,12 +108,12 @@ def main() -> int:
     parser.add_argument(
         "--output-png",
         type=Path,
-        default=ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v12.png",
+        default=ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v13.png",
     )
     parser.add_argument(
         "--output-svg",
         type=Path,
-        default=ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v12.svg",
+        default=ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v13.svg",
     )
     parser.add_argument("--days", type=int, default=220)
     args = parser.parse_args()

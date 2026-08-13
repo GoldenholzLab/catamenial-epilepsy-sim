@@ -288,6 +288,7 @@ def build_cells(repo: Path, output_dir: Path, data: dict[str, Any]) -> list[dict
 
     cells.append(markdown_cell(title_markdown(data)))
     cells.append(markdown_cell(cohort_definition_markdown()))
+    cells.append(markdown_cell(hormone_validation_markdown(repo)))
     cells.append(markdown_cell(protocol_plan_markdown(manifest)))
     cells.append(markdown_cell("## Reproducible function calls\n\nThese cells are the exact calls used to regenerate the analysis outputs. Run the smoke call for a quick end-to-end check; run the full call for the defined 100,000-participant analysis."))
     cells.append(code_cell(reproduction_code(output_dir, repo)))
@@ -398,6 +399,39 @@ def cohort_definition_markdown() -> str:
     )
 
 
+def hormone_validation_markdown(repo: Path) -> str:
+    """Summarize the versioned hormone gate that authorized this paper rerun."""
+
+    report_path = repo / "examples" / "reports" / "healthy_cycle_validation_v13.json"
+    if not report_path.exists():
+        return "## HORMONE-CYCLE validation provenance\n\nThe versioned validation report was not found."
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    calibration = report.get("calibration_metrics", [])
+    external = report.get("external_crosscheck_metrics", [])
+    subgroup_payloads = report.get("subgroup_analysis", {}).get("subgroups", {})
+    subgroup_passed = sum(bool(payload.get("passed")) for payload in subgroup_payloads.values())
+    ages = report.get("input", {}).get("age_range", [None, None])
+    age_text = f"{ages[0]:g}–{ages[1] - 0.1:g}" if all(value is not None for value in ages) else "not recorded"
+    return (
+        "## HORMONE-CYCLE v0.3.0 validation provenance\n\n"
+        f"The primary paper rerun was authorized only after the versioned 10,000-participant "
+        f"adult validation cohort (ages {age_text}) passed **{sum(bool(m['passed']) for m in calibration)}/{len(calibration)}** "
+        f"calibration/waveform checks and **{sum(bool(m['passed']) for m in external)}/{len(external)}** held-out "
+        f"Cunningham/Flo checks; **{subgroup_passed}/{len(subgroup_payloads)}** secondary age-matched modifier software stress tests also passed. "
+        "The v0.3.0 waveform gate uses the complete daily Stricker serum envelope, an independent "
+        "Anckaert subphase amplitude/order check, and prespecified P4 plateau, rise, peak, withdrawal, "
+        "luteal-E2 rebound, and cycle-boundary checks. Long follicular phases preserve terminal "
+        "maturation rather than stretching an ordinary curve. The pass is qualified rather than clinical: "
+        "the waveform represents a daily population-median envelope, not within-day pulsatility or "
+        "participant-level clinical validation. Cycle-summary agreement is strongest at ages 18–45, and the retained "
+        "post-50 discrepancy reflects differing variability estimates in AWHS and Flo. Modifier margins are "
+        "investigator-selected regression guards rather than externally estimated clinical thresholds. The machine-readable "
+        "report, citation audit, and executable validation notebook are "
+        "`examples/reports/healthy_cycle_validation_v13.json`, "
+        "`examples/reports/hormone_citation_audit_v13.json`, and `show_validation.ipynb`."
+    )
+
+
 def protocol_plan_markdown(manifest: dict[str, Any]) -> str:
     config = manifest["config"]
     full_sizes = config["analysis_modes"]["full"].get("cohort_sizes", {})
@@ -435,8 +469,10 @@ from paper1_null_ce.core.simulate import run_pipeline
 
 config = load_config(ROOT / "{config_path}")
 
-# Quick validation run used while developing and reviewing the pipeline:
-smoke_result = run_pipeline(config, mode="smoke")
+# Quick validation run used while developing and reviewing the pipeline. It is
+# intentionally opt-in so executing this results notebook does not overwrite
+# the already-populated definitive artifacts:
+# smoke_result = run_pipeline(config, mode="smoke")
 
 # Prespecified full analysis. This is intentionally separate because it is large:
 # full_result = run_pipeline(config, mode="full")
@@ -631,9 +667,19 @@ manifest_files.assign(size_mb=manifest_files["bytes"] / 1_000_000)[["path", "siz
 
 def figures_code() -> str:
     return """from paper1_null_ce.core.plots import write_all_figures
+from tempfile import TemporaryDirectory
 
-# Regenerate PNG and PDF figures from current populated output tables.
-write_all_figures(OUTPUT_DIR, summary_tables, study_level, pd.read_parquet(OUTPUT_DIR / "audit_daily_sample.parquet"))
+# Exercise the exact publication-figure renderer without mutating the immutable
+# completed-run bundle or invalidating its recorded checksums.
+with TemporaryDirectory(prefix="paper1-notebook-figures-") as figure_dir:
+    regenerated = write_all_figures(
+        figure_dir,
+        summary_tables,
+        study_level,
+        pd.read_parquet(OUTPUT_DIR / "audit_daily_sample.parquet"),
+    )
+    regenerated_figure_names = [path.name for path in regenerated]
+regenerated_figure_names
 """
 
 

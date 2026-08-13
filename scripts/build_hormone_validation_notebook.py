@@ -44,7 +44,14 @@ def build_notebook() -> object:
                independent timing context: long-cycle E2 peaks were about three days later, not
                proportionally stretched over the entire long cycle.
 
-            The central correction in v0.2.0 is estimand alignment: AWHS classified a participant
+            The central waveform correction in v0.3.0 replaces sparse subphase control points
+            with the complete daily Stricker serum series, aligns that series to the simulator's
+            ovulation event, and adds independently checked morphology criteria. Long follicular
+            phases now preserve a terminal 14-day maturation interval and use delayed-emergence or
+            failed-wave E2 geometry rather than stretching an ordinary-cycle template.
+
+            The central cycle-variability correction introduced in v0.2.0 was estimand alignment:
+            AWHS classified a participant
             as irregular when that person's *mean adjacent-cycle difference* was at least seven
             days. The table footnote omits “absolute,” but the methods define adjacent-cycle
             differences as absolute values; v0.2.0 follows that convention. The previous notebook
@@ -75,14 +82,16 @@ def build_notebook() -> object:
             from hormone_cycler.model import simulate_diary
             from hormone_cycler.validation import run_population_validation
             from render_healthy_cycle_examples_v12 import render as render_examples
+            from render_hormone_waveform_validation_v13 import render as render_waveform_figure
             from render_hormone_validation_figure_v12 import render as render_validation_figure
 
-            REPORT_PATH = ROOT / "examples" / "reports" / "healthy_cycle_validation_v12.json"
-            KINETICS_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_kinetics_validation.png"
-            VALIDATION_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_cycle_validation_v12.png"
-            EXAMPLE_PNG_PATH = ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v12.png"
-            EXAMPLE_SVG_PATH = ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v12.svg"
+            REPORT_PATH = ROOT / "examples" / "reports" / "healthy_cycle_validation_v13.json"
+            KINETICS_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_kinetics_validation_v13.png"
+            VALIDATION_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_cycle_validation_v13.png"
+            EXAMPLE_PNG_PATH = ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v13.png"
+            EXAMPLE_SVG_PATH = ROOT / "examples" / "reports" / "healthy_cycle_example_traces_v13.svg"
             WAVEFORM_FIGURE_PATH = ROOT / "examples" / "reports" / "hormone_waveform_validation_v13.png"
+            WAVEFORM_SVG_PATH = ROOT / "examples" / "reports" / "hormone_waveform_validation_v13.svg"
             REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
             """
         ),
@@ -294,51 +303,7 @@ def build_notebook() -> object:
         ),
         _code(
             """
-            from hormone_cycler.model import (
-                LONG_ESTRADIOL_DELAYED_EMERGENCE,
-                LONG_ESTRADIOL_FAILED_WAVE,
-                ovulatory_hormone_points,
-                shape_preserving_curve,
-            )
-
-            waveform_cases = [
-                ("Ordinary 29-day cycle", 29, 15, 14, LONG_ESTRADIOL_DELAYED_EMERGENCE),
-                ("53-day delayed emergence", 53, 39, 14, LONG_ESTRADIOL_DELAYED_EMERGENCE),
-                ("53-day failed wave", 53, 39, 14, LONG_ESTRADIOL_FAILED_WAVE),
-            ]
-            fig, axes = plt.subplots(1, 2, figsize=(13, 4.8), sharey=True)
-            for label, cycle_length, follicular_length, luteal_length, variant in waveform_cases[:2]:
-                points, _ = ovulatory_hormone_points(
-                    cycle_length, follicular_length, luteal_length, 1.0, 1.0, variant
-                )
-                curve = shape_preserving_curve(points)
-                relative_day = list(range(-follicular_length + 1, 1))
-                values = [curve(float(day)) for day in range(1, follicular_length + 1)]
-                axes[0].plot(relative_day, values, linewidth=2.0, label=label)
-            axes[0].axvline(0, color="#27855B", linestyle="--", linewidth=1.2)
-            axes[0].set_title("A. Extra days precede terminal maturation")
-            axes[0].set_xlabel("Days relative to ovulation")
-            axes[0].set_ylabel("Estradiol (pg/mL; scale=1)")
-            axes[0].legend(frameon=False)
-
-            for label, cycle_length, follicular_length, luteal_length, variant in waveform_cases[1:]:
-                points, _ = ovulatory_hormone_points(
-                    cycle_length, follicular_length, luteal_length, 1.0, 1.0, variant
-                )
-                curve = shape_preserving_curve(points)
-                days = list(range(1, follicular_length + 1))
-                axes[1].plot(days, [curve(float(day)) for day in days], linewidth=2.0, label=label)
-            axes[1].axvline(39, color="#27855B", linestyle="--", linewidth=1.2)
-            axes[1].set_title("B. Harlow-supported long-phase heterogeneity")
-            axes[1].set_xlabel("Cycle day")
-            axes[1].legend(frameon=False)
-            for axis in axes:
-                axis.grid(axis="y", alpha=0.18)
-                axis.spines["top"].set_visible(False)
-                axis.spines["right"].set_visible(False)
-            fig.tight_layout()
-            fig.savefig(WAVEFORM_FIGURE_PATH, dpi=200, bbox_inches="tight")
-            plt.show()
+            render_waveform_figure(WAVEFORM_FIGURE_PATH, WAVEFORM_SVG_PATH)
             print(f"Wrote {WAVEFORM_FIGURE_PATH}")
             """
         ),

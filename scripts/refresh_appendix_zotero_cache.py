@@ -3,7 +3,9 @@
 This does not flatten citations.  It updates the cached display inside the
 existing live Zotero fields and leaves every ADDIN ZOTERO_ITEM and ADDIN
 ZOTERO_BIBL instruction intact.  Bibliography strings are requested directly
-from the running Zotero local API using the NLM citation-sequence style.
+from the running Zotero local API using the NLM citation-sequence style.  The
+document's existing numeric citation presentation is retained: superscript in
+the main manuscript and parenthetical in the appendix.
 """
 
 from __future__ import annotations
@@ -25,30 +27,6 @@ from lxml import html as lxml_html
 W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 W = f"{{{W_NS}}}"
 NS = {"w": W_NS}
-
-# Citation-sequence order in the expanded appendix.
-ORDERED_KEYS = [
-    "BBSUV5B4",  # HORMONE-CYCLE
-    "EZ3PCTXC",  # CHOCOLATES
-    "AZR8XN6P",  # STRESS
-    "RQGUHW73",  # Stricker
-    "BZHW34SL",  # Bull
-    "KCJ4JNA6",  # Li
-    "7SYTA45K",  # Fraser
-    "37Z8WXRN",  # Mortimer
-    "BQCCFN9M",  # Jarrett
-    "RCZKMC43",  # World Health Organization adolescent study
-    "Y96VASBL",  # Zhang
-    "S9DWUGNY",  # Santoro
-    "T48PCTZP",  # Edelman
-    "99LKVM7K",  # Xiao
-    "E4VGVI5F",  # Barbosa
-    "YURRMKC9",  # Faundes
-    "9MA8UAT2",  # Malmqvist
-    "A4ZL26YS",  # Dawood
-    "ISA2UR7P",  # Herzog
-]
-
 
 def fetch_nlm_bibliography(keys: list[str]) -> list[str]:
     # The local API sorts a multi-item bibliography according to library
@@ -110,6 +88,50 @@ def citation_key(item: dict) -> str:
     return item_id.rstrip("/").split("/")[-1]
 
 
+def ordered_citation_keys(root: etree._Element) -> list[str]:
+    """Return unique Zotero item keys in first-citation document order."""
+
+    instructions = root.xpath(
+        './/w:fldSimple[contains(@w:instr,"ZOTERO_ITEM CSL_CITATION")]'
+        ' | .//w:instrText[contains(.,"ZOTERO_ITEM CSL_CITATION")]',
+        namespaces=NS,
+    )
+    keys: list[str] = []
+    for node in instructions:
+        instruction = (
+            node.get(W + "instr") if node.tag == W + "fldSimple" else node.text
+        )
+        payload, _, _ = parse_citation_instruction(instruction or "")
+        for item in payload.get("citationItems", []):
+            key = citation_key(item)
+            if key and key not in keys:
+                keys.append(key)
+    if not keys:
+        raise RuntimeError("No live Zotero citation fields were found")
+    return keys
+
+
+def citation_presentation(root: etree._Element) -> str:
+    """Infer the document's existing numeric-citation presentation."""
+
+    instructions = root.xpath(
+        './/w:fldSimple[contains(@w:instr,"ZOTERO_ITEM CSL_CITATION")]'
+        ' | .//w:instrText[contains(.,"ZOTERO_ITEM CSL_CITATION")]',
+        namespaces=NS,
+    )
+    for node in instructions:
+        instruction = (
+            node.get(W + "instr") if node.tag == W + "fldSimple" else node.text
+        )
+        payload, _, _ = parse_citation_instruction(instruction or "")
+        formatted = payload.get("properties", {}).get("formattedCitation", "")
+        if "\\super" in formatted:
+            return "superscript"
+        if formatted.startswith("("):
+            return "parenthetical"
+    raise RuntimeError("Could not infer numeric citation presentation")
+
+
 def collapse_numbers(numbers: list[int]) -> str:
     numbers = sorted(dict.fromkeys(numbers))
     groups: list[list[int]] = []
@@ -124,17 +146,39 @@ def collapse_numbers(numbers: list[int]) -> str:
             rendered.append(f"{group[0]}–{group[-1]}")
         else:
             rendered.extend(str(number) for number in group)
-    return f"({','.join(rendered)})"
+    return ",".join(rendered)
+
+
+def zotero_rtf(text: str) -> str:
+    """Encode the Unicode punctuation used here as Zotero-compatible RTF."""
+
+    return text.replace("–", r"\uc0\u8211{}")
+
+
+def render_citation(numbers: list[int], presentation: str) -> tuple[str, str, str]:
+    collapsed = collapse_numbers(numbers)
+    if presentation == "superscript":
+        return (
+            collapsed,
+            rf"\super {zotero_rtf(collapsed)}\nosupersub{{}}",
+            collapsed,
+        )
+    if presentation == "parenthetical":
+        displayed = f"({collapsed})"
+        return displayed, zotero_rtf(displayed), displayed
+    raise ValueError(f"Unsupported citation presentation: {presentation}")
 
 
 def updated_instruction(
-    instruction: str, number_by_key: dict[str, int]
+    instruction: str,
+    number_by_key: dict[str, int],
+    presentation: str,
 ) -> tuple[str, str]:
     payload, prefix, suffix = parse_citation_instruction(instruction)
     numbers = [number_by_key[citation_key(item)] for item in payload["citationItems"]]
-    display = collapse_numbers(numbers)
-    payload.setdefault("properties", {})["formattedCitation"] = display
-    payload["properties"]["plainCitation"] = display.strip("()")
+    display, formatted, plain = render_citation(numbers, presentation)
+    payload.setdefault("properties", {})["formattedCitation"] = formatted
+    payload["properties"]["plainCitation"] = plain
     compact = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     return prefix + compact + suffix, display
 
@@ -146,18 +190,41 @@ def make_text_run(text: str) -> etree._Element:
     return run
 
 
-def refresh_simple_citations(root, number_by_key: dict[str, int]) -> int:
+def set_run_presentation(run: etree._Element, presentation: str) -> None:
+    run_properties = run.find("w:rPr", namespaces=NS)
+    if presentation == "superscript":
+        if run_properties is None:
+            run_properties = etree.Element(W + "rPr")
+            run.insert(0, run_properties)
+        vertical = run_properties.find("w:vertAlign", namespaces=NS)
+        if vertical is None:
+            vertical = etree.SubElement(run_properties, W + "vertAlign")
+        vertical.set(W + "val", "superscript")
+    elif run_properties is not None:
+        for vertical in run_properties.findall("w:vertAlign", namespaces=NS):
+            run_properties.remove(vertical)
+
+
+def refresh_simple_citations(
+    root,
+    number_by_key: dict[str, int],
+    presentation: str,
+) -> int:
     changed = 0
     for field in root.xpath(
         './/w:fldSimple[contains(@w:instr,"ZOTERO_ITEM CSL_CITATION")]',
         namespaces=NS,
     ):
         instruction = field.get(W + "instr")
-        updated, display = updated_instruction(instruction, number_by_key)
+        updated, display = updated_instruction(
+            instruction, number_by_key, presentation
+        )
         field.set(W + "instr", updated)
         for child in list(field):
             field.remove(child)
-        field.append(make_text_run(display))
+        result_run = make_text_run(display)
+        set_run_presentation(result_run, presentation)
+        field.append(result_run)
         changed += 1
     return changed
 
@@ -171,7 +238,11 @@ def contains_field_char(run, kind: str) -> bool:
     )
 
 
-def refresh_complex_citations(root, number_by_key: dict[str, int]) -> int:
+def refresh_complex_citations(
+    root,
+    number_by_key: dict[str, int],
+    presentation: str,
+) -> int:
     changed = 0
     instructions = root.xpath(
         './/w:instrText[contains(.,"ZOTERO_ITEM CSL_CITATION")]',
@@ -179,28 +250,45 @@ def refresh_complex_citations(root, number_by_key: dict[str, int]) -> int:
     )
     for instruction_node in instructions:
         updated, display = updated_instruction(
-            instruction_node.text, number_by_key
+            instruction_node.text, number_by_key, presentation
         )
         instruction_node.text = updated
         paragraph = instruction_node.xpath("ancestor::w:p[1]", namespaces=NS)[0]
-        children = list(paragraph)
+        runs = paragraph.xpath(".//w:r", namespaces=NS)
         instruction_run = instruction_node.xpath("ancestor::w:r[1]", namespaces=NS)[0]
-        instruction_index = children.index(instruction_run)
+        instruction_index = runs.index(instruction_run)
         separate_index = next(
             index
-            for index in range(instruction_index + 1, len(children))
-            if children[index].tag == W + "r"
-            and contains_field_char(children[index], "separate")
+            for index in range(instruction_index + 1, len(runs))
+            if contains_field_char(runs[index], "separate")
         )
         end_index = next(
             index
-            for index in range(separate_index + 1, len(children))
-            if children[index].tag == W + "r"
-            and contains_field_char(children[index], "end")
+            for index in range(separate_index + 1, len(runs))
+            if contains_field_char(runs[index], "end")
         )
-        for child in children[separate_index + 1 : end_index]:
-            paragraph.remove(child)
-        paragraph.insert(separate_index + 1, make_text_run(display))
+
+        # Tracked insertions/deletions can split one live Zotero field across
+        # several ``w:ins`` wrappers. Preserve those wrappers and the run
+        # formatting; change only the cached result text between the field's
+        # separator and end characters. Word/Zotero can still refresh the live
+        # field because its begin/instruction/separate/end structure is intact.
+        result_nodes = []
+        for run in runs[separate_index : end_index + 1]:
+            result_nodes.extend(run.xpath(".//w:t", namespaces=NS))
+        if not result_nodes:
+            raise RuntimeError(
+                "A Zotero citation field has no cached text between its "
+                "separator and end characters"
+            )
+        result_nodes[0].text = display
+        for node in result_nodes[1:]:
+            node.text = ""
+        for node in result_nodes:
+            set_run_presentation(
+                node.xpath("ancestor::w:r[1]", namespaces=NS)[0],
+                presentation,
+            )
         changed += 1
     return changed
 
@@ -265,8 +353,13 @@ def rebuild_bibliography(root, entries: list[str]) -> None:
 
 
 def refresh_docx(path: Path, output: Path) -> dict:
-    entries = fetch_nlm_bibliography(ORDERED_KEYS)
-    number_by_key = {key: index + 1 for index, key in enumerate(ORDERED_KEYS)}
+    with zipfile.ZipFile(path, "r") as source:
+        parser = etree.XMLParser(remove_blank_text=False)
+        source_root = etree.fromstring(source.read("word/document.xml"), parser)
+    ordered_keys = ordered_citation_keys(source_root)
+    presentation = citation_presentation(source_root)
+    entries = fetch_nlm_bibliography(ordered_keys)
+    number_by_key = {key: index + 1 for index, key in enumerate(ordered_keys)}
     temp = output.with_suffix(".refresh-tmp.docx")
     with zipfile.ZipFile(path, "r") as source, zipfile.ZipFile(
         temp, "w", zipfile.ZIP_DEFLATED
@@ -276,8 +369,12 @@ def refresh_docx(path: Path, output: Path) -> dict:
             if item.filename == "word/document.xml":
                 parser = etree.XMLParser(remove_blank_text=False)
                 root = etree.fromstring(data, parser)
-                simple = refresh_simple_citations(root, number_by_key)
-                complex_count = refresh_complex_citations(root, number_by_key)
+                simple = refresh_simple_citations(
+                    root, number_by_key, presentation
+                )
+                complex_count = refresh_complex_citations(
+                    root, number_by_key, presentation
+                )
                 rebuild_bibliography(root, entries)
                 data = etree.tostring(
                     root,
@@ -291,7 +388,8 @@ def refresh_docx(path: Path, output: Path) -> dict:
         "simple_citation_fields": simple,
         "complex_citation_fields": complex_count,
         "bibliography_entries": len(entries),
-        "ordered_keys": ORDERED_KEYS,
+        "ordered_keys": ordered_keys,
+        "citation_presentation": presentation,
     }
 
 

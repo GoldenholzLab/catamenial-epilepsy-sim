@@ -191,13 +191,13 @@ def render(output: Path) -> None:
     centered_multiline(
         draw,
         (180, 175, WIDTH - 180, 245),
-        "The initial phase is sampled once in cycle 1; every later cycle begins at cycle day 1.",
+        "Each cycle: timing → LH-aligned serum envelope → long-follicular E2 branch → PCHIP + bridged serial noise.",
         font(38),
         fill=GRAY,
     )
 
-    lane_label(draw, (45, 290, 610, 345), "INITIALIZATION AND FIRST CYCLE")
-    lane_label(draw, (45, 890, 570, 945), "SUBSEQUENT-CYCLE LOOP")
+    lane_label(draw, (45, 290, 700, 345), "INITIALIZATION, WAVEFORM, AND FIRST CYCLE")
+    lane_label(draw, (45, 890, 690, 945), "REPEATED COMPLETE-CYCLE GENERATION")
 
     inputs = (45, 390, 490, 750)
     first_cycle = (550, 370, 1050, 770)
@@ -215,7 +215,7 @@ def render(output: Path) -> None:
         draw,
         first_cycle,
         "Generate cycle 1",
-        "Sample ovulation, length,\nbleeding, and phase timing;\nrender one complete cycle",
+        "Sample timing + bleeding;\nmap daily E2/P4 medians;\nlong-cycle E2 branch;\nPCHIP + bridged noise",
         outline=TEAL,
     )
     workflow_box(
@@ -271,7 +271,7 @@ def render(output: Path) -> None:
         draw,
         next_cycle,
         "Generate next cycle",
-        "Render one new complete\ncycle after the current\ncycle is exhausted",
+        "Sample structure and render\na new LH-aligned E2/P4\ncycle after the current\ncycle is exhausted",
         outline=TEAL,
     )
     workflow_box(
@@ -356,9 +356,4 @@ def render(output: Path) -> None:
 
 
 if __name__ == "__main__":
-    render(
-        Path(
-            ".codex_review/draft_v6_appendix_s1/generated_assets/"
-            "hormone_cycle_workflow.png"
-        )
-    )
+    render(Path("examples/reports/hormone_cycle_workflow_v13.png"))

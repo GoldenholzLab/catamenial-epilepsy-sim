@@ -79,12 +79,13 @@ The repo also includes:
 
 The model is hierarchical rather than a hand-drawn waveform:
 
-1. Age-specific cycle means, within-person SDs, participant-level irregularity, and short/long-cycle tails come from the Apple Women's Health Study analysis in [Li et al. 2023](https://pubmed.ncbi.nlm.nih.gov/37248288/). Version 0.2.0 uses a participant-level mean adjacent-cycle difference of at least seven days and operationalizes “difference” as absolute, consistent with the article's methods definition of adjacent-cycle differences.
+1. Age-specific cycle means, within-person SDs, participant-level irregularity, and short/long-cycle tails come from the Apple Women's Health Study analysis in [Li et al. 2023](https://pubmed.ncbi.nlm.nih.gov/37248288/). Version 0.3.0 retains the v0.2.0 participant-level mean absolute adjacent-cycle difference of at least seven days, consistent with the article's methods definition of adjacent-cycle differences.
 2. Follicular and luteal phase timing targets come from the 600,000-cycle Natural Cycles analysis in [Bull et al. 2019](https://pubmed.ncbi.nlm.nih.gov/31482137/).
-3. Daily estradiol and progesterone curves use shape-preserving cubic interpolation through serum sub-phase medians reported in [Stricker et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16776638/). Ovulatory curves reserve the final four cycle days for gradual steroid withdrawal before the next bleeding onset, and preovulatory estradiol maxima span multiple daily samples.
+3. Ovulatory estradiol and progesterone curves use the complete daily LH-aligned serum medians reported in [Stricker et al. 2006](https://pubmed.ncbi.nlm.nih.gov/16776638/). The simulator places ovulation 0.75 day after the LH peak, preserves one-day spacing through the peak, scales only the post-LH interval to the realized cycle end, and uses shape-preserving PCHIP interpolation plus endpoint-bridged serial noise. This yields a postovulatory progesterone rise, a broad midluteal summit, a secondary luteal estradiol elevation, and premenstrual withdrawal without a cycle-boundary jump.
 4. Bleeding-duration targets use the Natural Cycles analysis and normal uterine-bleeding terminology/range context from [Fraser et al. 2011](https://pubmed.ncbi.nlm.nih.gov/22065325/).
-5. Twelve-month participant means and personal SDs from [Cunningham et al. 2024](https://pubmed.ncbi.nlm.nih.gov/38702411/) are held out from fitting and used as an external cross-check.
-6. Clinical-factor modifiers are constrained by peer-reviewed subgroup literature:
+5. Long follicular phases keep a terminal 14-day estradiol-maturation interval rather than stretching an ordinary curve. [Harlow et al. 2000](https://pubmed.ncbi.nlm.nih.gov/10611180/) informs delayed-emergence and failed-wave geometry, while [Mumford et al. 2012](https://pubmed.ncbi.nlm.nih.gov/22837188/) supplies independent timing context. The implemented 25% failed-wave mixture and amplitude remain investigator-selected heterogeneity settings, not published prevalence estimates.
+6. Twelve-month participant means and personal SDs from [Cunningham et al. 2024](https://pubmed.ncbi.nlm.nih.gov/38702411/) are held out from fitting and used as an external cycle cross-check. Assay-specific subphase values from [Anckaert et al. 2021](https://pubmed.ncbi.nlm.nih.gov/33869706/) are held out from waveform construction and used as an independent aggregate hormone amplitude/order cross-check.
+7. Clinical-factor modifiers are constrained by peer-reviewed subgroup literature:
    - PCOS: [Mortimer et al. 2026](https://pubmed.ncbi.nlm.nih.gov/41297783/), [Doi et al. 2005](https://pubmed.ncbi.nlm.nih.gov/15932911/), and [Jarrett et al. 2020](https://pubmed.ncbi.nlm.nih.gov/32785651/)
    - Peri-menarche: [WHO Task Force 1986](https://pubmed.ncbi.nlm.nih.gov/3721946/), [Venturoli et al. 1986](https://pubmed.ncbi.nlm.nih.gov/3491030/), with [Zhang et al. 2008](https://pubmed.ncbi.nlm.nih.gov/18252789/) retained as a counterpoint
    - Perimenopause: [Santoro and Randolph 2011](https://pubmed.ncbi.nlm.nih.gov/21961713/)
@@ -149,7 +150,7 @@ Run the literature validation suite:
 python3 hormone_cycler validate \
   --patients 10000 \
   --days 365 \
-  --json-output examples/reports/healthy_cycle_validation_v12.json
+  --json-output examples/reports/healthy_cycle_validation_v13.json
 ```
 
 Run the deterministic low/high variability surrogate audit without changing source files:
@@ -167,7 +168,7 @@ Verify every simulator citation title, PMID, DOI, URL, and evidence role against
 
 ```bash
 PYTHONPATH=src python3 scripts/audit_hormone_citations.py \
-  --output examples/reports/hormone_citation_audit_v12.json
+  --output examples/reports/hormone_citation_audit_v13.json
 ```
 
 The executed [recalibration plan](docs/healthy_cycle_recalibration_plan_v12.md) and
@@ -193,13 +194,16 @@ matching AWHS adult eligibility) with literature targets:
 - mean luteal length
 - mean and SD of bleeding duration and luteal length
 - held-out 12-month mean cycle length and mean personal SD by age (Cunningham et al. 2024)
-- sub-phase estradiol and progesterone medians
+- independently measured sub-phase estradiol and progesterone medians
 - preovulatory estradiol peak width
+- luteal estradiol secondary-peak ratio
+- progesterone plateau width and peak offset from ovulation
+- progesterone rise-to-5-ng/mL offset from ovulation
 - consecutive premenstrual progesterone withdrawal
 - terminal-to-peak progesterone ratio
 - progesterone continuity across cycle boundaries
 
-The 16 full diaries retained for hormone checks are balanced across the eight age bands (two per band). Hormone plotting uses separate estradiol (pg/mL) and progesterone (ng/mL) panels, because those concentrations do not share a commensurate physical scale. Hormone-anchor and waveform checks remain internal software checks; the Cunningham comparison is genuinely held out from calibration.
+The 16 full diaries retained for hormone checks are balanced across the eight age bands (two per band). Hormone plotting uses separate estradiol (pg/mL) and progesterone (ng/mL) panels, because those concentrations do not share a commensurate physical scale. The complete Stricker series constructs the daily envelope; eight morphology checks guard its shape. The Anckaert comparison is held out from waveform construction, and the Cunningham comparison is held out from cycle calibration. Both are independent at the aggregate-source level rather than participant-level clinical validation.
 
 Age-stratified cycle metrics use equivalence windows centered on the published target estimates rather than requiring the simulator to fall inside the source-study confidence interval exactly. That choice is deliberate: the source cohorts are extremely large, so their confidence intervals are much narrower than a reasonable calibration tolerance for a simulator built from summary statistics rather than raw participant-level data.
 

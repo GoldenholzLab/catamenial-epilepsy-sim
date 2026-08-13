@@ -1,0 +1,37 @@
+{
+  "main": {
+    "source": "outputs/epilepsia_submission/draft_v11_hormone_repaired.docx",
+    "output": "outputs/epilepsia_submission/draft_v13_waveform_recalibrated.docx",
+    "source_citation_fields": 26,
+    "output_citation_fields": 28,
+    "source_citation_items": 31,
+    "output_citation_items": 36,
+    "citation_presentation": "superscript",
+    "cunningham_fields": 1,
+    "source_bibliography_fields": 1,
+    "output_bibliography_fields": 1,
+    "preserved_custom_xml_parts": 3,
+    "native_math_objects": 0,
+    "equation_seq_fields": 0,
+    "equation_ref_fields": 0,
+    "status": "pass"
+  },
+  "appendix": {
+    "source": "outputs/epilepsia_submission/draft_v11_appendix_hormone_repaired.docx",
+    "output": "outputs/epilepsia_submission/draft_v13_appendix_waveform_recalibrated.docx",
+    "source_citation_fields": 66,
+    "output_citation_fields": 78,
+    "source_citation_items": 109,
+    "output_citation_items": 121,
+    "citation_presentation": "parenthetical",
+    "cunningham_fields": 5,
+    "source_bibliography_fields": 1,
+    "output_bibliography_fields": 1,
+    "preserved_custom_xml_parts": 3,
+    "native_math_objects": 136,
+    "equation_seq_fields": 16,
+    "equation_ref_fields": 9,
+    "status": "pass"
+  },
+  "status": "pass"
+}

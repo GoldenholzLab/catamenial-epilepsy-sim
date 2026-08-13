@@ -1031,7 +1031,7 @@ def validation_rows(validation: dict) -> list[list[str]]:
         "progesterone_": "Progesterone, ",
     }
     source_names = {
-        "li_2024_awhs": "Li et al. (2023), age-stratified article tables",
+        "li_2023_awhs": "Li et al. (2023), age-stratified article tables",
         "bull_2019_natural_cycles": "Bull et al. (2019), Table 1",
         "stricker_2006_reference": "Stricker et al. (2006), Table 1B and Figure 1",
     }

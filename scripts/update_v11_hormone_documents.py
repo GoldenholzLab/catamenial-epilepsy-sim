@@ -227,6 +227,8 @@ def replace_with_ref_sequence(
         parent = run.getparent()
         insert_at = parent.index(run) + 1
         node.text = before
+        if before.startswith(" ") or before.endswith(" "):
+            node.set(qn(XML, "space"), "preserve")
         generated: list[etree._Element] = []
         for segment in segments:
             if isinstance(segment, str):
@@ -320,12 +322,20 @@ def write_docx(
     entries: dict[str, bytes],
     root: etree._Element,
     media_updates: dict[str, Path],
+    relationships: etree._Element | None = None,
 ) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     entries = dict(entries)
     entries["word/document.xml"] = etree.tostring(
         root, xml_declaration=True, encoding="UTF-8", standalone="yes"
     )
+    if relationships is not None:
+        entries["word/_rels/document.xml.rels"] = etree.tostring(
+            relationships,
+            xml_declaration=True,
+            encoding="UTF-8",
+            standalone="yes",
+        )
     for target, path in media_updates.items():
         entries[f"word/{target}"] = path.read_bytes()
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
@@ -511,7 +521,7 @@ def validation_value(metric: dict, field: str) -> str:
 
 def validation_rows(validation: dict) -> list[list[str]]:
     source_names = {
-        "li_2024_awhs": "Li et al. (2023), age-stratified article tables",
+        "li_2023_awhs": "Li et al. (2023), age-stratified article tables",
         "bull_2019_natural_cycles": "Bull et al. (2019), Table 1",
         "stricker_2006_reference": "Stricker et al. (2006), Table 1B and Figure 1",
     }
@@ -932,7 +942,7 @@ def update_main_document(source: Path, output: Path, outputs: Path, supplement: 
     for rid, path in [("rId8", media[rels["rId8"]]), ("rId9", media[rels["rId9"]]), ("rId10", media[rels["rId10"]])]:
         update_drawing_aspect(root, rid, path)
     refresh_main_title_page_counts(root)
-    write_docx(output, entries, root, media)
+    write_docx(output, entries, root, media, relationships)
 
 
 def update_appendix_document(
@@ -1122,7 +1132,7 @@ def update_appendix_document(
     }
     for rid in ["rId11", "rId12", "rId13", "rId14", "rId15", "rId16"]:
         update_drawing_aspect(root, rid, media[rels[rid]])
-    write_docx(output, entries, root, media)
+    write_docx(output, entries, root, media, relationships)
 
 
 def parse_args() -> argparse.Namespace:

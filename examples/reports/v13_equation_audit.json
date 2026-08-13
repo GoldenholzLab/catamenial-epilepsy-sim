@@ -1,0 +1,210 @@
+{
+  "docx": "/Users/dgoldenh/Documents/GitHub/catamenial-epilepsy-sim/outputs/epilepsia_submission/draft_v13_appendix_waveform_recalibrated.docx",
+  "manifest": "/Users/dgoldenh/Documents/GitHub/catamenial-epilepsy-sim/docs/v12_hormone_equations.json",
+  "status": "pass",
+  "errors": [],
+  "warnings": [],
+  "summary": {
+    "tagged_equation_count": 16,
+    "total_native_omath_count": 136,
+    "seq_equation_field_count": 16,
+    "cached_sequence_values": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "equation_bookmark_count": 16,
+    "update_fields_enabled": true
+  },
+  "equations": [
+    {
+      "id": "cycle_irregularity",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_cycle_irregularity"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 9,
+      "manifest_variable_count": 6
+    },
+    {
+      "id": "cycle_shifted_lognormal_parameters",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_cycle_shifted_lognormal_parameter"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 7,
+      "manifest_variable_count": 7
+    },
+    {
+      "id": "cycle_length_generation",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_cycle_length_generation"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 9,
+      "manifest_variable_count": 9
+    },
+    {
+      "id": "lognormal_sigma",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_lognormal_sigma"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 2,
+      "manifest_variable_count": 2
+    },
+    {
+      "id": "lognormal_mu",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_lognormal_mu"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 3,
+      "manifest_variable_count": 3
+    },
+    {
+      "id": "pchip_basis",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_pchip_basis"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 11,
+      "manifest_variable_count": 9
+    },
+    {
+      "id": "pchip_interpolation",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_pchip_interpolation"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 19,
+      "manifest_variable_count": 14
+    },
+    {
+      "id": "lh_reference_mapping",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_lh_reference_mapping"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 7,
+      "manifest_variable_count": 6
+    },
+    {
+      "id": "long_follicular_terminal_start",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_long_follicular_terminal_start"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 4,
+      "manifest_variable_count": 4
+    },
+    {
+      "id": "bridged_hormone_noise",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_bridged_hormone_noise"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 8,
+      "manifest_variable_count": 8
+    },
+    {
+      "id": "herzog_c1",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_herzog_c1"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 5,
+      "manifest_variable_count": 5
+    },
+    {
+      "id": "herzog_c2",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_herzog_c2"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 5,
+      "manifest_variable_count": 5
+    },
+    {
+      "id": "herzog_c3",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_herzog_c3"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 6,
+      "manifest_variable_count": 6
+    },
+    {
+      "id": "nb_c1_c2_model",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_nb_c1_c2_model"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 11,
+      "manifest_variable_count": 10
+    },
+    {
+      "id": "nb_dispersion",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_nb_dispersion"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 5,
+      "manifest_variable_count": 4
+    },
+    {
+      "id": "nb_c3_model",
+      "native_omath_count": 1,
+      "seq_field_count": 1,
+      "bookmarks": [
+        "Eq_nb_c3_model"
+      ],
+      "definition_position": "below",
+      "inline_definition_omath_count": 9,
+      "manifest_variable_count": 8
+    }
+  ]
+}

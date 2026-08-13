@@ -75,7 +75,7 @@ ZOTERO_KEYS = {
 }
 
 SOURCE_LABELS = {
-    "li_2024_awhs": "Li et al.",
+    "li_2023_awhs": "Li et al.",
     "bull_2019_natural_cycles": "Bull et al.",
     "stricker_2006_reference": "Stricker et al.",
 }
