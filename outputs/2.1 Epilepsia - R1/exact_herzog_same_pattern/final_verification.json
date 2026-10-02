@@ -1,0 +1,14 @@
+{
+  "document_sha256": "bf8f60d1ae82d93f6545fdb4808eeadec73285821e3b01e2d3b64e1550adaec0",
+  "existing_revisions_preserved": 42,
+  "added_revisions": 24,
+  "field_instructions_preserved": 26,
+  "media_preserved": true,
+  "track_changes_enabled": true,
+  "word_saved": true,
+  "word_layout_pages_inspected": 14,
+  "pytest_passed": 70,
+  "pytest_subtests_passed": 29,
+  "raw_diary_windows_validated": 1000,
+  "raw_diary_label_mismatches": 0
+}

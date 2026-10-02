@@ -1,0 +1,310 @@
+{
+  "analysis_code_sha256": "4245d904f5bdc99b36467df539db24d6c5f04234f8a821d8a56da49a42403609",
+  "analysis_config_sha256": "dacb0786d9d3dd6cb3267b388c85105a4034db62d0173e99bb88443753b96b89",
+  "assumptions": [
+    "Definition D uses a participant-full-diary method-of-moments negative-binomial alpha recorded in d_alpha; Poisson robust fallback is recorded in d_reason when statsmodels NB fitting fails. Definition D_window_alpha re-estimates alpha from the analyzed window as a non-oracle sensitivity.",
+    "HORMONE-CYCLE selected diary day 1 uniformly from the first generated cycle.",
+    "Healthy ovulatory cohort used hormone_cycler build_patient_profile/render_cycle with ovulation_probability set to 1.0 because simulate_diary does not expose a public force-ovulation knob.",
+    "Historical definitions H1-H4 are assumption-based operationalizations and are flagged in summary outputs.",
+    "Large-run non-audit participants used the RNG-equivalent compact hormone path; daily hormone concentrations were omitted, while cycle structure and ILP status were retained.",
+    "Study-level Monte Carlo samples each selected participant from a deterministic pool of precomputed random valid 3-month windows to avoid retaining all daily diaries in memory.",
+    "The hormone simulator exposes medical-factor knobs but no natural prevalence sampler; population medical factors were sampled from config.yaml rates."
+  ],
+  "config": {
+    "analysis_modes": {
+      "coupled_full": {
+        "chunk_size": 5000,
+        "cohort_sizes": {
+          "healthy_ovulatory": 50000,
+          "population": 50000
+        },
+        "diary_months": 36,
+        "n_jobs": -1,
+        "output_dir": "outputs_true_coupling_random_start",
+        "study_level_n_studies": 10000,
+        "true_coupling": {
+          "enabled": true,
+          "rate_ratio": 1.5,
+          "target_phase": "M"
+        }
+      },
+      "coupled_smoke": {
+        "chunk_size": 25,
+        "diary_months": 6,
+        "n_jobs": 1,
+        "n_total": 100,
+        "output_dir": "outputs_true_coupling_random_start_smoke",
+        "study_level_n_studies": 100,
+        "true_coupling": {
+          "enabled": true,
+          "rate_ratio": 1.5,
+          "target_phase": "M"
+        }
+      },
+      "full": {
+        "chunk_size": 5000,
+        "cohort_sizes": {
+          "healthy_ovulatory": 50000,
+          "population": 50000
+        },
+        "diary_months": 36,
+        "n_jobs": 3,
+        "output_dir": "outputs/random_start_full_v12_cycle_calibration",
+        "study_level_n_studies": 10000
+      },
+      "smoke": {
+        "chunk_size": 25,
+        "diary_months": 6,
+        "n_jobs": 1,
+        "n_total": 100,
+        "output_dir": "outputs_random_start_smoke_v12_cycle_calibration",
+        "study_level_n_studies": 100
+      }
+    },
+    "audit_daily_fraction": 0.01,
+    "bootstrap": {
+      "n_replicates": 1000
+    },
+    "chunk_size": 250,
+    "cohorts": {
+      "healthy_ovulatory": {
+        "age_range": [
+          18.0,
+          45.0
+        ],
+        "force_ovulatory_cycles": true
+      },
+      "population": {
+        "age_range": [
+          13.0,
+          54.9
+        ],
+        "force_ovulatory_cycles": false
+      }
+    },
+    "days_per_month": 30,
+    "default_seizure_frequency": null,
+    "definition_b": {
+      "min_cycle_window_cycles": 6,
+      "min_months": 4,
+      "min_seizure_days": 4
+    },
+    "historical": {
+      "h1_sensitivity_threshold": 0.667,
+      "h1_threshold": 0.5
+    },
+    "hormone_cycle_start_mode": "random",
+    "ilp_progesterone_threshold_ng_ml": 5.0,
+    "master_seed": 20260505,
+    "n_jobs": -1,
+    "output_dir": "outputs/random_start_full_v12_cycle_calibration",
+    "phase_mode": "strict_herzog",
+    "phase_modes": [
+      "strict_herzog",
+      "luteal_anchored_ovulatory"
+    ],
+    "population_factor_rates": {
+      "dysmenorrhea": 0.12,
+      "pcos": 0.1,
+      "peri_menarche_if_age_lt_20": 0.6,
+      "perimenopause_if_age_gte_45": 0.55
+    },
+    "progress": {
+      "enabled": true,
+      "print_every_chunks": 1,
+      "print_updates": true,
+      "write_json": true
+    },
+    "regression": {
+      "enabled": true,
+      "evaluated_windows": [
+        {
+          "window_type": "full"
+        }
+      ],
+      "fallback_alpha": 1.0,
+      "window_alpha_sensitivity_windows": [
+        {
+          "window_type": "full"
+        }
+      ]
+    },
+    "reproducibility": {
+      "primary_min_complete_cycles": 6,
+      "sensitivity_min_complete_cycles": 12
+    },
+    "study_level": {
+      "benchmarks": [
+        0.391,
+        0.442
+      ],
+      "n_participants": 30,
+      "n_participants_values": [
+        30,
+        50,
+        100
+      ],
+      "n_studies": 10000,
+      "window_months": 3,
+      "window_pool_per_participant": 5
+    },
+    "suppress_infradian_seizure_cycles": false,
+    "thresholds": {
+      "C1": 1.69,
+      "C2": 1.83,
+      "C3": 1.62
+    },
+    "true_coupling": {
+      "enabled": false,
+      "rate_ratio": 1.5,
+      "target_phase": "M"
+    },
+    "windows": {
+      "calendar_months": [
+        1,
+        3,
+        4,
+        6,
+        9,
+        12,
+        18,
+        24,
+        36
+      ],
+      "cycle_counts": [
+        3,
+        6,
+        12
+      ]
+    }
+  },
+  "created_unix_time": 1786579114.200452,
+  "files": [
+    {
+      "bytes": 16497,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/audit_daily_sample.parquet",
+      "sha256": "ef169d45a22273cecd67f9f9848e22d2bb9e7a6aea3b0ec18bc58c378f8ae693"
+    },
+    {
+      "bytes": 7852,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig1_false_positive_by_window.pdf",
+      "sha256": "fd72e6102768e61d113f011ba557cd2406d166afc52a59b2d70202d8dbb48a61"
+    },
+    {
+      "bytes": 15784,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig1_false_positive_by_window.png",
+      "sha256": "6474caa03df9d89862d615eff8c1e72488505e275b0b83f6fdf4e383bb5f1d1c"
+    },
+    {
+      "bytes": 13480,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig1_false_positive_by_window.svg",
+      "sha256": "0f1861f8baa565d9cf099db7caf2c9251a50b57162cf78057e54c2014134fd46"
+    },
+    {
+      "bytes": 16785,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig2_pattern_decomposition.pdf",
+      "sha256": "ee3daed0a1f629b8e186d3c6d9480bf08ab3df387adf4556bb82e9fe01bac3f4"
+    },
+    {
+      "bytes": 71253,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig2_pattern_decomposition.png",
+      "sha256": "f6c8d1e73386ccad3087d36d41c9588f9460665299de16964e2b3a8a3c2fc87d"
+    },
+    {
+      "bytes": 54045,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig2_pattern_decomposition.svg",
+      "sha256": "39e97d22f19c370cb958f70d3f8dd4daa18959c4c04a3a49ec71738c92aed723"
+    },
+    {
+      "bytes": 17440,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig3_study_prevalence_distribution_3month.pdf",
+      "sha256": "4562ba76e23090b8208731ef58abf123673ecdd5ff4ae39f583672b6c6e8b452"
+    },
+    {
+      "bytes": 94660,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig3_study_prevalence_distribution_3month.png",
+      "sha256": "f2caab53c985b9aff43453afc14c721600cb7de129d8dfb7fa61912e33f1147c"
+    },
+    {
+      "bytes": 64360,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig3_study_prevalence_distribution_3month.svg",
+      "sha256": "0ae8190c12be5f5a316d1f3faa1ccc83cb7fa5976402c02be1f60c788b72b6c8"
+    },
+    {
+      "bytes": 17695,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig4_historical_vs_core_definitions.pdf",
+      "sha256": "9058b3a6eeedadb23e460ac2a2cfa252e3b48caeb2abc1d461560e68e48cab4c"
+    },
+    {
+      "bytes": 77233,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig4_historical_vs_core_definitions.png",
+      "sha256": "69cff9169a8425e7167d2e3a73caa83249ca92a9ad0f83d2699ac1044a18e692"
+    },
+    {
+      "bytes": 50996,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig4_historical_vs_core_definitions.svg",
+      "sha256": "2383bfd21ee064417d93eda6c2d32bd404854726741223fa374e9a241e4c374c"
+    },
+    {
+      "bytes": 23387,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig4_indeterminate_vs_fpr_frontier.pdf",
+      "sha256": "70630b550cdd22a66408be51644d830e7f667b478b2da2a0f360311a74a8c34c"
+    },
+    {
+      "bytes": 141174,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig4_indeterminate_vs_fpr_frontier.png",
+      "sha256": "508de180b0946a2c456d8062552d522dbe154fb06efd047782ebc5609dfc161e"
+    },
+    {
+      "bytes": 81033,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig4_indeterminate_vs_fpr_frontier.svg",
+      "sha256": "b50e8d5eea003e7583836e289a1bb9babdf93dcecabb8029aeffe20171876502"
+    },
+    {
+      "bytes": 17158,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig5_qc_null_cycle_day_profile.pdf",
+      "sha256": "1528709ff6d41779e2bb80fd89930bcfb1ccaf36f7e82a6f00a480ed8d9f5d43"
+    },
+    {
+      "bytes": 93402,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig5_qc_null_cycle_day_profile.png",
+      "sha256": "0381f45f089c85d6c5f891559a27122741308818a56db3783b298f64c8f22081"
+    },
+    {
+      "bytes": 71460,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/fig5_qc_null_cycle_day_profile.svg",
+      "sha256": "38224c63f2be392b4a244344d0ac79ba4640fbdc0c5b25377230b887c1d66d57"
+    },
+    {
+      "bytes": 25635,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/participant_summary.parquet",
+      "sha256": "5a25300c67474da6e36a084df0057978452f359c839d38717cfb8509ff5e9b61"
+    },
+    {
+      "bytes": 376,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/progress.json",
+      "sha256": "63605ea33fb77dcfc3e562c43cc8f42097b07ea056db814c0003a11f1a176eec"
+    },
+    {
+      "bytes": 27181,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/study_level_3month.parquet",
+      "sha256": "fe71917dcb69909954c6563d2f68997124e78a8f0fc1b4815f10a56b0db25862"
+    },
+    {
+      "bytes": 27181,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/study_level_3month_n30.parquet",
+      "sha256": "fe71917dcb69909954c6563d2f68997124e78a8f0fc1b4815f10a56b0db25862"
+    },
+    {
+      "bytes": 3060266,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/summary_tables.csv",
+      "sha256": "9b84f5f14bb16b129cba6e442eede0acf536e86a5c6e92d4a644f7fab8ff33c1"
+    },
+    {
+      "bytes": 132081,
+      "path": "outputs_random_start_smoke_v12_cycle_calibration/window_results.parquet",
+      "sha256": "a21f1da6e4a72eac38262755242e27d6aa0f993cc901605376cb3467187438a0"
+    }
+  ],
+  "output_dir": "outputs_random_start_smoke_v12_cycle_calibration"
+}

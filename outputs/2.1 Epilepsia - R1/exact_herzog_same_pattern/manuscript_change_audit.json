@@ -1,0 +1,58 @@
+{
+  "document": "/Users/dgoldenh/Documents/GitHub/catamenial-epilepsy-sim/outputs/2.1 Epilepsia - R1/draft_v15_manuscript.docx",
+  "backup": "/Users/dgoldenh/Documents/GitHub/catamenial-epilepsy-sim/outputs/2.1 Epilepsia - R1/exact_herzog_same_pattern/draft_v15_manuscript_before_exact_correction.docx",
+  "changes": [
+    {
+      "old": "50.5%",
+      "new": "45.2%"
+    },
+    {
+      "old": "52.2%",
+      "new": "41.1%"
+    },
+    {
+      "old": "50.5%",
+      "new": "45.2%"
+    },
+    {
+      "old": "52.2%",
+      "new": "41.1%"
+    },
+    {
+      "old": "22,113 / 50,000",
+      "new": "18,803 / 50,000"
+    },
+    {
+      "old": "50.5 (49.9\u201351.2)",
+      "new": "45.2 (44.5\u201345.9)"
+    },
+    {
+      "old": "22.3",
+      "new": "17.0"
+    },
+    {
+      "old": "55.8",
+      "new": "62.4"
+    },
+    {
+      "old": "18,153 / 50,000",
+      "new": "15,291 / 50,000"
+    },
+    {
+      "old": "52.2 (51.5\u201353.0)",
+      "new": "41.1 (40.3\u201341.9)"
+    },
+    {
+      "old": "19.0",
+      "new": "12.6"
+    },
+    {
+      "old": "63.7",
+      "new": "69.4"
+    }
+  ],
+  "existing_revision_count": 42,
+  "added_revision_count": 24,
+  "field_instruction_count": 26,
+  "track_revisions": true
+}

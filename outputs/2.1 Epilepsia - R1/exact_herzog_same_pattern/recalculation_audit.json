@@ -1,0 +1,70 @@
+{
+  "source": "/Users/dgoldenh/Documents/GitHub/catamenial-epilepsy-sim/outputs/random_start_full_v14_waveform_recalibration/window_results.parquet",
+  "source_sha256": "17145b6fa73734def749a46f649ed9e07bedd878bb7190974b140e1a175396bd",
+  "classifier_sha256": "f4a0ccb3c1f555abe2af921d0bfa7fa1a278c3b91bfc284895775f412605b6d3",
+  "rule": "Same applicable pattern positive in at least two of three complete 23-35-day cycles",
+  "union": "Positive if any applicable subject pattern is true; negative if all are false; otherwise indeterminate",
+  "retained_policies": "Original per-pattern eligibility and conservative undefined-cycle-ratio handling",
+  "cohorts": {
+    "healthy_ovulatory": {
+      "attempted": 50000,
+      "previous_positive": 11173,
+      "previous_classifiable": 22113,
+      "corrected_positive": 8501,
+      "corrected_classifiable": 18803,
+      "corrected_indeterminate": 31197,
+      "newly_indeterminate": 3310
+    },
+    "population": {
+      "attempted": 50000,
+      "previous_positive": 9482,
+      "previous_classifiable": 18153,
+      "corrected_positive": 6285,
+      "corrected_classifiable": 15291,
+      "corrected_indeterminate": 34709,
+      "newly_indeterminate": 2862
+    }
+  },
+  "headline_results": [
+    {
+      "table_type": "window_false_positive",
+      "subset": "all",
+      "cohort": "healthy_ovulatory",
+      "window_type": "cycle",
+      "window_value": "3",
+      "definition": "A_exact_any",
+      "phase_mode": "strict_herzog",
+      "assumption_based_historical": false,
+      "n_windows": 50000,
+      "n_classifiable": 18803,
+      "positives": 8501,
+      "false_positive_rate": 0.452108706057544,
+      "wilson95_low": 0.4450053835078214,
+      "wilson95_high": 0.4592315930231151,
+      "indeterminate_rate": 0.6239399999999999,
+      "positive_rate_all_attempted": 0.17002,
+      "unstable_denominator": false,
+      "interpretation_note": ""
+    },
+    {
+      "table_type": "window_false_positive",
+      "subset": "all",
+      "cohort": "population",
+      "window_type": "cycle",
+      "window_value": "3",
+      "definition": "A_exact_any",
+      "phase_mode": "strict_herzog",
+      "assumption_based_historical": false,
+      "n_windows": 50000,
+      "n_classifiable": 15291,
+      "positives": 6285,
+      "false_positive_rate": 0.4110260937806553,
+      "wilson95_low": 0.4032508556644992,
+      "wilson95_high": 0.41884602534430854,
+      "indeterminate_rate": 0.69418,
+      "positive_rate_all_attempted": 0.1257,
+      "unstable_denominator": false,
+      "interpretation_note": ""
+    }
+  ]
+}

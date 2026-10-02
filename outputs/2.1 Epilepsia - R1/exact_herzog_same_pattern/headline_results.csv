@@ -1,0 +1,3 @@
+table_type,subset,cohort,window_type,window_value,definition,phase_mode,assumption_based_historical,n_windows,n_classifiable,positives,false_positive_rate,wilson95_low,wilson95_high,indeterminate_rate,positive_rate_all_attempted,unstable_denominator,interpretation_note
+window_false_positive,all,healthy_ovulatory,cycle,3,A_exact_any,strict_herzog,False,50000,18803,8501,0.452108706057544,0.4450053835078214,0.4592315930231151,0.6239399999999999,0.17002,False,
+window_false_positive,all,population,cycle,3,A_exact_any,strict_herzog,False,50000,15291,6285,0.4110260937806553,0.4032508556644992,0.41884602534430854,0.69418,0.1257,False,

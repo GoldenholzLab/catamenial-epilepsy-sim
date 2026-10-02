@@ -1,0 +1,31 @@
+{
+  "source": "outputs/random_start_full_v14_waveform_recalibration/summary_tables.csv",
+  "source_sha256": "8c1946f29e24aaa1db67ff9cccae8d49cbc866ca33da986aa3383564a9cb114c",
+  "scope": "strict_herzog; subset all; calendar durations for Figure 1; full36 for Table 2 and overlap comment",
+  "overlap": {
+    "healthy_ovulatory": {
+      "attempted": 50000,
+      "C1_and_C2": 1109,
+      "C1_C2_C3": 0,
+      "C1_C2_without_C3": 1109,
+      "percentage_all_attempted": 2.218
+    },
+    "population": {
+      "attempted": 50000,
+      "C1_and_C2": 1068,
+      "C1_C2_C3": 504,
+      "C1_C2_without_C3": 564,
+      "percentage_all_attempted": 2.136
+    }
+  },
+  "new_table_rows": 4,
+  "live_field_instructions_preserved": true,
+  "unrelated_body_text_preserved": true,
+  "track_changes_enabled": true,
+  "previous_figure_media_retained": true,
+  "word_visual_verification": "passed in Microsoft Word; tracked and clean native PDF proofs inspected; Table 2 and notes fit one page; Results comment visible",
+  "word_final_save": true,
+  "tracked_change_rejection_restores_original_body_text": true,
+  "zotero_field_instruction_count": 26,
+  "document_relationships_valid": true
+}

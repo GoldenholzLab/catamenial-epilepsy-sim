@@ -43,7 +43,8 @@ def classify_exact_herzog2004(
     """Definition A_exact_herzog2004.
 
     Exact analyses are limited to windows containing exactly three complete,
-    strict 23-35 day cycles.
+    strict 23-35 day cycles. A participant is positive only when the same
+    applicable pattern is positive in at least two of those cycles.
     """
 
     thresholds = thresholds or DEFAULT_THRESHOLDS
@@ -54,10 +55,15 @@ def classify_exact_herzog2004(
         return _empty("requires_three_complete_strict_23_35_day_cycles")
 
     cycle_results = [_cycle_exact_labels(window_df[window_df["cycle_id"] == cycle_id], cohort, thresholds) for cycle_id in cycle_ids]
-    any_label = _subject_label([result["any"] for result in cycle_results])
     c1 = _subject_label([result["C1"] for result in cycle_results])
     c2 = _subject_label([result["C2"] for result in cycle_results])
     c3 = None if cohort != "population" else _subject_label([result["C3"] for result in cycle_results])
+    applicable_labels = [c1, c2] + ([c3] if cohort == "population" else [])
+    any_label = (
+        True if any(label is True for label in applicable_labels)
+        else False if all(label is False for label in applicable_labels)
+        else None
+    )
     return {
         "label_A_exact_any": any_label,
         "label_A_exact_C1": c1,
